@@ -1,0 +1,150 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+ 
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+ 
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+ 
+    --primary: 142 72% 29%;
+    --primary-foreground: 0 0% 100%;
+ 
+    --secondary: 150 20% 96%;
+    --secondary-foreground: 240 10% 3.9%;
+ 
+    --muted: 150 20% 96%;
+    --muted-foreground: 240 3.8% 46.1%;
+ 
+    --accent: 150 20% 96%;
+    --accent-foreground: 240 10% 3.9%;
+ 
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 150 20% 90%;
+    --input: 150 20% 90%;
+    --ring: 142 72% 29%;
+ 
+    --radius: 0.5rem;
+  }
+}
+ 
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply relative border border-border/40 bg-white/80 backdrop-blur-sm rounded-lg overflow-hidden shadow-md;
+  }
+
+  .logger-card {
+    @apply glass-card;
+    animation: slideIn 0.5s ease-out;
+  }
+
+  .measurement-card {
+    @apply relative border border-primary/20 bg-white rounded-lg overflow-hidden shadow-sm;
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  .measurement-section {
+    @apply relative pl-6 border-l-2 border-primary/30;
+  }
+
+  .form-container {
+    @apply relative mx-auto max-w-5xl;
+  }
+
+  .form-container::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-primary/10 to-primary/5 blur-3xl -z-10;
+  }
+
+  .gradient-border {
+    @apply relative p-[1px] rounded-lg bg-gradient-to-r from-primary/50 via-primary to-primary/50 shadow-sm;
+  }
+
+  .gradient-border > * {
+    @apply bg-white rounded-lg;
+  }
+
+  .step-indicator {
+    @apply relative flex items-center justify-center;
+  }
+
+  .step-indicator::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-primary via-primary to-primary rounded-lg opacity-0 transition-opacity duration-300;
+  }
+
+  .step-indicator.active::before {
+    @apply opacity-100;
+  }
+
+  .step-number {
+    @apply relative w-10 h-10 flex items-center justify-center rounded-lg bg-white text-sm font-semibold transition-all duration-300;
+  }
+
+  .step-line {
+    @apply relative h-[2px] bg-gradient-to-r from-primary/20 to-primary/5 transition-all duration-300;
+  }
+
+  .step-line.active {
+    @apply from-primary to-primary/50;
+  }
+
+  .step-text {
+    @apply ml-3 text-sm font-medium transition-colors duration-300;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.noise-bg {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  opacity: 0.03;
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.maplibregl-canvas {
+  outline: none;
+}
+
+.maplibregl-marker {
+  cursor: pointer;
+}
