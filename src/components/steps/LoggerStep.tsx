@@ -14,7 +14,7 @@ export function LoggerStep() {
   const [expandedLocations, setExpandedLocations] = useState<{ [key: string]: boolean }>(
     locations.reduce((acc, loc) => ({ ...acc, [loc.uuid]: true }), {})
   );
-  const [expandedLoggers, setExpandedLoggers] = useState<{ [key: string]: boolean }>({});
+  const [expandedLoggers, setExpandedLoggers] = useState<{ [key: number]: boolean }>({});
 
   const addLogger = (locationIndex: number) => {
     const currentLoggers = watch(`measurement_location.${locationIndex}.logger_main_config`) || [];
@@ -28,7 +28,7 @@ export function LoggerStep() {
     };
 
     setValue(`measurement_location.${locationIndex}.logger_main_config`, [...currentLoggers, newLogger]);
-    setExpandedLoggers({ ...expandedLoggers, [newLogger.logger_serial_number]: true });
+    setExpandedLoggers({ ...expandedLoggers, [currentLoggers.length]: true }); // Use index as key
   };
 
   const removeLogger = (locationIndex: number, loggerIndex: number) => {
@@ -46,10 +46,10 @@ export function LoggerStep() {
     }));
   };
 
-  const toggleLoggerExpand = (loggerId: string) => {
+  const toggleLoggerExpand = (loggerIndex: number) => {
     setExpandedLoggers(prev => ({
       ...prev,
-      [loggerId]: !prev[loggerId]
+      [loggerIndex]: !prev[loggerIndex]
     }));
   };
 
@@ -101,13 +101,13 @@ export function LoggerStep() {
                   <div key={`${locationIndex}-${loggerIndex}`} className="border border-border rounded-lg overflow-hidden">
                     <div 
                       className="bg-primary/5 p-4 cursor-pointer hover:bg-primary/10 transition-colors"
-                      onClick={() => toggleLoggerExpand(logger.logger_serial_number)}
+                      onClick={() => toggleLoggerExpand(loggerIndex)}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <ChevronDown 
                             className={`w-5 h-5 transition-transform ${
-                              expandedLoggers[logger.logger_serial_number] ? 'transform rotate-0' : 'transform -rotate-90'
+                              expandedLoggers[loggerIndex] ? 'transform rotate-0' : 'transform -rotate-90'
                             }`}
                           />
                           <h5 className="text-base font-medium">Logger {loggerIndex + 1}</h5>
@@ -130,7 +130,7 @@ export function LoggerStep() {
                       </div>
                     </div>
 
-                    {expandedLoggers[logger.logger_serial_number] && (
+                    {expandedLoggers[loggerIndex] && (
                       <div className="p-6 bg-background space-y-6">
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                           <div className="space-y-2">
