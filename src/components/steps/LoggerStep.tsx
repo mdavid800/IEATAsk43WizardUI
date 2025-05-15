@@ -56,6 +56,9 @@ export function LoggerStep() {
   return (
     <div className="space-y-8">
       <h2 className="text-xl font-semibold text-foreground">Logger Configuration</h2>
+      <div className="text-muted-foreground mb-6">
+        <p>A separate logger file is required for each data file which will be uploaded to the system. Data files should ensure consistency in timestamp conventions, averaging periods, etc. for all parameters contained within those files – care should be taken that this is the case when data files contain outputs from multiple sensors.</p>
+      </div>
 
       {locations.map((location, locationIndex) => (
         <div key={location.uuid} className="border border-border rounded-lg overflow-hidden">
