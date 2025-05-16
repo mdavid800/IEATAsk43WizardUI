@@ -5,34 +5,34 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    --foreground: 222 47% 11%;
     
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 222 47% 11%;
  
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
+    --popover-foreground: 222 47% 11%;
  
-    --primary: 142 72% 29%;
+    --primary: 215 100% 50%;
     --primary-foreground: 0 0% 100%;
  
-    --secondary: 150 20% 96%;
-    --secondary-foreground: 240 10% 3.9%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222 47% 11%;
  
-    --muted: 150 20% 96%;
-    --muted-foreground: 240 3.8% 46.1%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
  
-    --accent: 150 20% 96%;
-    --accent-foreground: 240 10% 3.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222 47% 11%;
  
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 150 20% 90%;
-    --input: 150 20% 90%;
-    --ring: 142 72% 29%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 215 100% 50%;
  
-    --radius: 0.5rem;
+    --radius: 0.75rem;
   }
 }
  
@@ -42,29 +42,28 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
 @layer components {
   .glass-card {
-    @apply relative border border-border/40 bg-white/80 backdrop-blur-md rounded-2xl overflow-hidden shadow-xl transition-transform duration-300;
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+    @apply relative border border-border/40 bg-white/95 backdrop-blur-md rounded-xl overflow-hidden shadow-sm transition-transform duration-300;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.04);
   }
 
   .glass-card:hover {
-    box-shadow: 0 12px 40px 0 rgba(31,38,135,0.20);
+    box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.08);
   }
 
   .logger-card {
-    @apply glass-card;
-    animation: slideIn 0.5s cubic-bezier(.4,1.6,.6,1);
-    border: 1.5px solid hsl(var(--primary)/0.15);
-    background: linear-gradient(120deg, hsla(var(--primary),0.10) 0%, hsla(var(--background),0.85) 100%);
+    @apply relative border border-border bg-white rounded-xl overflow-hidden shadow-sm transition-all;
+    animation: slideIn 0.3s ease-out;
   }
 
   .logger-card:hover {
-    box-shadow: 0 16px 48px 0 rgba(31,38,135,0.24);
-    border-color: hsl(var(--primary)/0.25);
+    @apply border-primary/20;
+    box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.05);
   }
 
   .animated-bg {
@@ -74,8 +73,7 @@
     pointer-events: none;
     width: 100vw;
     height: 100vh;
-    background: linear-gradient(120deg, hsla(var(--primary),0.08) 0%, hsla(var(--secondary),0.05) 100%);
-    animation: gradientMove 12s ease-in-out infinite alternate;
+    background: linear-gradient(120deg, hsla(var(--secondary),0.4) 0%, hsla(var(--background),0.95) 100%);
   }
 
   @keyframes gradientMove {
@@ -84,12 +82,12 @@
   }
 
   .measurement-card {
-    @apply relative border border-primary/20 bg-white rounded-lg overflow-hidden shadow-sm;
+    @apply relative border border-border bg-white rounded-xl overflow-hidden shadow-sm;
     animation: fadeIn 0.3s ease-out;
   }
 
   .measurement-section {
-    @apply relative pl-6 border-l-2 border-primary/30;
+    @apply relative pl-6 border-l border-border;
   }
 
   .form-container {
@@ -98,7 +96,7 @@
 
   .form-container::before {
     content: '';
-    @apply absolute inset-0 bg-gradient-to-r from-primary/10 to-primary/5 blur-3xl -z-10;
+    @apply absolute inset-0 bg-gradient-to-r from-secondary/30 to-secondary/5 blur-3xl -z-10;
   }
 
   .gradient-border {
@@ -115,23 +113,27 @@
 
   .step-indicator::before {
     content: '';
-    @apply absolute inset-0 bg-gradient-to-r from-primary via-primary to-primary rounded-lg opacity-0 transition-opacity duration-300;
+    @apply absolute inset-0 bg-primary rounded-full opacity-0 transition-opacity duration-300;
   }
 
   .step-indicator.active::before {
-    @apply opacity-100;
+    @apply opacity-10;
   }
 
   .step-number {
-    @apply relative w-10 h-10 flex items-center justify-center rounded-lg bg-white text-sm font-semibold transition-all duration-300;
+    @apply relative w-10 h-10 flex items-center justify-center rounded-full bg-white text-sm font-medium border border-border transition-all duration-300;
+  }
+
+  .step-number.active {
+    @apply border-primary text-primary;
   }
 
   .step-line {
-    @apply relative h-[2px] bg-gradient-to-r from-primary/20 to-primary/5 transition-all duration-300;
+    @apply relative h-[1px] bg-border transition-all duration-300;
   }
 
   .step-line.active {
-    @apply from-primary to-primary/50;
+    @apply bg-primary/30;
   }
 
   .step-text {
@@ -142,7 +144,7 @@
 @keyframes slideIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -160,18 +162,7 @@
 }
 
 .noise-bg {
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  opacity: 0.04;
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  mix-blend-mode: multiply;
-}
-
-.animated-bg + .noise-bg {
-  z-index: -1;
+  display: none;
 }
 
 .maplibregl-canvas {

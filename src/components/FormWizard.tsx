@@ -135,8 +135,7 @@ export function FormWizard() {
                 )}>
                   <div className={cn(
                     "step-number",
-                    index <= currentStep && "text-primary",
-                    index === currentStep && "shadow-lg shadow-primary/20",
+                    index <= currentStep && "active",
                     index < currentStep && "bg-primary text-white"
                   )}>
                     {index < currentStep ? '✓' : index + 1}
@@ -163,7 +162,7 @@ export function FormWizard() {
       {/* Form Content */}
       <FormProvider {...methods}>
         <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-8">
-          <div className="glass-card p-6 shadow-xl shadow-primary/5">
+          <div className="glass-card p-6 shadow-sm">
             <CurrentStepComponent />
           </div>
           
@@ -174,14 +173,14 @@ export function FormWizard() {
               onClick={prev}
               disabled={currentStep === 0}
               variant="outline"
-              className="border-primary/20 hover:border-primary/50 shadow-sm"
+              className="border-border hover:border-primary/50 shadow-sm"
             >
               <ChevronLeft className="w-4 h-4 mr-1" />
               Previous
             </Button>
             <Button 
               type="submit" 
-              className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
+              className="bg-primary hover:bg-primary/90 shadow-sm"
             >
               {currentStep === steps.length - 1 ? (
                 <>
