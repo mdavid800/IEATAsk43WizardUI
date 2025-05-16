@@ -61,35 +61,35 @@ export function LoggerStep() {
       </div>
 
       {locations.map((location, locationIndex) => (
-        <div key={location.uuid} className="border border-border rounded-lg overflow-hidden">
+        <div key={location.uuid} className="logger-card mb-8 shadow-lg transition-transform hover:scale-[1.01]">
           <div 
-            className="bg-card p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+            className="flex items-center justify-between bg-gradient-to-r from-primary/5 to-primary/0 p-5 cursor-pointer hover:bg-primary/10 transition-colors border-b border-border/60 backdrop-blur-md"
             onClick={() => toggleLocationExpand(location.uuid)}
           >
-            <div className="flex items-center gap-3">
-              <ChevronDown 
-                className={`w-5 h-5 transition-transform ${
-                  expandedLocations[location.uuid] ? 'transform rotate-0' : 'transform -rotate-90'
-                }`} 
-              />
-              <h3 className="text-lg font-medium text-foreground">{location.name || `Location ${locationIndex + 1}`}</h3>
-              <div className="text-sm text-muted-foreground">
-                {location.measurement_station_type_id}
-              </div>
-            </div>
+            <div className="flex items-center gap-4">
+                <ChevronDown 
+                  className={`w-5 h-5 transition-transform ${expandedLocations[location.uuid] ? 'rotate-0' : '-rotate-90'}`} 
+                />
+                <h3 className="text-xl font-semibold text-primary drop-shadow-sm tracking-tight">
+                  {location.name || `Location ${locationIndex + 1}`}
+                </h3>
+                <span className="ml-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium border border-primary/20">
+                  {location.measurement_station_type_id}
+                </span>
+              </div>              
           </div>
 
           {expandedLocations[location.uuid] && (
-            <div className="p-6 border-t border-border">
+            <div className="p-8 bg-white/70 backdrop-blur-md border-t border-border/60 space-y-8 transition-all animate-fadeIn">
               <div className="flex justify-between items-center mb-6">
-                <div className="flex items-center gap-2">
-                  <Settings className="w-5 h-5 text-primary" />
-                  <h4 className="text-base font-medium">Loggers</h4>
-                </div>
-                <Button
+                <div className="flex items-center gap-3">
+                                  <Settings className="w-5 h-5 text-primary" />
+                                  <span className="font-semibold text-foreground tracking-tight text-base">Loggers</span>
+                                </div>         <Button
                   type="button"
+                  variant="secondary"
+                  className="bg-primary hover:bg-primary/90 shadow hover:shadow-lg focus:ring-2 focus:ring-primary/50"
                   onClick={() => addLogger(locationIndex)}
-                  className="bg-primary hover:bg-primary/90"
                 >
                   <PlusCircle className="w-4 h-4 mr-2" />
                   Add Logger
@@ -98,12 +98,11 @@ export function LoggerStep() {
 
               <div className="space-y-6">
                 {(watch(`measurement_location.${locationIndex}.logger_main_config`) || []).map((logger, loggerIndex) => (
-                  <div key={`${locationIndex}-${loggerIndex}`} className="border border-border rounded-lg overflow-hidden">
-                    <div 
-                      className="bg-primary/5 p-4 cursor-pointer hover:bg-primary/10 transition-colors"
-                      onClick={() => toggleLoggerExpand(loggerIndex)}
-                    >
-                      <div className="flex items-center justify-between">
+                  <div className="glass-card border border-primary/20 rounded-xl overflow-hidden mb-6 shadow transition-transform hover:scale-[1.01]" key={loggerIndex}>
+                    <div
+                              className="flex items-center gap-3 cursor-pointer select-none px-6 py-3 bg-gradient-to-r from-primary/10 to-primary/0 hover:bg-primary/20 transition-colors border-b border-border/40"
+                              onClick={() => toggleLoggerExpand(loggerIndex)}
+                            >                <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <ChevronDown 
                             className={`w-5 h-5 transition-transform ${
@@ -116,23 +115,20 @@ export function LoggerStep() {
                           </div>
                         </div>
                         <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeLogger(locationIndex, loggerIndex);
-                          }}
-                          className="text-destructive hover:text-destructive/90"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </Button>
+  type="button"
+  variant="outline"
+  size="sm"
+  className="ml-auto bg-transparent text-red-600 hover:bg-red-50 focus:ring-2 focus:ring-red-400"
+  onClick={() => removeLogger(locationIndex, loggerIndex)}
+>
+  <Trash2 className="w-5 h-5" />
+</Button>
                       </div>
                     </div>
 
                     {expandedLoggers[loggerIndex] && (
                       <div className="p-6 bg-background space-y-6">
-                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 p-8 bg-white/80 rounded-b-xl">
                           <div className="space-y-2">
                             <Label htmlFor={`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.logger_oem_id`}>
                               Logger Manufacturer
