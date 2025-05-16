@@ -14,7 +14,7 @@
     --popover-foreground: 222 47% 11%;
  
     --primary: 142 72% 45%; /* Green: #22c55e */
-    --primary-foreground: 0 0% 100%;
+    --primary-foreground: 0 0% 20%; /* Changed from white to dark gray */
  
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222 47% 11%;
@@ -101,7 +101,7 @@
   .btn, .button, button, .shadcn-btn {
     @apply rounded-full font-semibold px-5 py-2 transition-colors duration-200;
     background: hsl(var(--primary));
-    color: #fff;
+    color: hsl(var(--primary-foreground)); /* Updated to use primary-foreground */
     box-shadow: 0 2px 8px 0 rgba(34,197,94,0.08);
     border: none;
   }
