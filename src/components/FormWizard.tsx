@@ -62,16 +62,16 @@ export function FormWizard() {
       // Format the data according to the schema
       const formattedData = {
         ...data,
-        measurement_location: data.measurement_location.map(location => ({
-          ...location,
+        measurement_location: [{
+          ...data.measurement_location[0],
           update_at: new Date().toISOString(),
-          logger_main_config: location.logger_main_config?.map(logger => ({
+          logger_main_config: data.measurement_location[0].logger_main_config?.map(logger => ({
             ...logger,
             update_at: new Date().toISOString(),
             date_to: logger.date_to || null,
             clock_is_auto_synced: true
           })),
-          measurement_point: location.measurement_point.map(point => ({
+          measurement_point: data.measurement_location[0].measurement_point.map(point => ({
             ...point,
             update_at: new Date().toISOString(),
             sensor: point.sensor?.map(sensor => ({
@@ -102,7 +102,7 @@ export function FormWizard() {
               update_at: new Date().toISOString()
             }))
           }))
-        }))
+        }]
       };
 
       // Export as JSON file
@@ -165,7 +165,7 @@ export function FormWizard() {
           <div className="glass-card p-6 shadow-sm">
             <CurrentStepComponent />
           </div>
-          
+
           {/* Navigation */}
           <div className="flex justify-between pt-4">
             <Button
@@ -178,8 +178,8 @@ export function FormWizard() {
               <ChevronLeft className="w-4 h-4 mr-1" />
               Previous
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="bg-primary hover:bg-primary/90 shadow-sm"
             >
               {currentStep === steps.length - 1 ? (
