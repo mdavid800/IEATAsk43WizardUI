@@ -35,7 +35,7 @@ export function LocationStep() {
   };
 
   const toggleExpand = (id: string) => {
-    setLocations(locations.map(loc => 
+    setLocations(locations.map(loc =>
       loc.id === id ? { ...loc, isExpanded: !loc.isExpanded } : loc
     ));
   };
@@ -56,7 +56,7 @@ export function LocationStep() {
 
       {locations.map((location, index) => (
         <div key={location.id} className="border border-border rounded-lg overflow-hidden">
-          <div 
+          <div
             className="bg-card p-4 cursor-pointer hover:bg-muted/50 transition-colors"
             onClick={() => toggleExpand(location.id)}
           >
@@ -153,7 +153,7 @@ export function LocationStep() {
                   </div>
 
                   <div className="sm:col-span-2">
-                    <Map 
+                    <Map
                       latitude={watch(`measurement_location.${index}.latitude_ddeg`) || 0}
                       longitude={watch(`measurement_location.${index}.longitude_ddeg`) || 0}
                       className="border border-border shadow-sm"
@@ -183,7 +183,7 @@ export function LocationStep() {
                         </Label>
                         <Select
                           onValueChange={(value) => setValue(`measurement_location.${index}.mast_properties.mast_geometry_id`, value as any)}
-                          value={watch(`measurement_location.${index}.mast_properties.mast_geometry_id`)}
+                          value={watch(`measurement_location.${index}.mast_properties.mast_geometry_id`) as string}
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="Select mast geometry" />
@@ -351,7 +351,7 @@ export function LocationStep() {
                         </Label>
                         <Select
                           onValueChange={(value) => setValue(`measurement_location.${index}.vertical_profiler_properties.0.device_vertical_orientation`, value as any)}
-                          value={watch(`measurement_location.${index}.vertical_profiler_properties.0.device_vertical_orientation`)}
+                          value={watch(`measurement_location.${index}.vertical_profiler_properties.0.device_vertical_orientation`) as string}
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="Select vertical orientation" />
