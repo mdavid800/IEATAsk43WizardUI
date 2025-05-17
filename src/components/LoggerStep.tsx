@@ -73,14 +73,14 @@ export function LoggerStep() {
 
       {locations.map((location, locationIndex) => (
         <div key={location.uuid} className="logger-card mb-8">
-          <div 
+          <div
             className="bg-white p-5 cursor-pointer hover:bg-secondary/10 transition-colors border-b border-border backdrop-blur-md"
             onClick={() => toggleLocationExpand(location.uuid)}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <ChevronDown 
-                  className={`w-5 h-5 transition-transform ${expandedLocations[location.uuid] ? 'rotate-0' : '-rotate-90'}`} 
+                <ChevronDown
+                  className={`w-5 h-5 transition-transform ${expandedLocations[location.uuid] ? 'rotate-0' : '-rotate-90'}`}
                 />
                 <h3 className="text-xl font-semibold text-foreground tracking-tight">
                   {location.name || `Location ${locationIndex + 1}`}
@@ -88,7 +88,7 @@ export function LoggerStep() {
                 <span className="ml-2 px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs font-medium">
                   {location.measurement_station_type_id}
                 </span>
-              </div>              
+              </div>
             </div>
           </div>
 
@@ -119,10 +119,9 @@ export function LoggerStep() {
                     >
                       <div className="flex items-center justify-between w-full">
                         <div className="flex items-center gap-3">
-                          <ChevronDown 
-                            className={`w-5 h-5 transition-transform ${
-                              expandedLoggers[loggerIndex] ? 'transform rotate-0' : 'transform -rotate-90'
-                            }`}
+                          <ChevronDown
+                            className={`w-5 h-5 transition-transform ${expandedLoggers[loggerIndex] ? 'transform rotate-0' : 'transform -rotate-90'
+                              }`}
                           />
                           <h5 className="text-base font-medium">Logger {loggerIndex + 1}</h5>
                           <div className="text-sm text-muted-foreground">
@@ -133,7 +132,7 @@ export function LoggerStep() {
                           type="button"
                           variant="outline"
                           size="sm"
-                          className="ml-auto bg-transparent text-red-600 hover:bg-red-50 focus:ring-1 focus:ring-red-400"
+                          className="bg-transparent text-red-600 hover:bg-red-50 focus:ring-1 focus:ring-red-400"
                           onClick={(e) => {
                             e.stopPropagation();
                             removeLogger(locationIndex, loggerIndex);
@@ -282,8 +281,8 @@ export function LoggerStep() {
                             <Input
                               type="number"
                               step="0.5"
-                              {...register(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.offset_from_utc_hrs`, { 
-                                valueAsNumber: true 
+                              {...register(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.offset_from_utc_hrs`, {
+                                valueAsNumber: true
                               })}
                               placeholder="Enter UTC offset"
                             />
@@ -295,8 +294,8 @@ export function LoggerStep() {
                             </Label>
                             <Input
                               type="number"
-                              {...register(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.sampling_rate_sec`, { 
-                                valueAsNumber: true 
+                              {...register(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.sampling_rate_sec`, {
+                                valueAsNumber: true
                               })}
                               placeholder="Enter sampling rate"
                             />
@@ -308,8 +307,8 @@ export function LoggerStep() {
                             </Label>
                             <Input
                               type="number"
-                              {...register(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.averaging_period_minutes`, { 
-                                valueAsNumber: true 
+                              {...register(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.averaging_period_minutes`, {
+                                valueAsNumber: true
                               })}
                               placeholder="Enter averaging period"
                             />
@@ -364,8 +363,8 @@ export function LoggerStep() {
                             <Input
                               type="number"
                               step="0.01"
-                              {...register(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.logger_acquisition_uncertainty`, { 
-                                valueAsNumber: true 
+                              {...register(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.logger_acquisition_uncertainty`, {
+                                valueAsNumber: true
                               })}
                               placeholder="Enter uncertainty percentage"
                             />
@@ -378,8 +377,8 @@ export function LoggerStep() {
                             <Input
                               type="number"
                               step="0.1"
-                              {...register(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.uncertainty_k_factor`, { 
-                                valueAsNumber: true 
+                              {...register(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.uncertainty_k_factor`, {
+                                valueAsNumber: true
                               })}
                               placeholder="Enter k factor"
                             />

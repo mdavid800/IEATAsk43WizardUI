@@ -1,19 +1,52 @@
 import { useFormContext } from 'react-hook-form';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, PlusCircle, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Textarea } from '../ui/textarea';
 import { Map } from '../ui/map';
+import { Button } from '../ui/button';
 import type { IEATask43Schema } from '../../types/schema';
 
 export function LocationStep() {
   const { register, setValue, watch } = useFormContext<IEATask43Schema>();
   const [isExpanded, setIsExpanded] = useState(true);
+  const [expandedProfilerProps, setExpandedProfilerProps] = useState<Record<string, boolean>>({});
 
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);
+  };
+
+  const toggleProfilerPropExpand = (index: number) => {
+    setExpandedProfilerProps(prev => ({
+      ...prev,
+      [index]: !prev[index]
+    }));
+  };
+
+  const addVerticalProfilerProperty = () => {
+    const currentProps = watch('measurement_location.0.vertical_profiler_properties') || [];
+    setValue('measurement_location.0.vertical_profiler_properties', [
+      ...currentProps,
+      {
+        device_datum_plane_height_m: 0,
+        height_reference_id: 'ground_level',
+        device_orientation_deg: 0,
+        orientation_reference_id: 'true_north',
+        device_vertical_orientation: 'upward',
+        date_from: new Date().toISOString(),
+        date_to: null,
+        notes: '',
+        update_at: new Date().toISOString()
+      }
+    ]);
+  };
+
+  const removeVerticalProfilerProperty = (index: number) => {
+    const currentProps = watch('measurement_location.0.vertical_profiler_properties') || [];
+    const newProps = currentProps.filter((_, i) => i !== index);
+    setValue('measurement_location.0.vertical_profiler_properties', newProps);
   };
 
   return (
@@ -229,124 +262,168 @@ export function LocationStep() {
               {/* Vertical Profiler Properties Section */}
               {['lidar', 'sodar', 'floating_lidar'].includes(watch('measurement_location.0.measurement_station_type_id')) && (
                 <div className="mt-8 pt-6 border-t border-border">
-                  <h4 className="text-lg font-medium mb-4">Vertical Profiler Properties</h4>
-                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="measurement_location.0.vertical_profiler_properties.0.device_datum_plane_height_m">
-                        Device Datum Plane Height (m)
-                      </Label>
-                      <Input
-                        type="number"
-                        step="0.1"
-                        {...register('measurement_location.0.vertical_profiler_properties.0.device_datum_plane_height_m', { valueAsNumber: true })}
-                        placeholder="Enter height"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="measurement_location.0.vertical_profiler_properties.0.height_reference_id">
-                        Height Reference
-                      </Label>
-                      <Select
-                        onValueChange={(value) => setValue('measurement_location.0.vertical_profiler_properties.0.height_reference_id', value as any)}
-                        value={watch('measurement_location.0.vertical_profiler_properties.0.height_reference_id')}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select height reference" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="ground_level">Ground Level</SelectItem>
-                          <SelectItem value="mean_sea_level">Mean Sea Level</SelectItem>
-                          <SelectItem value="sea_level">Sea Level</SelectItem>
-                          <SelectItem value="lowest_astronomical_tide">Lowest Astronomical Tide</SelectItem>
-                          <SelectItem value="sea_floor">Sea Floor</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="measurement_location.0.vertical_profiler_properties.0.device_orientation_deg">
-                        Device Orientation (deg)
-                      </Label>
-                      <Input
-                        type="number"
-                        step="0.1"
-                        min="0"
-                        max="360"
-                        {...register('measurement_location.0.vertical_profiler_properties.0.device_orientation_deg', { valueAsNumber: true })}
-                        placeholder="Enter orientation"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="measurement_location.0.vertical_profiler_properties.0.orientation_reference_id">
-                        Orientation Reference
-                      </Label>
-                      <Select
-                        onValueChange={(value) => setValue('measurement_location.0.vertical_profiler_properties.0.orientation_reference_id', value as any)}
-                        value={watch('measurement_location.0.vertical_profiler_properties.0.orientation_reference_id')}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select orientation reference" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="magnetic_north">Magnetic North</SelectItem>
-                          <SelectItem value="true_north">True North</SelectItem>
-                          <SelectItem value="grid_north">Grid North</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="measurement_location.0.vertical_profiler_properties.0.device_vertical_orientation">
-                        Vertical Orientation
-                      </Label>
-                      <Select
-                        onValueChange={(value) => setValue('measurement_location.0.vertical_profiler_properties.0.device_vertical_orientation', value as any)}
-                        value={watch('measurement_location.0.vertical_profiler_properties.0.device_vertical_orientation') as string}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select vertical orientation" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="upward">Upward</SelectItem>
-                          <SelectItem value="downward">Downward</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="measurement_location.0.vertical_profiler_properties.0.date_from">
-                        Date From
-                      </Label>
-                      <Input
-                        type="datetime-local"
-                        {...register('measurement_location.0.vertical_profiler_properties.0.date_from')}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="measurement_location.0.vertical_profiler_properties.0.date_to">
-                        Date To
-                      </Label>
-                      <Input
-                        type="datetime-local"
-                        {...register('measurement_location.0.vertical_profiler_properties.0.date_to')}
-                      />
-                    </div>
-
-                    <div className="sm:col-span-2 space-y-2">
-                      <Label htmlFor="measurement_location.0.vertical_profiler_properties.0.notes">
-                        Notes
-                      </Label>
-                      <Textarea
-                        {...register('measurement_location.0.vertical_profiler_properties.0.notes')}
-                        placeholder="Add any additional notes"
-                        rows={3}
-                      />
-                    </div>
+                  <div className="flex justify-between items-center mb-4">
+                    <h4 className="text-lg font-medium">Vertical Profiler Properties</h4>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="bg-primary hover:bg-primary/90 shadow hover:shadow-lg focus:ring-2 focus:ring-primary/50"
+                      onClick={addVerticalProfilerProperty}
+                    >
+                      <PlusCircle className="w-4 h-4 mr-2" />
+                      Add Vertical Profiler Property
+                    </Button>
                   </div>
+
+                  {(watch('measurement_location.0.vertical_profiler_properties') || []).map((_, index) => (
+                    <div key={index} className="border border-border rounded-lg overflow-hidden mb-4">
+                      <div
+                        className="bg-card p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => toggleProfilerPropExpand(index)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <ChevronDown className={`w-5 h-5 transition-transform ${expandedProfilerProps[index] ? 'transform rotate-0' : 'transform -rotate-90'}`} />
+                            <h5 className="text-base font-medium">Vertical Profiler Property {index + 1}</h5>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeVerticalProfilerProperty(index);
+                            }}
+                            className="bg-transparent border-none shadow-none p-2"
+                          >
+                            <Trash2 className="w-6 h-6 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {expandedProfilerProps[index] && (
+                        <div className="border-t border-border p-6 bg-background">
+                          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                            <div className="space-y-2">
+                              <Label htmlFor={`measurement_location.0.vertical_profiler_properties.${index}.device_datum_plane_height_m`}>
+                                Device Datum Plane Height (m)
+                              </Label>
+                              <Input
+                                type="number"
+                                step="0.1"
+                                {...register(`measurement_location.0.vertical_profiler_properties.${index}.device_datum_plane_height_m`, { valueAsNumber: true })}
+                                placeholder="Enter height"
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor={`measurement_location.0.vertical_profiler_properties.${index}.height_reference_id`}>
+                                Height Reference
+                              </Label>
+                              <Select
+                                onValueChange={(value) => setValue(`measurement_location.0.vertical_profiler_properties.${index}.height_reference_id`, value as any)}
+                                value={watch(`measurement_location.0.vertical_profiler_properties.${index}.height_reference_id`)}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select height reference" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="ground_level">Ground Level</SelectItem>
+                                  <SelectItem value="mean_sea_level">Mean Sea Level</SelectItem>
+                                  <SelectItem value="sea_level">Sea Level</SelectItem>
+                                  <SelectItem value="lowest_astronomical_tide">Lowest Astronomical Tide</SelectItem>
+                                  <SelectItem value="sea_floor">Sea Floor</SelectItem>
+                                  <SelectItem value="other">Other</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor={`measurement_location.0.vertical_profiler_properties.${index}.device_orientation_deg`}>
+                                Device Orientation (deg)
+                              </Label>
+                              <Input
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                max="360"
+                                {...register(`measurement_location.0.vertical_profiler_properties.${index}.device_orientation_deg`, { valueAsNumber: true })}
+                                placeholder="Enter orientation"
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor={`measurement_location.0.vertical_profiler_properties.${index}.orientation_reference_id`}>
+                                Orientation Reference
+                              </Label>
+                              <Select
+                                onValueChange={(value) => setValue(`measurement_location.0.vertical_profiler_properties.${index}.orientation_reference_id`, value as any)}
+                                value={watch(`measurement_location.0.vertical_profiler_properties.${index}.orientation_reference_id`)}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select orientation reference" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="magnetic_north">Magnetic North</SelectItem>
+                                  <SelectItem value="true_north">True North</SelectItem>
+                                  <SelectItem value="grid_north">Grid North</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor={`measurement_location.0.vertical_profiler_properties.${index}.device_vertical_orientation`}>
+                                Vertical Orientation
+                              </Label>
+                              <Select
+                                onValueChange={(value) => setValue(`measurement_location.0.vertical_profiler_properties.${index}.device_vertical_orientation`, value as any)}
+                                value={watch(`measurement_location.0.vertical_profiler_properties.${index}.device_vertical_orientation`) as string}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select vertical orientation" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="upward">Upward</SelectItem>
+                                  <SelectItem value="downward">Downward</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor={`measurement_location.0.vertical_profiler_properties.${index}.date_from`}>
+                                Date From
+                              </Label>
+                              <Input
+                                type="datetime-local"
+                                {...register(`measurement_location.0.vertical_profiler_properties.${index}.date_from`)}
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor={`measurement_location.0.vertical_profiler_properties.${index}.date_to`}>
+                                Date To
+                              </Label>
+                              <Input
+                                type="datetime-local"
+                                {...register(`measurement_location.0.vertical_profiler_properties.${index}.date_to`)}
+                              />
+                            </div>
+
+                            <div className="sm:col-span-2 space-y-2">
+                              <Label htmlFor={`measurement_location.0.vertical_profiler_properties.${index}.notes`}>
+                                Notes
+                              </Label>
+                              <Textarea
+                                {...register(`measurement_location.0.vertical_profiler_properties.${index}.notes`)}
+                                placeholder="Add any additional notes"
+                                rows={3}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
