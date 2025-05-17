@@ -77,11 +77,11 @@ export function LocationStep() {
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="measurement_location.0.name">
-                    Location Name
+                    Name
                   </Label>
                   <Input
                     {...register('measurement_location.0.name')}
-                    placeholder="Enter location name"
+                    placeholder="Enter Device Name"
                   />
                 </div>
 
