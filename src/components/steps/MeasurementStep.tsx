@@ -117,7 +117,7 @@ export function MeasurementStep() {
     }
 
     // Find the actual header row (look for the row containing "timestamp")
-    let headerRowIndex = cleanData.findIndex(row => 
+    let headerRowIndex = cleanData.findIndex(row =>
       row.some(cell => typeof cell === 'string' && cell.toLowerCase().includes('timestamp'))
     );
 
@@ -264,7 +264,7 @@ export function MeasurementStep() {
 
     try {
       const reader = new FileReader();
-      
+
       reader.onload = async (e) => {
         const text = e.target?.result;
         if (typeof text !== 'string') return;
@@ -272,7 +272,7 @@ export function MeasurementStep() {
         Papa.parse(text, {
           complete: (results) => {
             const validation = validateCSVStructure(results.data);
-            
+
             if (!validation.isValid) {
               setUploadErrors(prev => ({
                 ...prev,
@@ -289,7 +289,7 @@ export function MeasurementStep() {
               const cleanName = name.trim();
               const type = determineMeasurementType(cleanName);
               const height = extractHeight(cleanName);
-              
+
               return {
                 name: cleanName,
                 measurement_type_id: type,
@@ -314,9 +314,9 @@ export function MeasurementStep() {
 
             // Get all current points
             const allCurrentPoints = watch(`measurement_location.${locationIndex}.measurement_point`) || [];
-            
+
             // Separate points into those belonging to the current logger and others
-            const otherLoggersPoints = allCurrentPoints.filter(point => 
+            const otherLoggersPoints = allCurrentPoints.filter(point =>
               point.logger_measurement_config?.[0]?.logger_id !== loggerId
             );
 
@@ -379,7 +379,7 @@ export function MeasurementStep() {
 
   const determineMeasurementType = (name: string): string => {
     const lowerName = name.toLowerCase();
-    
+
     if (lowerName.includes('significantwaveheight')) return 'wave_height';
     if (lowerName.includes('maximumwaveheight')) return 'wave_height';
     if (lowerName.includes('peakperiod')) return 'wave_period';
@@ -391,7 +391,7 @@ export function MeasurementStep() {
     if (lowerName.includes('press')) return 'pressure';
     if (lowerName.includes('humid')) return 'humidity';
     if (lowerName.includes('gps')) return 'position';
-    
+
     return 'other';
   };
 
@@ -409,15 +409,14 @@ export function MeasurementStep() {
 
       {locations.map((location, locationIndex) => (
         <div key={location.uuid} className="border border-border rounded-lg overflow-hidden">
-          <div 
+          <div
             className="bg-card p-4 cursor-pointer hover:bg-muted/50 transition-colors"
             onClick={() => toggleLocationExpand(location.uuid)}
           >
             <div className="flex items-center gap-3">
-              <ChevronDown 
-                className={`w-5 h-5 transition-transform ${
-                  expandedLocations[location.uuid] ? 'transform rotate-0' : 'transform -rotate-90'
-                }`} 
+              <ChevronDown
+                className={`w-5 h-5 transition-transform ${expandedLocations[location.uuid] ? 'transform rotate-0' : 'transform -rotate-90'
+                  }`}
               />
               <h3 className="text-lg font-medium text-foreground">{location.name || `Location ${locationIndex + 1}`}</h3>
               <div className="text-sm text-muted-foreground">
@@ -431,18 +430,17 @@ export function MeasurementStep() {
               {(location.logger_main_config || []).map((logger, loggerIndex) => {
                 const loggerId = `${location.uuid}-${loggerIndex}`;
                 const loggerIdentifier = logger.logger_id || logger.logger_serial_number;
-                
+
                 return (
                   <div key={loggerId} className="mb-6 last:mb-0">
-                    <div 
+                    <div
                       className="bg-primary/5 p-4 cursor-pointer hover:bg-primary/10 transition-colors rounded-lg"
                       onClick={() => toggleLoggerExpand(loggerId)}
                     >
                       <div className="flex items-center gap-3">
-                        <ChevronDown 
-                          className={`w-5 h-5 transition-transform ${
-                            expandedLoggers[loggerId] ? 'transform rotate-0' : 'transform -rotate-90'
-                          }`} 
+                        <ChevronDown
+                          className={`w-5 h-5 transition-transform ${expandedLoggers[loggerId] ? 'transform rotate-0' : 'transform -rotate-90'
+                            }`}
                         />
                         <h4 className="text-base font-medium">Logger {loggerIndex + 1}</h4>
                         <div className="text-sm text-muted-foreground">
@@ -458,11 +456,10 @@ export function MeasurementStep() {
                             {uploadErrors[loggerIdentifier].map((error, index) => (
                               <div
                                 key={index}
-                                className={`p-3 rounded-md mb-2 ${
-                                  error.type === 'error' 
+                                className={`p-3 rounded-md mb-2 ${error.type === 'error'
                                     ? "bg-red-50 border border-red-200 text-red-700"
                                     : "bg-blue-50 border border-blue-200 text-blue-700"
-                                }`}
+                                  }`}
                               >
                                 <div className="flex items-center gap-2">
                                   <AlertCircle className="w-4 h-4" />
@@ -485,15 +482,15 @@ export function MeasurementStep() {
                               onChange={(e) => handleFileUpload(e, locationIndex, loggerIndex)}
                               className="hidden"
                             />
-                            <Button 
+                            <Button
                               type="button"
-                              variant="outline" 
+                              variant="outline"
                               onClick={() => handleUploadClick(location.uuid, loggerId)}
                             >
                               <Upload className="w-4 h-4 mr-2" />
                               Upload CSV
                             </Button>
-                            <Button 
+                            <Button
                               type="button"
                               onClick={() => addMeasurementPoint(locationIndex, loggerIndex)}
                               className="bg-primary hover:bg-primary/90"
@@ -504,145 +501,111 @@ export function MeasurementStep() {
                           </div>
                         </div>
 
-                        <div className="space-y-4">
-                          {(watch(`measurement_location.${locationIndex}.measurement_point`) || [])
-                            .filter(point => 
-                              point.logger_measurement_config?.[0]?.logger_id === loggerIdentifier
-                            )
-                            .map((point, pointIndex) => {
-                              const pointId = `${loggerId}-${pointIndex}`;
-                              return (
-                                <div key={pointId} className="border border-border rounded-lg overflow-hidden">
-                                  <div 
-                                    className="bg-muted/50 p-4 cursor-pointer hover:bg-muted/70 transition-colors"
-                                    onClick={() => togglePointExpand(pointId)}
-                                  >
-                                    <div className="flex items-center justify-between">
-                                      <div className="flex items-center gap-3">
-                                        <ChevronDown 
-                                          className={`w-5 h-5 transition-transform ${
-                                            expandedPoints[pointId] ? 'transform rotate-0' : 'transform -rotate-90'
-                                          }`}
-                                        />
-                                        <h5 className="text-base font-medium">Measurement Point {pointIndex + 1}</h5>
-                                        <div className="text-sm text-muted-foreground">
-                                          {point.name || 'Unnamed Point'}
-                                        </div>
-                                      </div>
+                        <div className="overflow-x-auto">
+                          <table className="min-w-full divide-y divide-border">
+                            <thead className="bg-muted/50">
+                              <tr>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Name</th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Measurement Type</th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Height (m)</th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Height Reference</th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Notes</th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Remove</th>
+                              </tr>
+                            </thead>
+                            <tbody className="bg-background divide-y divide-border">
+                              {(watch(`measurement_location.${locationIndex}.measurement_point`) || [])
+                                .filter(point =>
+                                  point.logger_measurement_config?.[0]?.logger_id === loggerIdentifier
+                                )
+                                .map((point, pointIndex) => (
+                                  <tr key={`${loggerId}-${pointIndex}`}>
+                                    <td className="px-4 py-2 align-top">
+                                      <Input
+                                        {...register(`measurement_location.${locationIndex}.measurement_point.${pointIndex}.name`)}
+                                        placeholder="Enter measurement name"
+                                      />
+                                    </td>
+                                    <td className="px-4 py-2 align-top">
+                                      <Select
+                                        onValueChange={(value) => setValue(
+                                          `measurement_location.${locationIndex}.measurement_point.${pointIndex}.measurement_type_id`,
+                                          value
+                                        )}
+                                        value={watch(
+                                          `measurement_location.${locationIndex}.measurement_point.${pointIndex}.measurement_type_id`
+                                        )}
+                                      >
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Select measurement type" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="wind_speed">Wind Speed</SelectItem>
+                                          <SelectItem value="wind_direction">Wind Direction</SelectItem>
+                                          <SelectItem value="temperature">Temperature</SelectItem>
+                                          <SelectItem value="pressure">Pressure</SelectItem>
+                                          <SelectItem value="humidity">Humidity</SelectItem>
+                                          <SelectItem value="wave_height">Wave Height</SelectItem>
+                                          <SelectItem value="wave_period">Wave Period</SelectItem>
+                                          <SelectItem value="wave_direction">Wave Direction</SelectItem>
+                                          <SelectItem value="position">Position</SelectItem>
+                                          <SelectItem value="other">Other</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </td>
+                                    <td className="px-4 py-2 align-top">
+                                      <Input
+                                        type="number"
+                                        step="0.1"
+                                        {...register(
+                                          `measurement_location.${locationIndex}.measurement_point.${pointIndex}.height_m`,
+                                          { valueAsNumber: true }
+                                        )}
+                                        placeholder="Enter height"
+                                      />
+                                    </td>
+                                    <td className="px-4 py-2 align-top">
+                                      <Select
+                                        onValueChange={(value) => setValue(
+                                          `measurement_location.${locationIndex}.measurement_point.${pointIndex}.height_reference_id`,
+                                          value
+                                        )}
+                                        value={watch(
+                                          `measurement_location.${locationIndex}.measurement_point.${pointIndex}.height_reference_id`
+                                        )}
+                                      >
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Select height reference" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="ground_level">Ground Level</SelectItem>
+                                          <SelectItem value="sea_level">Sea Level</SelectItem>
+                                          <SelectItem value="sea_floor">Sea Floor</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </td>
+                                    <td className="px-4 py-2 align-top">
+                                      <Textarea
+                                        {...register(`measurement_location.${locationIndex}.measurement_point.${pointIndex}.notes`)}
+                                        placeholder="Add any additional notes"
+                                        rows={2}
+                                      />
+                                    </td>
+                                    <td className="px-4 py-2 align-top">
                                       <Button
                                         type="button"
                                         variant="ghost"
                                         size="icon"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          removeMeasurementPoint(locationIndex, pointIndex);
-                                        }}
+                                        onClick={() => removeMeasurementPoint(locationIndex, pointIndex)}
                                         className="text-destructive hover:text-destructive/90"
                                       >
                                         <Trash2 className="w-5 h-5" />
                                       </Button>
-                                    </div>
-                                  </div>
-
-                                  {expandedPoints[pointId] && (
-                                    <div className="border-t border-border p-6 bg-background">
-                                      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                        <div className="space-y-2">
-                                          <Label htmlFor={`measurement_location.${locationIndex}.measurement_point.${pointIndex}.name`}>
-                                            Name
-                                          </Label>
-                                          <Input
-                                            {...register(`measurement_location.${locationIndex}.measurement_point.${pointIndex}.name`)}
-                                            placeholder="Enter measurement name"
-                                          />
-                                        </div>
-
-                                        <div className="space-y-2">
-                                          <Label htmlFor={`measurement_location.${locationIndex}.measurement_point.${pointIndex}.measurement_type_id`}>
-                                            Measurement Type
-                                          </Label>
-                                          <Select
-                                            onValueChange={(value) => setValue(
-                                              `measurement_location.${locationIndex}.measurement_point.${pointIndex}.measurement_type_id`,
-                                              value
-                                            )}
-                                            value={watch(
-                                              `measurement_location.${locationIndex}.measurement_point.${pointIndex}.measurement_type_id`
-                                            )}
-                                          >
-                                            <SelectTrigger>
-                                              <SelectValue placeholder="Select measurement type" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                              <SelectItem value="wind_speed">Wind Speed</SelectItem>
-                                              <SelectItem value="wind_direction">Wind Direction</SelectItem>
-                                              <SelectItem value="temperature">Temperature</SelectItem>
-                                              <SelectItem value="pressure">Pressure</SelectItem>
-                                              <SelectItem value="humidity">Humidity</SelectItem>
-                                              <SelectItem value="wave_height">Wave Height</SelectItem>
-                                              <SelectItem value="wave_period">Wave Period</SelectItem>
-                                              <SelectItem value="wave_direction">Wave Direction</SelectItem>
-                                              <SelectItem value="position">Position</SelectItem>
-                                              <SelectItem value="other">Other</SelectItem>
-                                            </SelectContent>
-                                          </Select>
-                                        </div>
-
-                                        <div className="space-y-2">
-                                          <Label htmlFor={`measurement_location.${locationIndex}.measurement_point.${pointIndex}.height_m`}>
-                                            Height (m)
-                                          </Label>
-                                          <Input
-                                            type="number"
-                                            step="0.1"
-                                            {...register(
-                                              `measurement_location.${locationIndex}.measurement_point.${pointIndex}.height_m`,
-                                              { valueAsNumber: true }
-                                            )}
-                                            placeholder="Enter height"
-                                          />
-                                        </div>
-
-                                        <div className="space-y-2">
-                                          <Label htmlFor={`measurement_location.${locationIndex}.measurement_point.${pointIndex}.height_reference_id`}>
-                                            Height Reference
-                                          </Label>
-                                          <Select
-                                            onValueChange={(value) => setValue(
-                                              `measurement_location.${locationIndex}.measurement_point.${pointIndex}.height_reference_id`,
-                                              value
-                                            )}
-                                            value={watch(
-                                              `measurement_location.${locationIndex}.measurement_point.${pointIndex}.height_reference_id`
-                                            )}
-                                          >
-                                            <SelectTrigger>
-                                              <SelectValue placeholder="Select height reference" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                              <SelectItem value="ground_level">Ground Level</SelectItem>
-                                              <SelectItem value="sea_level">Sea Level</SelectItem>
-                                              <SelectItem value="sea_floor">Sea Floor</SelectItem>
-                                            </SelectContent>
-                                          </Select>
-                                        </div>
-
-                                        <div className="sm:col-span-2 space-y-2">
-                                          <Label htmlFor={`measurement_location.${locationIndex}.measurement_point.${pointIndex}.notes`}>
-                                            Notes
-                                          </Label>
-                                          <Textarea
-                                            {...register(`measurement_location.${locationIndex}.measurement_point.${pointIndex}.notes`)}
-                                            placeholder="Add any additional notes"
-                                            rows={3}
-                                          />
-                                        </div>
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })}
+                                    </td>
+                                  </tr>
+                                ))}
+                            </tbody>
+                          </table>
                         </div>
                       </div>
                     )}
