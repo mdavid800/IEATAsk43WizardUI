@@ -102,7 +102,7 @@ export function LoggerStep() {
                     <div
                               className="flex items-center gap-3 cursor-pointer select-none px-6 py-3 bg-gradient-to-r from-primary/10 to-primary/0 hover:bg-primary/20 transition-colors border-b border-border/40"
                               onClick={() => toggleLoggerExpand(loggerIndex)}
-                            >                <div className="flex items-center justify-between">
+                            >                <div className="flex items-center w-full justify-between">
                         <div className="flex items-center gap-3">
                           <ChevronDown 
                             className={`w-5 h-5 transition-transform ${
@@ -118,7 +118,7 @@ export function LoggerStep() {
   type="button"
   variant="outline"
   size="sm"
-  className="ml-auto bg-transparent text-red-600 hover:bg-red-50 focus:ring-2 focus:ring-red-400"
+  className="bg-transparent text-red-600 hover:bg-red-50 focus:ring-2 focus:ring-red-400"
   onClick={() => removeLogger(locationIndex, loggerIndex)}
 >
   <Trash2 className="w-5 h-5" />
