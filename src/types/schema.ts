@@ -72,9 +72,9 @@ export interface LoggerMainConfig {
 
 export interface MeasurementPoint {
   name: string;
-  measurement_type_id: MeasurementType;
+  measurement_type_id: 'wind_speed' | 'wind_direction' | 'temperature' | 'pressure' | 'humidity' | 'wave_height' | 'wave_period' | 'wave_direction' | 'position' | 'other';
   height_m: number;
-  height_reference_id: HeightReference;
+  height_reference_id: 'ground_level' | 'sea_level' | 'sea_floor';
   notes?: string;
   update_at: string;
   logger_measurement_config: LoggerMeasurementConfig[];
@@ -84,6 +84,7 @@ export interface MeasurementPoint {
 }
 
 export interface LoggerMeasurementConfig {
+  logger_id?: string;
   slope?: number;
   offset?: number;
   sensitivity?: number;
@@ -179,7 +180,7 @@ export interface InterferenceStructure {
   update_at: string;
 }
 
-export type LoggerOEM = 
+export type LoggerOEM =
   | 'NRG Systems'
   | 'Ammonit'
   | 'Campbell Scientific'
@@ -199,52 +200,7 @@ export type LoggerOEM =
   | 'Aanderaa'
   | 'Other';
 
-export type MeasurementType =
-  | 'wind_speed'
-  | 'wind_direction'
-  | 'air_temperature'
-  | 'water_temperature'
-  | 'temperature'
-  | 'air_pressure'
-  | 'relative_humidity'
-  | 'voltage'
-  | 'current'
-  | 'resistance'
-  | 'power'
-  | 'energy'
-  | 'vertical_wind_speed'
-  | 'wind_speed_turbulence'
-  | 'precipitation'
-  | 'salinity'
-  | 'conductivity'
-  | 'pressure'
-  | 'gps_coordinates'
-  | 'status'
-  | 'flag'
-  | 'counter'
-  | 'carrier_to_noise_ratio'
-  | 'wave_height'
-  | 'wave_significant_height'
-  | 'wave_maximum_height'
-  | 'wave_direction'
-  | 'wave_directional_spread'
-  | 'wave_period'
-  | 'wave_peak_period'
-  | 'water_speed'
-  | 'vertical_water_speed'
-  | 'water_direction'
-  | 'orientation'
-  | 'compass_direction'
-  | 'tilt'
-  | 'tilt_x'
-  | 'tilt_y'
-  | 'tilt_z'
-  | 'u'
-  | 'v'
-  | 'w'
-  | 'water_level'
-  | 'timestamp'
-  | 'other';
+export type MeasurementType = 'wind_speed' | 'wind_direction' | 'temperature' | 'pressure' | 'humidity' | 'wave_height' | 'wave_period' | 'wave_direction' | 'position' | 'other';
 
 export type MeasurementUnits =
   | 'm/s'
@@ -278,13 +234,7 @@ export type MeasurementUnits =
   | 'S/m'
   | '-';
 
-export type HeightReference =
-  | 'ground_level'
-  | 'mean_sea_level'
-  | 'sea_level'
-  | 'lowest_astronomical_tide'
-  | 'sea_floor'
-  | 'other';
+export type HeightReference = 'ground_level' | 'sea_level' | 'sea_floor';
 
 export type OrientationReference =
   | 'magnetic_north'

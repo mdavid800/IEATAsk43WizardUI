@@ -2,12 +2,19 @@ import { useFormContext } from 'react-hook-form';
 import { PlusCircle, Trash2, Upload, ChevronDown, AlertCircle } from 'lucide-react';
 import { useState, useRef } from 'react';
 import Papa from 'papaparse';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Textarea } from '../ui/textarea';
-import type { IEATask43Schema } from '../../types/schema';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import type {
+  IEATask43Schema,
+  MeasurementType,
+  HeightReference,
+  MeasurementPoint,
+  StatisticType
+} from '@/types/schema';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface CSVValidationError {
   type: 'error' | 'warning';
@@ -20,6 +27,12 @@ interface CSVValidationResult {
   data: any[] | null;
 }
 
+interface BulkEditValues {
+  measurement_type_id: MeasurementType | '';
+  height_m: string;
+  height_reference_id: HeightReference | '';
+}
+
 export function MeasurementStep() {
   const { register, setValue, watch } = useFormContext<IEATask43Schema>();
   const locations = watch('measurement_location');
@@ -30,6 +43,12 @@ export function MeasurementStep() {
   const [expandedPoints, setExpandedPoints] = useState<{ [key: string]: boolean }>({});
   const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
   const [uploadErrors, setUploadErrors] = useState<{ [key: string]: CSVValidationError[] }>({});
+  const [selectedPoints, setSelectedPoints] = useState<{ [key: string]: boolean }>({});
+  const [bulkEditValues, setBulkEditValues] = useState<BulkEditValues>({
+    measurement_type_id: '',
+    height_m: '',
+    height_reference_id: ''
+  });
 
   const addMeasurementPoint = (locationIndex: number, loggerIndex: number) => {
     const logger = watch(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}`);
@@ -105,7 +124,7 @@ export function MeasurementStep() {
     // Remove empty rows and find the header row
     const cleanData = data.filter(row => {
       if (!Array.isArray(row)) return false;
-      return row.some(cell => cell !== null && cell !== undefined && cell !== '');
+      return row.some((cell: any) => cell !== null && cell !== undefined && cell !== '');
     });
 
     if (cleanData.length < 2) {
@@ -118,7 +137,7 @@ export function MeasurementStep() {
 
     // Find the actual header row (look for the row containing "timestamp")
     let headerRowIndex = cleanData.findIndex(row =>
-      row.some(cell => typeof cell === 'string' && cell.toLowerCase().includes('timestamp'))
+      row.some((cell: unknown) => typeof cell === 'string' && cell.toLowerCase().includes('timestamp'))
     );
 
     if (headerRowIndex === -1) {
@@ -289,12 +308,13 @@ export function MeasurementStep() {
               const cleanName = name.trim();
               const type = determineMeasurementType(cleanName);
               const height = extractHeight(cleanName);
+              const heightRef: HeightReference = type.includes('wave') ? 'sea_level' : 'ground_level';
 
               return {
                 name: cleanName,
                 measurement_type_id: type,
                 height_m: height || 0,
-                height_reference_id: type.includes('wave') ? 'sea_level' : 'ground_level',
+                height_reference_id: heightRef,
                 update_at: new Date().toISOString(),
                 logger_measurement_config: [{
                   logger_id: loggerId,
@@ -309,7 +329,7 @@ export function MeasurementStep() {
                   }]
                 }],
                 sensor: []
-              };
+              } as MeasurementPoint;
             });
 
             // Get all current points
@@ -318,7 +338,7 @@ export function MeasurementStep() {
             // Separate points into those belonging to the current logger and others
             const otherLoggersPoints = allCurrentPoints.filter(point =>
               point.logger_measurement_config?.[0]?.logger_id !== loggerId
-            );
+            ) as MeasurementPoint[];
 
             // Combine points: other loggers' points + new points for current logger
             setValue(
@@ -340,7 +360,7 @@ export function MeasurementStep() {
               }]
             }));
           },
-          error: (error) => {
+          error: (error: Error) => {
             setUploadErrors(prev => ({
               ...prev,
               [loggerId]: [{
@@ -366,7 +386,7 @@ export function MeasurementStep() {
     event.target.value = '';
   };
 
-  const determineStatisticType = (name: string): string => {
+  const determineStatisticType = (name: string): StatisticType => {
     const lowerName = name.toLowerCase();
     if (lowerName.includes('_avg_')) return 'avg';
     if (lowerName.includes('_sd_')) return 'sd';
@@ -377,7 +397,7 @@ export function MeasurementStep() {
     return 'avg';
   };
 
-  const determineMeasurementType = (name: string): string => {
+  const determineMeasurementType = (name: string): MeasurementType => {
     const lowerName = name.toLowerCase();
 
     if (lowerName.includes('significantwaveheight')) return 'wave_height';
@@ -401,6 +421,60 @@ export function MeasurementStep() {
       return parseInt(match[1]);
     }
     return null;
+  };
+
+  const handleBulkEdit = (locationIndex: number, loggerIdentifier: string) => {
+    const points = watch(`measurement_location.${locationIndex}.measurement_point`) || [];
+    const pointsToUpdate = points.filter((_, index) =>
+      selectedPoints[`${locationIndex}-${index}`] &&
+      points[index].logger_measurement_config?.[0]?.logger_id === loggerIdentifier
+    );
+
+    pointsToUpdate.forEach((_, index) => {
+      if (bulkEditValues.measurement_type_id) {
+        setValue(
+          `measurement_location.${locationIndex}.measurement_point.${index}.measurement_type_id`,
+          bulkEditValues.measurement_type_id as MeasurementType
+        );
+      }
+      if (bulkEditValues.height_m) {
+        setValue(
+          `measurement_location.${locationIndex}.measurement_point.${index}.height_m`,
+          parseFloat(bulkEditValues.height_m)
+        );
+      }
+      if (bulkEditValues.height_reference_id) {
+        setValue(
+          `measurement_location.${locationIndex}.measurement_point.${index}.height_reference_id`,
+          bulkEditValues.height_reference_id as HeightReference
+        );
+      }
+    });
+
+    // Reset bulk edit values and selections
+    setBulkEditValues({
+      measurement_type_id: '',
+      height_m: '',
+      height_reference_id: ''
+    });
+    setSelectedPoints({});
+  };
+
+  const toggleSelectAll = (locationIndex: number, loggerIdentifier: string) => {
+    const points = watch(`measurement_location.${locationIndex}.measurement_point`) || [];
+    const relevantPoints = points.filter(point =>
+      point.logger_measurement_config?.[0]?.logger_id === loggerIdentifier
+    );
+
+    const allSelected = relevantPoints.every((_, index) =>
+      selectedPoints[`${locationIndex}-${index}`]
+    );
+
+    const newSelectedPoints = { ...selectedPoints };
+    relevantPoints.forEach((_, index) => {
+      newSelectedPoints[`${locationIndex}-${index}`] = !allSelected;
+    });
+    setSelectedPoints(newSelectedPoints);
   };
 
   return (
@@ -457,8 +531,8 @@ export function MeasurementStep() {
                               <div
                                 key={index}
                                 className={`p-3 rounded-md mb-2 ${error.type === 'error'
-                                    ? "bg-red-50 border border-red-200 text-red-700"
-                                    : "bg-blue-50 border border-blue-200 text-blue-700"
+                                  ? "bg-red-50 border border-red-200 text-red-700"
+                                  : "bg-blue-50 border border-blue-200 text-blue-700"
                                   }`}
                               >
                                 <div className="flex items-center gap-2">
@@ -481,6 +555,7 @@ export function MeasurementStep() {
                               accept=".csv"
                               onChange={(e) => handleFileUpload(e, locationIndex, loggerIndex)}
                               className="hidden"
+                              aria-label="Upload CSV file"
                             />
                             <Button
                               type="button"
@@ -501,10 +576,86 @@ export function MeasurementStep() {
                           </div>
                         </div>
 
+                        {/* Bulk Edit Controls */}
+                        <div className="mb-4 p-4 bg-muted/30 rounded-lg">
+                          <h5 className="text-sm font-medium mb-3">Bulk Edit Selected Points</h5>
+                          <div className="grid grid-cols-3 gap-4">
+                            <div>
+                              <Label>Measurement Type</Label>
+                              <Select
+                                value={bulkEditValues.measurement_type_id}
+                                onValueChange={(value: MeasurementType) =>
+                                  setBulkEditValues(prev => ({ ...prev, measurement_type_id: value }))
+                                }
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select measurement type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="wind_speed">Wind Speed</SelectItem>
+                                  <SelectItem value="wind_direction">Wind Direction</SelectItem>
+                                  <SelectItem value="temperature">Temperature</SelectItem>
+                                  <SelectItem value="pressure">Pressure</SelectItem>
+                                  <SelectItem value="humidity">Humidity</SelectItem>
+                                  <SelectItem value="wave_height">Wave Height</SelectItem>
+                                  <SelectItem value="wave_period">Wave Period</SelectItem>
+                                  <SelectItem value="wave_direction">Wave Direction</SelectItem>
+                                  <SelectItem value="position">Position</SelectItem>
+                                  <SelectItem value="other">Other</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label>Height (m)</Label>
+                              <Input
+                                type="number"
+                                step="0.1"
+                                value={bulkEditValues.height_m}
+                                onChange={(e) => setBulkEditValues(prev => ({ ...prev, height_m: e.target.value }))}
+                                placeholder="Enter height"
+                              />
+                            </div>
+                            <div>
+                              <Label>Height Reference</Label>
+                              <Select
+                                value={bulkEditValues.height_reference_id}
+                                onValueChange={(value: HeightReference) =>
+                                  setBulkEditValues(prev => ({ ...prev, height_reference_id: value }))
+                                }
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select height reference" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="ground_level">Ground Level</SelectItem>
+                                  <SelectItem value="sea_level">Sea Level</SelectItem>
+                                  <SelectItem value="sea_floor">Sea Floor</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          <div className="mt-3 flex justify-end">
+                            <Button
+                              type="button"
+                              onClick={() => handleBulkEdit(locationIndex, loggerIdentifier)}
+                              disabled={!Object.values(selectedPoints).some(Boolean)}
+                            >
+                              Apply to Selected
+                            </Button>
+                          </div>
+                        </div>
+
                         <div className="overflow-x-auto">
                           <table className="min-w-full divide-y divide-border">
                             <thead className="bg-muted/50">
                               <tr>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">
+                                  <Checkbox
+                                    checked={Object.values(selectedPoints).some(Boolean)}
+                                    onCheckedChange={() => toggleSelectAll(locationIndex, loggerIdentifier)}
+                                    aria-label="Select all points"
+                                  />
+                                </th>
                                 <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Name</th>
                                 <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Measurement Type</th>
                                 <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Height (m)</th>
@@ -521,6 +672,18 @@ export function MeasurementStep() {
                                 .map((point, pointIndex) => (
                                   <tr key={`${loggerId}-${pointIndex}`}>
                                     <td className="px-4 py-2 align-top">
+                                      <Checkbox
+                                        checked={selectedPoints[`${locationIndex}-${pointIndex}`] || false}
+                                        onCheckedChange={(checked: boolean) =>
+                                          setSelectedPoints(prev => ({
+                                            ...prev,
+                                            [`${locationIndex}-${pointIndex}`]: checked
+                                          }))
+                                        }
+                                        aria-label={`Select point ${pointIndex + 1}`}
+                                      />
+                                    </td>
+                                    <td className="px-4 py-2 align-top">
                                       <Input
                                         {...register(`measurement_location.${locationIndex}.measurement_point.${pointIndex}.name`)}
                                         placeholder="Enter measurement name"
@@ -528,13 +691,13 @@ export function MeasurementStep() {
                                     </td>
                                     <td className="px-4 py-2 align-top">
                                       <Select
-                                        onValueChange={(value) => setValue(
+                                        onValueChange={(value: MeasurementType) => setValue(
                                           `measurement_location.${locationIndex}.measurement_point.${pointIndex}.measurement_type_id`,
                                           value
                                         )}
                                         value={watch(
                                           `measurement_location.${locationIndex}.measurement_point.${pointIndex}.measurement_type_id`
-                                        )}
+                                        ) as MeasurementType}
                                       >
                                         <SelectTrigger>
                                           <SelectValue placeholder="Select measurement type" />
@@ -566,13 +729,13 @@ export function MeasurementStep() {
                                     </td>
                                     <td className="px-4 py-2 align-top">
                                       <Select
-                                        onValueChange={(value) => setValue(
+                                        onValueChange={(value: HeightReference) => setValue(
                                           `measurement_location.${locationIndex}.measurement_point.${pointIndex}.height_reference_id`,
                                           value
                                         )}
                                         value={watch(
                                           `measurement_location.${locationIndex}.measurement_point.${pointIndex}.height_reference_id`
-                                        )}
+                                        ) as HeightReference}
                                       >
                                         <SelectTrigger>
                                           <SelectValue placeholder="Select height reference" />
