@@ -115,15 +115,18 @@ export function LoggerStep() {
                           </div>
                         </div>
                         <Button
-  type="button"
-  variant="ghost"
-  size="icon"
-  aria-label="Remove logger"
-  className="text-red-600 hover:bg-red-100 hover:text-red-700 focus:ring-2 focus:ring-red-400 p-0"
-  onClick={() => removeLogger(locationIndex, loggerIndex)}
->
-  <Trash2 className="w-5 h-5" />
-</Button>
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          aria-label="Remove"
+                          className="p-2 hover:bg-transparent"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeLogger(locationIndex, loggerIndex);
+                          }}
+                        >
+                          <Trash2 className="w-6 h-6 text-[#FF0000] hover:text-[#CC0000]" />
+                        </Button>
                       </div>
                     </div>
 

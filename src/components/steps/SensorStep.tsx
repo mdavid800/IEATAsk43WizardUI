@@ -153,13 +153,14 @@ export function SensorStep() {
                   type="button"
                   variant="ghost"
                   size="icon"
+                  aria-label="Remove"
                   onClick={(e) => {
                     e.stopPropagation();
                     removeSensor(sensor.id);
                   }}
-                  className="text-destructive hover:text-destructive/90"
+                  className="p-2 hover:bg-transparent"
                 >
-                  <Trash2 className="w-5 h-5" />
+                  <Trash2 className="w-6 h-6 text-[#FF0000] hover:text-[#CC0000]" />
                 </Button>
               )}
             </div>
@@ -346,13 +347,14 @@ export function SensorStep() {
                               type="button"
                               variant="ghost"
                               size="icon"
+                              aria-label="Remove"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 removeCalibration(sensor.id, calibration.id);
                               }}
-                              className="text-destructive hover:text-destructive/90"
+                              className="p-2 hover:bg-transparent"
                             >
-                              <Trash2 className="w-5 h-5" />
+                              <Trash2 className="w-6 h-6 text-[#FF0000] hover:text-[#CC0000]" />
                             </Button>
                           )}
                         </div>
@@ -538,10 +540,11 @@ export function SensorStep() {
                                       type="button"
                                       variant="ghost"
                                       size="icon"
+                                      aria-label="Remove"
                                       onClick={() => removeUncertainty(sensor.id, calibration.id, uncertainty.id)}
-                                      className="absolute right-2 top-2 text-destructive hover:text-destructive/90"
+                                      className="absolute right-2 top-2 p-2 hover:bg-transparent"
                                     >
-                                      <Trash2 className="w-4 h-4" />
+                                      <Trash2 className="w-4 h-4 text-[#FF0000] hover:text-[#CC0000]" />
                                     </Button>
                                   )}
                                   

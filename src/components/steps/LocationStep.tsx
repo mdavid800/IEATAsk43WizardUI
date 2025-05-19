@@ -290,13 +290,14 @@ export function LocationStep() {
                             type="button"
                             variant="ghost"
                             size="icon"
+                            aria-label="Remove"
                             onClick={(e) => {
                               e.stopPropagation();
                               removeVerticalProfilerProperty(index);
                             }}
-                            className="bg-transparent border-none shadow-none p-2"
+                            className="p-2 hover:bg-transparent"
                           >
-                            <Trash2 className="w-6 h-6 text-destructive" />
+                            <Trash2 className="w-6 h-6 text-[#FF0000] hover:text-[#CC0000]" />
                           </Button>
                         </div>
                       </div>

@@ -130,15 +130,16 @@ export function LoggerStep() {
                         </div>
                         <Button
                           type="button"
-                          variant="outline"
-                          size="sm"
-                          className="bg-transparent text-red-600 hover:bg-red-50 focus:ring-1 focus:ring-red-400"
+                          variant="ghost"
+                          size="icon"
+                          aria-label="Remove"
                           onClick={(e) => {
                             e.stopPropagation();
                             removeLogger(locationIndex, loggerIndex);
                           }}
+                          className="p-2 hover:bg-transparent"
                         >
-                          <Trash2 className="w-5 h-5" />
+                          <Trash2 className="w-6 h-6 text-[#FF0000] hover:text-[#CC0000]" />
                         </Button>
                       </div>
                     </div>

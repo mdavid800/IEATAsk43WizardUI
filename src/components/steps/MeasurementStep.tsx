@@ -759,10 +759,11 @@ export function MeasurementStep() {
                                         type="button"
                                         variant="ghost"
                                         size="icon"
+                                        aria-label="Remove"
                                         onClick={() => removeMeasurementPoint(locationIndex, pointIndex)}
-                                        className="text-destructive hover:text-destructive/90"
+                                        className="p-2 hover:bg-transparent"
                                       >
-                                        <Trash2 className="w-5 h-5" />
+                                        <Trash2 className="w-6 h-6 text-[#FF0000] hover:text-[#CC0000]" />
                                       </Button>
                                     </td>
                                   </tr>
