@@ -649,19 +649,19 @@ export function MeasurementStep() {
                           <table className="min-w-full divide-y divide-border">
                             <thead className="bg-muted/50">
                               <tr>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">
+                                <th className="px-4 py-2 text-center align-middle text-xs font-medium text-muted-foreground">
                                   <Checkbox
                                     checked={Object.values(selectedPoints).some(Boolean)}
                                     onCheckedChange={() => toggleSelectAll(locationIndex, loggerIdentifier)}
                                     aria-label="Select all points"
                                   />
                                 </th>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Name</th>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Measurement Type</th>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Height (m)</th>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Height Reference</th>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Notes</th>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Remove</th>
+                                <th className="px-4 py-2 text-center align-middle text-xs font-medium text-muted-foreground">Name</th>
+                                <th className="px-4 py-2 text-center align-middle text-xs font-medium text-muted-foreground">Measurement Type</th>
+                                <th className="px-4 py-2 text-center align-middle text-xs font-medium text-muted-foreground">Height (m)</th>
+                                <th className="px-4 py-2 text-center align-middle text-xs font-medium text-muted-foreground">Height Reference</th>
+                                <th className="px-4 py-2 text-center align-middle text-xs font-medium text-muted-foreground">Notes</th>
+                                <th className="px-4 py-2 text-center align-middle text-xs font-medium text-muted-foreground">Remove</th>
                               </tr>
                             </thead>
                             <tbody className="bg-background divide-y divide-border">
@@ -671,7 +671,7 @@ export function MeasurementStep() {
                                 )
                                 .map((point, pointIndex) => (
                                   <tr key={`${loggerId}-${pointIndex}`}>
-                                    <td className="px-4 py-2 align-top">
+                                    <td className="px-4 py-2 text-center align-middle">
                                       <Checkbox
                                         checked={selectedPoints[`${locationIndex}-${pointIndex}`] || false}
                                         onCheckedChange={(checked: boolean) =>
@@ -683,13 +683,13 @@ export function MeasurementStep() {
                                         aria-label={`Select point ${pointIndex + 1}`}
                                       />
                                     </td>
-                                    <td className="px-4 py-2 align-top">
+                                    <td className="px-4 py-2 text-center align-middle">
                                       <Input
                                         {...register(`measurement_location.${locationIndex}.measurement_point.${pointIndex}.name`)}
                                         placeholder="Enter measurement name"
                                       />
                                     </td>
-                                    <td className="px-4 py-2 align-top">
+                                    <td className="px-4 py-2 text-center align-middle">
                                       <Select
                                         onValueChange={(value: MeasurementType) => setValue(
                                           `measurement_location.${locationIndex}.measurement_point.${pointIndex}.measurement_type_id`,
@@ -716,7 +716,7 @@ export function MeasurementStep() {
                                         </SelectContent>
                                       </Select>
                                     </td>
-                                    <td className="px-4 py-2 align-top">
+                                    <td className="px-4 py-2 text-center align-middle">
                                       <Input
                                         type="number"
                                         step="0.1"
@@ -727,7 +727,7 @@ export function MeasurementStep() {
                                         placeholder="Enter height"
                                       />
                                     </td>
-                                    <td className="px-4 py-2 align-top">
+                                    <td className="px-4 py-2 text-center align-middle">
                                       <Select
                                         onValueChange={(value: HeightReference) => setValue(
                                           `measurement_location.${locationIndex}.measurement_point.${pointIndex}.height_reference_id`,
@@ -747,14 +747,14 @@ export function MeasurementStep() {
                                         </SelectContent>
                                       </Select>
                                     </td>
-                                    <td className="px-4 py-2 align-top">
+                                    <td className="px-4 py-2 text-center align-middle">
                                       <Textarea
                                         {...register(`measurement_location.${locationIndex}.measurement_point.${pointIndex}.notes`)}
                                         placeholder="Add any additional notes"
                                         rows={2}
                                       />
                                     </td>
-                                    <td className="px-4 py-2 align-top">
+                                    <td className="px-4 py-2 text-center align-middle">
                                       <Button
                                         type="button"
                                         variant="ghost"

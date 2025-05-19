@@ -116,9 +116,10 @@ export function LoggerStep() {
                         </div>
                         <Button
   type="button"
-  variant="outline"
-  size="sm"
-  className="bg-transparent text-red-600 hover:bg-red-50 focus:ring-2 focus:ring-red-400"
+  variant="ghost"
+  size="icon"
+  aria-label="Remove logger"
+  className="text-red-600 hover:bg-red-100 hover:text-red-700 focus:ring-2 focus:ring-red-400 p-0"
   onClick={() => removeLogger(locationIndex, loggerIndex)}
 >
   <Trash2 className="w-5 h-5" />
