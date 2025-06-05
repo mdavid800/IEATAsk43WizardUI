@@ -33,6 +33,15 @@ interface BulkEditValues {
   height_reference_id: HeightReference | '';
 }
 
+interface ColumnInfo {
+  name: string;
+  displayName: string;
+  measurementType: MeasurementType;
+  height: number | null;
+  unit: string | null;
+  statisticType: StatisticType;
+}
+
 export function MeasurementStep() {
   const { register, setValue, watch } = useFormContext<IEATask43Schema>();
   const locations = watch('measurement_location');
@@ -110,24 +119,16 @@ export function MeasurementStep() {
     fileInputRefs.current[refKey]?.click();
   };
 
-  const isValidNumber = (value: string): boolean => {
-    // Allow empty strings and "NaN" values
-    if (value === '' || value.toLowerCase() === 'nan') {
-      return true;
-    }
-    return !isNaN(parseFloat(value)) && isFinite(Number(value));
-  };
-
   const validateCSVStructure = (data: any[]): CSVValidationResult => {
     const errors: CSVValidationError[] = [];
 
-    // Remove empty rows and find the header row
-    const cleanData = data.filter(row => {
+    // Remove empty rows
+    const nonEmptyRows = data.filter(row => {
       if (!Array.isArray(row)) return false;
       return row.some((cell: any) => cell !== null && cell !== undefined && cell !== '');
     });
 
-    if (cleanData.length < 2) {
+    if (nonEmptyRows.length < 2) {
       errors.push({
         type: 'error',
         message: 'CSV file must contain at least 2 rows (header and data)'
@@ -135,31 +136,8 @@ export function MeasurementStep() {
       return { isValid: false, errors, data: null };
     }
 
-    // Find the actual header row (look for the row containing "timestamp")
-    let headerRowIndex = cleanData.findIndex(row =>
-      row.some((cell: unknown) => typeof cell === 'string' && cell.toLowerCase().includes('timestamp'))
-    );
-
-    if (headerRowIndex === -1) {
-      errors.push({
-        type: 'error',
-        message: 'Could not find header row with timestamp column'
-      });
-      return { isValid: false, errors, data: null };
-    }
-
-    // Reorganize data to put header row first
-    if (headerRowIndex > 0) {
-      const beforeHeaders = cleanData.slice(0, headerRowIndex);
-      errors.push({
-        type: 'warning',
-        message: `Removed ${beforeHeaders.length} row(s) before headers`
-      });
-      cleanData.splice(0, headerRowIndex);
-      headerRowIndex = 0;
-    }
-
-    const headers = cleanData[headerRowIndex] as string[];
+    // Assume first row is header
+    const headers = nonEmptyRows[0] as string[];
     if (!headers || headers.length === 0) {
       errors.push({
         type: 'error',
@@ -168,6 +146,22 @@ export function MeasurementStep() {
       return { isValid: false, errors, data: null };
     }
 
+    // Check if first column is timestamp
+    const firstHeader = headers[0]?.toString().toLowerCase() || '';
+    const hasTimestampColumn = firstHeader.includes('timestamp') || 
+                              firstHeader.includes('date') || 
+                              firstHeader.includes('time') || 
+                              firstHeader === 'iso' || 
+                              firstHeader.includes('utc');
+    
+    if (!hasTimestampColumn) {
+      errors.push({
+        type: 'warning',
+        message: `First column "${headers[0]}" might not be a timestamp column. Processing will continue, but data may be incorrectly interpreted.`
+      });
+    }
+
+    // Check for measurement columns (all columns except timestamp column)
     const measurementNames = headers.slice(1).filter(name => name && name.trim() !== '');
     if (measurementNames.length === 0) {
       errors.push({
@@ -177,42 +171,37 @@ export function MeasurementStep() {
       return { isValid: false, errors, data: null };
     }
 
-    const uniqueNames = new Set(measurementNames);
-    if (uniqueNames.size !== measurementNames.length) {
-      errors.push({
-        type: 'error',
-        message: 'Duplicate measurement names found'
-      });
-    }
-
     // Validate data rows (skip header row)
-    for (let i = 1; i < cleanData.length; i++) {
-      const row = cleanData[i] as string[];
+    let invalidTimestampCount = 0;
+    for (let i = 1; i < nonEmptyRows.length; i++) {
+      const row = nonEmptyRows[i] as string[];
       if (!row || row.length !== headers.length) {
         errors.push({
           type: 'warning',
-          message: `Skipping row ${i + 1}: mismatched column count`
+          message: `Row ${i + 1} has ${row ? row.length : 0} columns, expected ${headers.length}. This row will be skipped.`
         });
         continue;
       }
 
-      // Only validate timestamp if the row has data
+      // Validate timestamp if the row has data
       if (row.some(cell => cell !== null && cell !== undefined && cell !== '')) {
         const timestamp = row[0];
         if (!timestamp || !isValidTimestamp(timestamp)) {
-          errors.push({
-            type: 'warning',
-            message: `Invalid timestamp in row ${i + 1}: "${timestamp}"`
-          });
+          invalidTimestampCount++;
+          if (invalidTimestampCount <= 3) { // Limit number of timestamp warnings
+            errors.push({
+              type: 'warning',
+              message: `Invalid timestamp in row ${i + 1}: "${timestamp}"`
+            });
+          }
         }
       }
     }
 
-    // Add warning about empty rows if they were removed
-    if (data.length !== cleanData.length) {
+    if (invalidTimestampCount > 3) {
       errors.push({
         type: 'warning',
-        message: `Removed ${data.length - cleanData.length} empty rows`
+        message: `${invalidTimestampCount - 3} additional rows with invalid timestamps found`
       });
     }
 
@@ -222,7 +211,7 @@ export function MeasurementStep() {
     return {
       isValid: !hasErrors,
       errors,
-      data: hasErrors ? null : cleanData
+      data: hasErrors ? null : nonEmptyRows
     };
   };
 
@@ -230,37 +219,133 @@ export function MeasurementStep() {
     if (!value || typeof value !== 'string') return false;
 
     // Skip validation for header row
-    if (value.toLowerCase() === 'timestamp') return true;
+    if (value.toLowerCase().includes('timestamp') || 
+        value.toLowerCase().includes('date') || 
+        value.toLowerCase() === 'time' ||
+        value.toLowerCase() === 'iso' ||
+        value.toLowerCase().includes('utc')) {
+      return true;
+    }
 
-    // Handle common date formats
-    const formats = [
-      // DD/MM/YYYY HH:mm
-      /^(\d{2})\/(\d{2})\/(\d{4})\s(\d{2}):(\d{2})$/,
-      // YYYY-MM-DD HH:mm:ss
-      /^(\d{4})-(\d{2})-(\d{2})\s(\d{2}):(\d{2}):(\d{2})$/,
-      // ISO 8601
-      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?$/
-    ];
+    // Try ISO format first
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?$/.test(value)) {
+      return true;
+    }
 
-    // Try parsing with Date.parse first (handles ISO format)
+    // Try parsing with Date.parse
     if (!isNaN(Date.parse(value))) {
       return true;
     }
 
-    // Try each format
-    for (const format of formats) {
-      if (format.test(value)) {
-        // For DD/MM/YYYY format, convert to YYYY-MM-DD
-        if (format === formats[0]) {
-          const [_, day, month, year, hours, minutes] = value.match(format) || [];
-          const isoString = `${year}-${month}-${day}T${hours}:${minutes}:00`;
-          return !isNaN(Date.parse(isoString));
-        }
-        return true;
+    return false;
+  };
+
+  const parseColumnHeader = (header: string): ColumnInfo => {
+    const result: ColumnInfo = {
+      name: header,
+      displayName: header,
+      measurementType: 'other',
+      height: null,
+      unit: null,
+      statisticType: 'avg'
+    };
+
+    // Extract height using various patterns
+    let heightMatch = /(\d+)m\b/i.exec(header);
+    if (heightMatch) {
+      result.height = parseInt(heightMatch[1], 10);
+    }
+
+    // Extract unit information
+    if (header.includes('m/s')) {
+      result.unit = 'm/s';
+    } else if (header.includes('deg')) {
+      result.unit = 'deg';
+    } else if (header.includes('%')) {
+      result.unit = '%';
+    }
+
+    // Process different measurement types
+    const lowerHeader = header.toLowerCase();
+
+    // Wind speed measurements
+    if (lowerHeader.includes('verticalwindspeed')) {
+      result.measurementType = 'wind_speed';
+      result.displayName = `Vertical Wind Speed ${result.height}m`;
+    } 
+    else if (lowerHeader.includes('windspeed') || lowerHeader.includes('wind speed')) {
+      result.measurementType = 'wind_speed';
+      result.displayName = `Wind Speed ${result.height}m`;
+    }
+    // Wind direction
+    else if (lowerHeader.includes('winddir') || lowerHeader.includes('wind direction')) {
+      result.measurementType = 'wind_direction';
+      result.displayName = `Wind Direction ${result.height}m`;
+    }
+    // Wind gust
+    else if (lowerHeader.includes('windgust') || lowerHeader.includes('wind gust')) {
+      result.measurementType = 'wind_speed';
+      result.displayName = `Wind Gust ${result.height}m`;
+    }
+    // Max/Min wind
+    else if (lowerHeader.includes('windmax') || lowerHeader.includes('max_hor')) {
+      result.measurementType = 'wind_speed';
+      result.statisticType = 'max';
+      result.displayName = `Max Wind Speed ${result.height}m`;
+    }
+    else if (lowerHeader.includes('windmin') || lowerHeader.includes('min_hor')) {
+      result.measurementType = 'wind_speed';
+      result.statisticType = 'min';
+      result.displayName = `Min Wind Speed ${result.height}m`;
+    }
+    // Standard deviation
+    else if (lowerHeader.includes('standarddeviation') || lowerHeader.includes('std')) {
+      result.measurementType = 'wind_speed';
+      result.statisticType = 'sd';
+      result.displayName = `Wind Speed SD ${result.height}m`;
+    }
+    // Wind shear
+    else if (lowerHeader.includes('wind shear')) {
+      result.measurementType = 'wind_speed';
+      result.displayName = `Wind Shear ${header.replace('Wind Shear ', '')}`;
+      
+      // Extract height range from shear measurements
+      const shearMatch = /(\d+)m-(\d+)m/.exec(header);
+      if (shearMatch) {
+        const upperHeight = parseInt(shearMatch[1], 10);
+        const lowerHeight = parseInt(shearMatch[2], 10);
+        result.height = (upperHeight + lowerHeight) / 2; // Use average height
+      }
+    }
+    // Wind veer
+    else if (lowerHeader.includes('wind veer')) {
+      result.measurementType = 'wind_direction';
+      result.displayName = `Wind Veer ${header.replace('Wind Veer ', '')}`;
+      
+      // Extract height range from veer measurements
+      const veerMatch = /(\d+)m-(\d+)m/.exec(header);
+      if (veerMatch) {
+        const upperHeight = parseInt(veerMatch[1], 10);
+        const lowerHeight = parseInt(veerMatch[2], 10);
+        result.height = (upperHeight + lowerHeight) / 2; // Use average height
+      }
+    }
+    // Turbulence intensity
+    else if (lowerHeader.includes('turbulence') || lowerHeader.includes('(ti)')) {
+      result.measurementType = 'wind_speed';
+      result.statisticType = 'ti';
+      result.displayName = `Turbulence Intensity ${result.height}m`;
+    }
+
+    // If no height was found but the column name has numbers, try to extract height
+    if (result.height === null) {
+      const genericHeightMatch = /(\d+)/.exec(header);
+      if (genericHeightMatch) {
+        result.height = parseInt(genericHeightMatch[1], 10);
       }
     }
 
-    return false;
+    return result;
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, locationIndex: number, loggerIndex: number) => {
@@ -290,7 +375,9 @@ export function MeasurementStep() {
 
         Papa.parse(text, {
           complete: (results) => {
+            console.log('CSV parsing complete', results.data);
             const validation = validateCSVStructure(results.data);
+            console.log('Validation result', validation);
 
             if (!validation.isValid) {
               setUploadErrors(prev => ({
@@ -300,54 +387,82 @@ export function MeasurementStep() {
               return;
             }
 
-            const headers = results.data[1] as string[];
-            const measurementNames = headers.slice(1).filter(name => name && name.trim() !== '');
-
-            // Create new measurement points
-            const newPoints = measurementNames.map(name => {
-              const cleanName = name.trim();
-              const type = determineMeasurementType(cleanName);
-              const height = extractHeight(cleanName);
-              const heightRef: HeightReference = type.includes('wave') ? 'sea_level' : 'ground_level';
-
-              return {
-                name: cleanName,
-                measurement_type_id: type,
-                height_m: height || 0,
-                height_reference_id: heightRef,
+            const headers = validation.data![0] as string[];
+            console.log('CSV headers', headers);
+            
+            // Process all columns except the first (timestamp)
+            const measurementColumns = headers.slice(1).map(parseColumnHeader);
+            console.log('Parsed columns', measurementColumns);
+            
+            // Group columns by height and measurement type
+            const measurementGroups = new Map<string, ColumnInfo[]>();
+            
+            measurementColumns.forEach(column => {
+              if (column.height === null) {
+                column.height = 0; // Default height if none detected
+              }
+              
+              // Create a unique key for each height + type combination
+              const groupKey = `${column.measurementType}_${column.height}`;
+              
+              if (!measurementGroups.has(groupKey)) {
+                measurementGroups.set(groupKey, []);
+              }
+              
+              measurementGroups.get(groupKey)!.push(column);
+            });
+            
+            // Create measurement points from the groups
+            const measurementPoints: MeasurementPoint[] = [];
+            
+            measurementGroups.forEach((columns, groupKey) => {
+              // Use the first column in the group for basic info
+              const primaryColumn = columns[0];
+              
+              // Create column config for logger
+              const columnConfigs = columns.map(col => ({
+                column_name: col.name,
+                statistic_type_id: col.statisticType,
+                is_ignored: false,
+                update_at: new Date().toISOString()
+              }));
+              
+              // Create the measurement point
+              const measurementPoint: MeasurementPoint = {
+                name: primaryColumn.displayName,
+                measurement_type_id: primaryColumn.measurementType,
+                height_m: primaryColumn.height || 0,
+                height_reference_id: 'ground_level',
                 update_at: new Date().toISOString(),
                 logger_measurement_config: [{
                   logger_id: loggerId,
                   date_from: new Date().toISOString(),
                   date_to: null,
                   update_at: new Date().toISOString(),
-                  column_name: [{
-                    column_name: cleanName,
-                    statistic_type_id: determineStatisticType(cleanName),
-                    is_ignored: false,
-                    update_at: new Date().toISOString()
-                  }]
+                  column_name: columnConfigs
                 }],
                 sensor: []
-              } as MeasurementPoint;
+              };
+              
+              measurementPoints.push(measurementPoint);
             });
+            
+            console.log('Created measurement points', measurementPoints);
 
-            // Get all current points
+            // Get existing points for other loggers
             const allCurrentPoints = watch(`measurement_location.${locationIndex}.measurement_point`) || [];
-
-            // Separate points into those belonging to the current logger and others
-            const otherLoggersPoints = allCurrentPoints.filter(point =>
+            const otherLoggersPoints = allCurrentPoints.filter(point => 
               point.logger_measurement_config?.[0]?.logger_id !== loggerId
-            ) as MeasurementPoint[];
-
-            // Combine points: other loggers' points + new points for current logger
-            setValue(
-              `measurement_location.${locationIndex}.measurement_point`,
-              [...otherLoggersPoints, ...newPoints]
             );
 
-            // Expand new points
-            newPoints.forEach(() => {
+            // Update form with combined points
+            setValue(
+              `measurement_location.${locationIndex}.measurement_point`,
+              [...otherLoggersPoints, ...measurementPoints]
+            );
+
+            // Make all new points expanded by default
+            measurementPoints.forEach(() => {
               const pointId = crypto.randomUUID();
               setExpandedPoints(prev => ({ ...prev, [pointId]: true }));
             });
@@ -356,11 +471,12 @@ export function MeasurementStep() {
               ...prev,
               [loggerId]: [{
                 type: 'warning',
-                message: `Successfully added ${newPoints.length} measurement points`
+                message: `Successfully imported ${measurementPoints.length} measurement points from ${measurementColumns.length} columns`
               }]
             }));
           },
           error: (error: Error) => {
+            console.error('CSV parsing error', error);
             setUploadErrors(prev => ({
               ...prev,
               [loggerId]: [{
@@ -374,6 +490,7 @@ export function MeasurementStep() {
 
       reader.readAsText(file);
     } catch (error) {
+      console.error('File reading error', error);
       setUploadErrors(prev => ({
         ...prev,
         [loggerId]: [{
@@ -384,43 +501,6 @@ export function MeasurementStep() {
     }
 
     event.target.value = '';
-  };
-
-  const determineStatisticType = (name: string): StatisticType => {
-    const lowerName = name.toLowerCase();
-    if (lowerName.includes('_avg_')) return 'avg';
-    if (lowerName.includes('_sd_')) return 'sd';
-    if (lowerName.includes('_max_')) return 'max';
-    if (lowerName.includes('_min_')) return 'min';
-    if (lowerName.includes('_count_')) return 'count';
-    if (lowerName.includes('_ti_')) return 'ti';
-    return 'avg';
-  };
-
-  const determineMeasurementType = (name: string): MeasurementType => {
-    const lowerName = name.toLowerCase();
-
-    if (lowerName.includes('significantwaveheight')) return 'wave_height';
-    if (lowerName.includes('maximumwaveheight')) return 'wave_height';
-    if (lowerName.includes('peakperiod')) return 'wave_period';
-    if (lowerName.includes('meanspectralperiod')) return 'wave_period';
-    if (lowerName.includes('wavedirection')) return 'wave_direction';
-    if (lowerName.includes('windspeed')) return 'wind_speed';
-    if (lowerName.includes('winddirection')) return 'wind_direction';
-    if (lowerName.includes('temp')) return 'temperature';
-    if (lowerName.includes('press')) return 'pressure';
-    if (lowerName.includes('humid')) return 'humidity';
-    if (lowerName.includes('gps')) return 'position';
-
-    return 'other';
-  };
-
-  const extractHeight = (name: string): number | null => {
-    const match = name.match(/_(\d+)m/);
-    if (match) {
-      return parseInt(match[1]);
-    }
-    return null;
   };
 
   const handleBulkEdit = (locationIndex: number, loggerIdentifier: string) => {
@@ -670,15 +750,20 @@ export function MeasurementStep() {
                                 .filter(point =>
                                   point.logger_measurement_config?.[0]?.logger_id === loggerIdentifier
                                 )
-                                .map((point, pointIndex) => (
+                                .map((point, pointIndex) => {
+                                  // Find the actual index in the measurement_point array
+                                  const actualPointIndex = watch(`measurement_location.${locationIndex}.measurement_point`)
+                                    .findIndex(p => p === point);
+                                  
+                                  return (
                                   <tr key={`${loggerId}-${pointIndex}`}>
                                     <td className="px-4 py-2 text-center align-middle">
                                       <Checkbox
-                                        checked={selectedPoints[`${locationIndex}-${pointIndex}`] || false}
+                                        checked={selectedPoints[`${locationIndex}-${actualPointIndex}`] || false}
                                         onCheckedChange={(checked: boolean) =>
                                           setSelectedPoints(prev => ({
                                             ...prev,
-                                            [`${locationIndex}-${pointIndex}`]: checked
+                                            [`${locationIndex}-${actualPointIndex}`]: checked
                                           }))
                                         }
                                         aria-label={`Select point ${pointIndex + 1}`}
@@ -686,18 +771,18 @@ export function MeasurementStep() {
                                     </td>
                                     <td className="px-4 py-2 text-center align-middle">
                                       <Input
-                                        {...register(`measurement_location.${locationIndex}.measurement_point.${pointIndex}.name`)}
+                                        {...register(`measurement_location.${locationIndex}.measurement_point.${actualPointIndex}.name`)}
                                         placeholder="Enter measurement name"
                                       />
                                     </td>
                                     <td className="px-4 py-2 text-center align-middle">
                                       <Select
                                         onValueChange={(value: MeasurementType) => setValue(
-                                          `measurement_location.${locationIndex}.measurement_point.${pointIndex}.measurement_type_id`,
+                                          `measurement_location.${locationIndex}.measurement_point.${actualPointIndex}.measurement_type_id`,
                                           value
                                         )}
                                         value={watch(
-                                          `measurement_location.${locationIndex}.measurement_point.${pointIndex}.measurement_type_id`
+                                          `measurement_location.${locationIndex}.measurement_point.${actualPointIndex}.measurement_type_id`
                                         ) as MeasurementType}
                                       >
                                         <SelectTrigger>
@@ -722,7 +807,7 @@ export function MeasurementStep() {
                                         type="number"
                                         step="0.1"
                                         {...register(
-                                          `measurement_location.${locationIndex}.measurement_point.${pointIndex}.height_m`,
+                                          `measurement_location.${locationIndex}.measurement_point.${actualPointIndex}.height_m`,
                                           { valueAsNumber: true }
                                         )}
                                         placeholder="Enter height"
@@ -731,11 +816,11 @@ export function MeasurementStep() {
                                     <td className="px-4 py-2 text-center align-middle">
                                       <Select
                                         onValueChange={(value: HeightReference) => setValue(
-                                          `measurement_location.${locationIndex}.measurement_point.${pointIndex}.height_reference_id`,
+                                          `measurement_location.${locationIndex}.measurement_point.${actualPointIndex}.height_reference_id`,
                                           value
                                         )}
                                         value={watch(
-                                          `measurement_location.${locationIndex}.measurement_point.${pointIndex}.height_reference_id`
+                                          `measurement_location.${locationIndex}.measurement_point.${actualPointIndex}.height_reference_id`
                                         ) as HeightReference}
                                       >
                                         <SelectTrigger>
@@ -750,7 +835,7 @@ export function MeasurementStep() {
                                     </td>
                                     <td className="px-4 py-2 text-center align-middle">
                                       <Textarea
-                                        {...register(`measurement_location.${locationIndex}.measurement_point.${pointIndex}.notes`)}
+                                        {...register(`measurement_location.${locationIndex}.measurement_point.${actualPointIndex}.notes`)}
                                         placeholder="Add any additional notes"
                                         rows={2}
                                       />
@@ -761,14 +846,14 @@ export function MeasurementStep() {
                                         variant="ghost"
                                         size="icon"
                                         aria-label="Remove"
-                                        onClick={() => removeMeasurementPoint(locationIndex, pointIndex)}
+                                        onClick={() => removeMeasurementPoint(locationIndex, actualPointIndex)}
                                         className="p-2 hover:bg-transparent"
                                       >
                                         <Trash2 className="w-6 h-6 text-[#FF0000] hover:text-[#CC0000]" />
                                       </Button>
                                     </td>
                                   </tr>
-                                ))}
+                                )})}
                             </tbody>
                           </table>
                         </div>
