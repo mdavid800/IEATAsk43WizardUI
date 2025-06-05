@@ -35,7 +35,6 @@ interface BulkEditValues {
 
 interface ColumnInfo {
   name: string;
-  displayName: string;
   measurementType: MeasurementType;
   height: number | null;
   unit: string | null;
@@ -243,7 +242,6 @@ export function MeasurementStep() {
   const parseColumnHeader = (header: string): ColumnInfo => {
     const result: ColumnInfo = {
       name: header, // Preserve original header name exactly
-      displayName: header,
       measurementType: 'other',
       height: null,
       unit: null,
@@ -271,43 +269,35 @@ export function MeasurementStep() {
     // Wind speed measurements
     if (lowerHeader.includes('verticalwindspeed')) {
       result.measurementType = 'wind_speed';
-      result.displayName = `Vertical Wind Speed ${result.height}m`;
     } 
     else if (lowerHeader.includes('windspeed') || lowerHeader.includes('wind speed')) {
       result.measurementType = 'wind_speed';
-      result.displayName = `Wind Speed ${result.height}m`;
     }
     // Wind direction
     else if (lowerHeader.includes('winddir') || lowerHeader.includes('wind direction')) {
       result.measurementType = 'wind_direction';
-      result.displayName = `Wind Direction ${result.height}m`;
     }
     // Wind gust
     else if (lowerHeader.includes('windgust') || lowerHeader.includes('wind gust')) {
       result.measurementType = 'wind_speed';
-      result.displayName = `Wind Gust ${result.height}m`;
     }
     // Max/Min wind
     else if (lowerHeader.includes('windmax') || lowerHeader.includes('max_hor')) {
       result.measurementType = 'wind_speed';
       result.statisticType = 'max';
-      result.displayName = `Max Wind Speed ${result.height}m`;
     }
     else if (lowerHeader.includes('windmin') || lowerHeader.includes('min_hor')) {
       result.measurementType = 'wind_speed';
       result.statisticType = 'min';
-      result.displayName = `Min Wind Speed ${result.height}m`;
     }
     // Standard deviation
     else if (lowerHeader.includes('standarddeviation') || lowerHeader.includes('std')) {
       result.measurementType = 'wind_speed';
       result.statisticType = 'sd';
-      result.displayName = `Wind Speed SD ${result.height}m`;
     }
     // Wind shear
     else if (lowerHeader.includes('wind shear')) {
       result.measurementType = 'wind_speed';
-      result.displayName = `Wind Shear ${header.replace('Wind Shear ', '')}`;
       
       // Extract height range from shear measurements
       const shearMatch = /(\d+)m-(\d+)m/.exec(header);
@@ -320,7 +310,6 @@ export function MeasurementStep() {
     // Wind veer
     else if (lowerHeader.includes('wind veer')) {
       result.measurementType = 'wind_direction';
-      result.displayName = `Wind Veer ${header.replace('Wind Veer ', '')}`;
       
       // Extract height range from veer measurements
       const veerMatch = /(\d+)m-(\d+)m/.exec(header);
@@ -334,7 +323,6 @@ export function MeasurementStep() {
     else if (lowerHeader.includes('turbulence') || lowerHeader.includes('(ti)')) {
       result.measurementType = 'wind_speed';
       result.statisticType = 'ti';
-      result.displayName = `Turbulence Intensity ${result.height}m`;
     }
 
     // If no height was found but the column name has numbers, try to extract height
@@ -394,44 +382,19 @@ export function MeasurementStep() {
             const measurementColumns = headers.slice(1).map(parseColumnHeader);
             console.log('Parsed columns', measurementColumns);
             
-            // Group columns by height and measurement type
-            const measurementGroups = new Map<string, ColumnInfo[]>();
+            // Create measurement points from columns (one point per column)
+            const measurementPoints: MeasurementPoint[] = [];
             
             measurementColumns.forEach(column => {
               if (column.height === null) {
                 column.height = 0; // Default height if none detected
               }
               
-              // Create a unique key for each height + type combination
-              const groupKey = `${column.measurementType}_${column.height}`;
-              
-              if (!measurementGroups.has(groupKey)) {
-                measurementGroups.set(groupKey, []);
-              }
-              
-              measurementGroups.get(groupKey)!.push(column);
-            });
-            
-            // Create measurement points from the groups
-            const measurementPoints: MeasurementPoint[] = [];
-            
-            measurementGroups.forEach((columns, groupKey) => {
-              // Use the first column in the group for basic info
-              const primaryColumn = columns[0];
-              
-              // Create column config for logger
-              const columnConfigs = columns.map(col => ({
-                column_name: col.name, // Use exact original column name
-                statistic_type_id: col.statisticType,
-                is_ignored: false,
-                update_at: new Date().toISOString()
-              }));
-              
               // Create the measurement point
               const measurementPoint: MeasurementPoint = {
-                name: primaryColumn.displayName,
-                measurement_type_id: primaryColumn.measurementType,
-                height_m: primaryColumn.height || 0,
+                name: column.name, // Use exact original column name
+                measurement_type_id: column.measurementType,
+                height_m: column.height || 0,
                 height_reference_id: 'ground_level',
                 update_at: new Date().toISOString(),
                 logger_measurement_config: [{
@@ -439,7 +402,12 @@ export function MeasurementStep() {
                   date_from: new Date().toISOString(),
                   date_to: null,
                   update_at: new Date().toISOString(),
-                  column_name: columnConfigs
+                  column_name: [{
+                    column_name: column.name, // Use exact original column name
+                    statistic_type_id: column.statisticType,
+                    is_ignored: false,
+                    update_at: new Date().toISOString()
+                  }]
                 }],
                 sensor: []
               };
