@@ -559,7 +559,8 @@ export function MeasurementStep() {
                             />
                             <Button
                               type="button"
-                              variant="outline"
+                              variant="secondary"
+                              className="bg-blue-600 hover:bg-blue-700 text-white"
                               onClick={() => handleUploadClick(location.uuid, loggerId)}
                             >
                               <Upload className="w-4 h-4 mr-2" />
