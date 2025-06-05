@@ -242,7 +242,7 @@ export function MeasurementStep() {
 
   const parseColumnHeader = (header: string): ColumnInfo => {
     const result: ColumnInfo = {
-      name: header,
+      name: header, // Preserve original header name exactly
       displayName: header,
       measurementType: 'other',
       height: null,
@@ -421,7 +421,7 @@ export function MeasurementStep() {
               
               // Create column config for logger
               const columnConfigs = columns.map(col => ({
-                column_name: col.name,
+                column_name: col.name, // Use exact original column name
                 statistic_type_id: col.statisticType,
                 is_ignored: false,
                 update_at: new Date().toISOString()
