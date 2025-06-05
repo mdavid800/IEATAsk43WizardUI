@@ -135,8 +135,40 @@ export function MeasurementStep() {
       return { isValid: false, errors, data: null };
     }
 
-    // Assume first row is header
-    const headers = nonEmptyRows[0] as string[];
+    // Find header row - try first few rows until we find one with valid column names
+    let headerRowIndex = 0;
+    let headers: string[] = [];
+    
+    // Check first 5 rows to find header
+    for (let i = 0; i < Math.min(5, nonEmptyRows.length); i++) {
+      const potentialHeaders = nonEmptyRows[i] as string[];
+      if (potentialHeaders && potentialHeaders.length > 1) {
+        // Skip rows that are mostly empty
+        const nonEmptyCells = potentialHeaders.filter(cell => cell !== null && cell !== undefined && cell !== '');
+        if (nonEmptyCells.length > Math.max(2, potentialHeaders.length * 0.2)) {
+          // Check if this row looks like a header row (containing keywords like timestamp, wind, speed, etc.)
+          const headerKeywords = ['time', 'date', 'wind', 'speed', 'dir', 'temp', 'humidity', 'pressure', 'wave'];
+          const lowerCaseCells = potentialHeaders.map(cell => (cell || '').toString().toLowerCase());
+          
+          const keywordMatches = headerKeywords.some(keyword => 
+            lowerCaseCells.some(cell => cell.includes(keyword))
+          );
+          
+          if (keywordMatches) {
+            headerRowIndex = i;
+            headers = potentialHeaders;
+            break;
+          }
+        }
+      }
+    }
+    
+    // If we couldn't find a proper header row, default to the first row
+    if (headers.length === 0) {
+      headers = nonEmptyRows[0] as string[];
+      headerRowIndex = 0;
+    }
+
     if (!headers || headers.length === 0) {
       errors.push({
         type: 'error',
@@ -145,24 +177,32 @@ export function MeasurementStep() {
       return { isValid: false, errors, data: null };
     }
 
-    // Check if first column is timestamp
-    const firstHeader = headers[0]?.toString().toLowerCase() || '';
-    const hasTimestampColumn = firstHeader.includes('timestamp') || 
-                              firstHeader.includes('date') || 
-                              firstHeader.includes('time') || 
-                              firstHeader === 'iso' || 
-                              firstHeader.includes('utc');
+    // Check if there's a timestamp column
+    // Look for timestamp in first few columns (sometimes there are metadata rows before timestamp)
+    const timestampColumnIndex = headers.findIndex((header, index) => {
+      if (index > 5) return false; // Only check first few columns
+      
+      const headerStr = (header || '').toString().toLowerCase();
+      return headerStr.includes('timestamp') || 
+             headerStr.includes('date') || 
+             headerStr.includes('time') || 
+             headerStr === 'iso' || 
+             headerStr.includes('utc');
+    });
     
-    if (!hasTimestampColumn) {
+    if (timestampColumnIndex === -1) {
       errors.push({
         type: 'warning',
-        message: `First column "${headers[0]}" might not be a timestamp column. Processing will continue, but data may be incorrectly interpreted.`
+        message: 'No timestamp column detected. First column will be treated as timestamp.'
       });
     }
+    
+    // Identify the actual timestamp column to use (default to first column if none found)
+    const timeColIndex = timestampColumnIndex !== -1 ? timestampColumnIndex : 0;
 
     // Check for measurement columns (all columns except timestamp column)
-    const measurementNames = headers.slice(1).filter(name => name && name.trim() !== '');
-    if (measurementNames.length === 0) {
+    const dataColumns = headers.filter((name, i) => i !== timeColIndex && name && name.trim() !== '');
+    if (dataColumns.length === 0) {
       errors.push({
         type: 'error',
         message: 'No valid measurement columns found'
@@ -172,7 +212,7 @@ export function MeasurementStep() {
 
     // Validate data rows (skip header row)
     let invalidTimestampCount = 0;
-    for (let i = 1; i < nonEmptyRows.length; i++) {
+    for (let i = headerRowIndex + 1; i < nonEmptyRows.length; i++) {
       const row = nonEmptyRows[i] as string[];
       if (!row || row.length !== headers.length) {
         errors.push({
@@ -184,7 +224,7 @@ export function MeasurementStep() {
 
       // Validate timestamp if the row has data
       if (row.some(cell => cell !== null && cell !== undefined && cell !== '')) {
-        const timestamp = row[0];
+        const timestamp = row[timeColIndex];
         if (!timestamp || !isValidTimestamp(timestamp)) {
           invalidTimestampCount++;
           if (invalidTimestampCount <= 3) { // Limit number of timestamp warnings
@@ -210,7 +250,7 @@ export function MeasurementStep() {
     return {
       isValid: !hasErrors,
       errors,
-      data: hasErrors ? null : nonEmptyRows
+      data: hasErrors ? null : { headers, headerRowIndex, timeColIndex }
     };
   };
 
@@ -226,12 +266,39 @@ export function MeasurementStep() {
       return true;
     }
 
+    // Support various date formats
+    
     // Try ISO format first
     if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?$/.test(value)) {
       return true;
     }
-
-    // Try parsing with Date.parse
+    
+    // DD/MM/YYYY format
+    if (/^\d{2}\/\d{2}\/\d{4}\s\d{2}:\d{2}$/.test(value)) {
+      return true;
+    }
+    
+    // MM/DD/YYYY format
+    if (/^\d{1,2}\/\d{1,2}\/\d{4}\s\d{1,2}:\d{1,2}(?::\d{1,2})?(?:\s[APap][Mm])?$/.test(value)) {
+      return true;
+    }
+    
+    // YYYY/MM/DD format
+    if (/^\d{4}\/\d{1,2}\/\d{1,2}\s\d{1,2}:\d{1,2}(?::\d{1,2})?$/.test(value)) {
+      return true;
+    }
+    
+    // YYYYMMDD_HHMMSS format
+    if (/^\d{8}_\d{6}$/.test(value)) {
+      return true;
+    }
+    
+    // Unix timestamp (seconds since epoch)
+    if (/^\d{10}$/.test(value) && !isNaN(parseInt(value))) {
+      return true;
+    }
+    
+    // Try parsing with Date.parse as a fallback
     if (!isNaN(Date.parse(value))) {
       return true;
     }
@@ -240,6 +307,7 @@ export function MeasurementStep() {
   };
 
   const parseColumnHeader = (header: string): ColumnInfo => {
+    // Always preserve the exact original column name
     const result: ColumnInfo = {
       name: header, // Preserve original header name exactly
       measurementType: 'other',
@@ -248,55 +316,91 @@ export function MeasurementStep() {
       statisticType: 'avg'
     };
 
-    // Extract height using various patterns
-    let heightMatch = /(\d+)m\b/i.exec(header);
-    if (heightMatch) {
-      result.height = parseInt(heightMatch[1], 10);
-    }
-
-    // Extract unit information
-    if (header.includes('m/s')) {
-      result.unit = 'm/s';
-    } else if (header.includes('deg')) {
-      result.unit = 'deg';
-    } else if (header.includes('%')) {
-      result.unit = '%';
-    }
-
-    // Process different measurement types
+    // Process the header to extract metadata without changing the original name
     const lowerHeader = header.toLowerCase();
+    
+    // Extract units
+    if (lowerHeader.includes('m/s')) {
+      result.unit = 'm/s';
+    } else if (lowerHeader.includes('deg')) {
+      result.unit = 'deg';
+    } else if (lowerHeader.includes('%')) {
+      result.unit = '%';
+    } else if (lowerHeader.includes('hpa')) {
+      result.unit = 'hPa';
+    } else if (lowerHeader.includes('mbar')) {
+      result.unit = 'mbar';
+    }
 
+    // Extract height using various patterns
+    // Pattern matching for different height formats like "40m", "40 m", "_40m", etc.
+    let heightPatterns = [
+      // Matches "040m" or "40m" format
+      /(?:^|[^0-9])(\d+)m\b/i,
+      // Matches "_40m" format
+      /_(\d+)m/i,
+      // Matches "40 m" format with space
+      /(\d+)\s+m\b/i,
+      // Matches height at the end like "height40"
+      /height(\d+)/i,
+      // Matches "_2m" format (e.g., for buoy wave data)
+      /_(\d+)m\b/i,
+    ];
+    
+    // Try each pattern until we find a match
+    for (const pattern of heightPatterns) {
+      const match = pattern.exec(lowerHeader);
+      if (match) {
+        result.height = parseInt(match[1], 10);
+        break;
+      }
+    }
+
+    // Process different measurement types - extended pattern matching
+    
     // Wind speed measurements
-    if (lowerHeader.includes('verticalwindspeed')) {
+    if (/verticalwindspeed|vertical_wind_speed|vert[._]?w[._]?s|vertical[._]?speed/i.test(lowerHeader)) {
       result.measurementType = 'wind_speed';
     } 
-    else if (lowerHeader.includes('windspeed') || lowerHeader.includes('wind speed')) {
+    else if (/windspeed|wind_speed|wind[._]?s|w[._]?s|hor[._]?speed|horiz[._]?speed/i.test(lowerHeader)) {
       result.measurementType = 'wind_speed';
     }
+    else if (/wind[._]?vel|windvelocity/i.test(lowerHeader)) {
+      result.measurementType = 'wind_speed';
+    }
+    
     // Wind direction
-    else if (lowerHeader.includes('winddir') || lowerHeader.includes('wind direction')) {
+    else if (/winddir|wind_dir|wind[._]?d|w[._]?d|wind[._]?direction|direction/i.test(lowerHeader)) {
       result.measurementType = 'wind_direction';
     }
-    // Wind gust
-    else if (lowerHeader.includes('windgust') || lowerHeader.includes('wind gust')) {
-      result.measurementType = 'wind_speed';
+    else if (/azimuth|heading|bearing/i.test(lowerHeader)) {
+      result.measurementType = 'wind_direction';
     }
+    
+    // Wind gust
+    else if (/windgust|wind_gust|gust|max[._]?gust/i.test(lowerHeader)) {
+      result.measurementType = 'wind_speed';
+      result.statisticType = 'gust';
+    }
+    
     // Max/Min wind
-    else if (lowerHeader.includes('windmax') || lowerHeader.includes('max_hor')) {
+    else if (/windmax|wind_max|max[._]?hor|max[._]?wind/i.test(lowerHeader)) {
       result.measurementType = 'wind_speed';
       result.statisticType = 'max';
     }
-    else if (lowerHeader.includes('windmin') || lowerHeader.includes('min_hor')) {
+    else if (/windmin|wind_min|min[._]?hor|min[._]?wind/i.test(lowerHeader)) {
       result.measurementType = 'wind_speed';
       result.statisticType = 'min';
     }
+    
     // Standard deviation
-    else if (lowerHeader.includes('standarddeviation') || lowerHeader.includes('std')) {
+    else if (/standarddeviation|std|std[._]?dev|sigma|wind[._]?std/i.test(lowerHeader)) {
       result.measurementType = 'wind_speed';
       result.statisticType = 'sd';
     }
+    
     // Wind shear
-    else if (lowerHeader.includes('wind shear')) {
+    else if (/wind[._]?shear|shear/i.test(lowerHeader)) {
       result.measurementType = 'wind_speed';
       
       // Extract height range from shear measurements
@@ -307,8 +411,9 @@ export function MeasurementStep() {
         result.height = (upperHeight + lowerHeight) / 2; // Use average height
       }
     }
+    
     // Wind veer
-    else if (lowerHeader.includes('wind veer')) {
+    else if (/wind[._]?veer|veer/i.test(lowerHeader)) {
       result.measurementType = 'wind_direction';
       
       // Extract height range from veer measurements
@@ -319,14 +424,54 @@ export function MeasurementStep() {
         result.height = (upperHeight + lowerHeight) / 2; // Use average height
       }
     }
+    
     // Turbulence intensity
-    else if (lowerHeader.includes('turbulence') || lowerHeader.includes('(ti)')) {
+    else if (/turbulence|ti\d+m|ti[._]?\d+|intensity|ti\b/i.test(lowerHeader)) {
       result.measurementType = 'wind_speed';
       result.statisticType = 'ti';
     }
+    
+    // Temperature
+    else if (/temp|temperature/i.test(lowerHeader)) {
+      result.measurementType = 'temperature';
+    }
+    
+    // Pressure
+    else if (/press|pressure|baro/i.test(lowerHeader)) {
+      result.measurementType = 'pressure';
+    }
+    
+    // Humidity
+    else if (/humid|humidity|rh\b/i.test(lowerHeader)) {
+      result.measurementType = 'humidity';
+    }
+    
+    // Wave measurements
+    else if (/significantwaveheight|significant[._]?wave|hsig|hs\b/i.test(lowerHeader)) {
+      result.measurementType = 'wave_height';
+    }
+    else if (/maximumwaveheight|maximum[._]?wave|hmax/i.test(lowerHeader)) {
+      result.measurementType = 'wave_height';
+      result.statisticType = 'max';
+    }
+    else if (/peakperiod|peak[._]?period|tp\b/i.test(lowerHeader)) {
+      result.measurementType = 'wave_period';
+    }
+    else if (/meanspectralperiod|mean[._]?period|t[0-9]\b/i.test(lowerHeader)) {
+      result.measurementType = 'wave_period';
+    }
+    else if (/wavedirection|wave[._]?direction|mwd\b|direction/i.test(lowerHeader)) {
+      result.measurementType = 'wave_direction';
+    }
+    
+    // Position/GPS
+    else if (/gps|lat|lon|position|coordinate/i.test(lowerHeader)) {
+      result.measurementType = 'position';
+    }
 
-    // If no height was found but the column name has numbers, try to extract height
+    // If no height was found but there are numbers in the column name, try to extract height
     if (result.height === null) {
+      // Look for any number in the string as a fallback
       const genericHeightMatch = /(\d+)/.exec(header);
       if (genericHeightMatch) {
         result.height = parseInt(genericHeightMatch[1], 10);
@@ -375,11 +520,15 @@ export function MeasurementStep() {
               return;
             }
 
-            const headers = validation.data![0] as string[];
+            const { headers, timeColIndex } = validation.data as { headers: string[], headerRowIndex: number, timeColIndex: number };
             console.log('CSV headers', headers);
             
-            // Process all columns except the first (timestamp)
-            const measurementColumns = headers.slice(1).map(parseColumnHeader);
+            // Process all columns except the timestamp column
+            const dataColumns = headers.filter((_, i) => i !== timeColIndex);
+            console.log('Data columns', dataColumns);
+            
+            // Parse each column header to extract metadata (without changing the name)
+            const measurementColumns = dataColumns.map(parseColumnHeader);
             console.log('Parsed columns', measurementColumns);
             
             // Create measurement points from columns (one point per column)
