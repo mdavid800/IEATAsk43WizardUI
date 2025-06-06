@@ -212,7 +212,7 @@ export function MeasurementSection({ locationIndex }: MeasurementSectionProps) {
                     </Label>
                     <Select
                       onValueChange={(value) => setValue(`measurement_location.${locationIndex}.measurement_point.${index}.measurement_type_id`, value)}
-                      value={getValues(`measurement_location.${locationIndex}.measurement_point.${index}.measurement_type_id`) || ''}
+                      value={getValues(`measurement_location.${locationIndex}.measurement_point.${index}.measurement_type_id`)}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select measurement type" />
@@ -250,7 +250,7 @@ export function MeasurementSection({ locationIndex }: MeasurementSectionProps) {
                     </Label>
                     <Select
                       onValueChange={(value) => setValue(`measurement_location.${locationIndex}.measurement_point.${index}.height_reference_id`, value)}
-                      value={getValues(`measurement_location.${locationIndex}.measurement_point.${index}.height_reference_id`) || ''}
+                      value={getValues(`measurement_location.${locationIndex}.measurement_point.${index}.height_reference_id`)}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select height reference" />

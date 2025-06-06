@@ -112,7 +112,7 @@ export function LoggerStep() {
 
               <div className="space-y-6">
                 {(watch(`measurement_location.${locationIndex}.logger_main_config`) || []).map((logger, loggerIndex) => (
-                  <div className="border border-border rounded-xl overflow-hidden mb-6 shadow-sm transition-transform hover:border-primary/20\" key={loggerIndex}>
+                  <div className="border border-border rounded-xl overflow-hidden mb-6 shadow-sm transition-transform hover:border-primary/20" key={loggerIndex}>
                     <div
                       className="flex items-center gap-3 cursor-pointer select-none px-6 py-3 bg-secondary/20 hover:bg-secondary/30 transition-colors border-b border-border"
                       onClick={() => toggleLoggerExpand(loggerIndex)}
@@ -156,7 +156,7 @@ export function LoggerStep() {
                                 `measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.logger_oem_id`,
                                 value as LoggerOEM
                               )}
-                              value={watch(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.logger_oem_id`) || ''}
+                              value={watch(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.logger_oem_id`)}
                             >
                               <SelectTrigger>
                                 <SelectValue placeholder="Select manufacturer" />
@@ -324,7 +324,7 @@ export function LoggerStep() {
                                 `measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.timestamp_is_end_of_period`,
                                 value === 'true'
                               )}
-                              value={watch(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.timestamp_is_end_of_period`)?.toString() || ''}
+                              value={watch(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.timestamp_is_end_of_period`)?.toString()}
                             >
                               <SelectTrigger>
                                 <SelectValue placeholder="Select timestamp position" />
@@ -345,7 +345,7 @@ export function LoggerStep() {
                                 `measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.clock_is_auto_synced`,
                                 value === 'true'
                               )}
-                              value={watch(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.clock_is_auto_synced`)?.toString() || ''}
+                              value={watch(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.clock_is_auto_synced`)?.toString()}
                             >
                               <SelectTrigger>
                                 <SelectValue placeholder="Select if clock is auto-synced" />
