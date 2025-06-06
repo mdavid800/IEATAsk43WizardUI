@@ -16,8 +16,8 @@ const steps = [
   { id: 'basic-info', name: 'Basic Information', component: BasicInfoStep },
   { id: 'location', name: 'Location & Properties', component: LocationStep },
   { id: 'loggers', name: 'Loggers', component: LoggerStep },
-  { id: 'measurements', name: 'Measurement Points', component: MeasurementStep },
   { id: 'sensors', name: 'Sensors', component: SensorStep },
+  { id: 'measurements', name: 'Measurement Points', component: MeasurementStep },
   { id: 'review', name: 'Review & Export', component: ReviewStep },
 ];
 
