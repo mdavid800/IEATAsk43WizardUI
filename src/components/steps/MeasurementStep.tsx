@@ -1,12 +1,8 @@
 import { useFormContext } from 'react-hook-form';
-import { PlusCircle, Trash2, Upload, ChevronDown, AlertCircle } from 'lucide-react';
+import { PlusCircle, Upload, ChevronDown, AlertCircle } from 'lucide-react';
 import { useState, useRef } from 'react';
 import Papa from 'papaparse';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import type {
   IEATask43Schema,
   MeasurementType,
@@ -14,7 +10,7 @@ import type {
   MeasurementPoint,
   StatisticType
 } from '@/types/schema';
-import { Checkbox } from '@/components/ui/checkbox';
+import { MeasurementTable, type BulkEditValues } from './sections/MeasurementTable';
 
 interface CSVValidationError {
   type: 'error' | 'warning';
@@ -24,14 +20,10 @@ interface CSVValidationError {
 interface CSVValidationResult {
   isValid: boolean;
   errors: CSVValidationError[];
-  data: any[] | null;
+  data: { headers: string[]; headerRowIndex: number; timeColIndex: number } | null;
 }
 
-interface BulkEditValues {
-  measurement_type_id: MeasurementType | '';
-  height_m: string;
-  height_reference_id: HeightReference | '';
-}
+
 
 interface ColumnInfo {
   name: string;
@@ -138,7 +130,7 @@ export function MeasurementStep() {
     // Find header row - try first few rows until we find one with valid column names
     let headerRowIndex = 0;
     let headers: string[] = [];
-    
+
     // Check first 5 rows to find header
     for (let i = 0; i < Math.min(5, nonEmptyRows.length); i++) {
       const potentialHeaders = nonEmptyRows[i] as string[];
@@ -149,11 +141,11 @@ export function MeasurementStep() {
           // Check if this row looks like a header row (containing keywords like timestamp, wind, speed, etc.)
           const headerKeywords = ['time', 'date', 'wind', 'speed', 'dir', 'temp', 'humidity', 'pressure', 'wave'];
           const lowerCaseCells = potentialHeaders.map(cell => (cell || '').toString().toLowerCase());
-          
-          const keywordMatches = headerKeywords.some(keyword => 
+
+          const keywordMatches = headerKeywords.some(keyword =>
             lowerCaseCells.some(cell => cell.includes(keyword))
           );
-          
+
           if (keywordMatches) {
             headerRowIndex = i;
             headers = potentialHeaders;
@@ -162,7 +154,7 @@ export function MeasurementStep() {
         }
       }
     }
-    
+
     // If we couldn't find a proper header row, default to the first row
     if (headers.length === 0) {
       headers = nonEmptyRows[0] as string[];
@@ -181,22 +173,22 @@ export function MeasurementStep() {
     // Look for timestamp in first few columns (sometimes there are metadata rows before timestamp)
     const timestampColumnIndex = headers.findIndex((header, index) => {
       if (index > 5) return false; // Only check first few columns
-      
+
       const headerStr = (header || '').toString().toLowerCase();
-      return headerStr.includes('timestamp') || 
-             headerStr.includes('date') || 
-             headerStr.includes('time') || 
-             headerStr === 'iso' || 
-             headerStr.includes('utc');
+      return headerStr.includes('timestamp') ||
+        headerStr.includes('date') ||
+        headerStr.includes('time') ||
+        headerStr === 'iso' ||
+        headerStr.includes('utc');
     });
-    
+
     if (timestampColumnIndex === -1) {
       errors.push({
         type: 'warning',
         message: 'No timestamp column detected. First column will be treated as timestamp.'
       });
     }
-    
+
     // Identify the actual timestamp column to use (default to first column if none found)
     const timeColIndex = timestampColumnIndex !== -1 ? timestampColumnIndex : 0;
 
@@ -258,46 +250,46 @@ export function MeasurementStep() {
     if (!value || typeof value !== 'string') return false;
 
     // Skip validation for header row
-    if (value.toLowerCase().includes('timestamp') || 
-        value.toLowerCase().includes('date') || 
-        value.toLowerCase() === 'time' ||
-        value.toLowerCase() === 'iso' ||
-        value.toLowerCase().includes('utc')) {
+    if (value.toLowerCase().includes('timestamp') ||
+      value.toLowerCase().includes('date') ||
+      value.toLowerCase() === 'time' ||
+      value.toLowerCase() === 'iso' ||
+      value.toLowerCase().includes('utc')) {
       return true;
     }
 
     // Support various date formats
-    
+
     // Try ISO format first
     if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?$/.test(value)) {
       return true;
     }
-    
+
     // DD/MM/YYYY format
     if (/^\d{2}\/\d{2}\/\d{4}\s\d{2}:\d{2}$/.test(value)) {
       return true;
     }
-    
+
     // MM/DD/YYYY format
     if (/^\d{1,2}\/\d{1,2}\/\d{4}\s\d{1,2}:\d{1,2}(?::\d{1,2})?(?:\s[APap][Mm])?$/.test(value)) {
       return true;
     }
-    
+
     // YYYY/MM/DD format
     if (/^\d{4}\/\d{1,2}\/\d{1,2}\s\d{1,2}:\d{1,2}(?::\d{1,2})?$/.test(value)) {
       return true;
     }
-    
+
     // YYYYMMDD_HHMMSS format
     if (/^\d{8}_\d{6}$/.test(value)) {
       return true;
     }
-    
+
     // Unix timestamp (seconds since epoch)
     if (/^\d{10}$/.test(value) && !isNaN(parseInt(value))) {
       return true;
     }
-    
+
     // Try parsing with Date.parse as a fallback
     if (!isNaN(Date.parse(value))) {
       return true;
@@ -318,7 +310,7 @@ export function MeasurementStep() {
 
     // Process the header to extract metadata without changing the original name
     const lowerHeader = header.toLowerCase();
-    
+
     // Extract units
     if (lowerHeader.includes('m/s')) {
       result.unit = 'm/s';
@@ -346,7 +338,7 @@ export function MeasurementStep() {
       // Matches "_2m" format (e.g., for buoy wave data)
       /_(\d+)m\b/i,
     ];
-    
+
     // Try each pattern until we find a match
     for (const pattern of heightPatterns) {
       const match = pattern.exec(lowerHeader);
@@ -357,18 +349,18 @@ export function MeasurementStep() {
     }
 
     // Process different measurement types - extended pattern matching
-    
+
     // Wind speed measurements
     if (/verticalwindspeed|vertical_wind_speed|vert[._]?w[._]?s|vertical[._]?speed/i.test(lowerHeader)) {
       result.measurementType = 'wind_speed';
-    } 
+    }
     else if (/windspeed|wind_speed|wind[._]?s|w[._]?s|hor[._]?speed|horiz[._]?speed/i.test(lowerHeader)) {
       result.measurementType = 'wind_speed';
     }
     else if (/wind[._]?vel|windvelocity/i.test(lowerHeader)) {
       result.measurementType = 'wind_speed';
     }
-    
+
     // Wind direction
     else if (/winddir|wind_dir|wind[._]?d|w[._]?d|wind[._]?direction|direction/i.test(lowerHeader)) {
       result.measurementType = 'wind_direction';
@@ -376,13 +368,13 @@ export function MeasurementStep() {
     else if (/azimuth|heading|bearing/i.test(lowerHeader)) {
       result.measurementType = 'wind_direction';
     }
-    
+
     // Wind gust
     else if (/windgust|wind_gust|gust|max[._]?gust/i.test(lowerHeader)) {
       result.measurementType = 'wind_speed';
       result.statisticType = 'gust';
     }
-    
+
     // Max/Min wind
     else if (/windmax|wind_max|max[._]?hor|max[._]?wind/i.test(lowerHeader)) {
       result.measurementType = 'wind_speed';
@@ -392,17 +384,17 @@ export function MeasurementStep() {
       result.measurementType = 'wind_speed';
       result.statisticType = 'min';
     }
-    
+
     // Standard deviation
     else if (/standarddeviation|std|std[._]?dev|sigma|wind[._]?std/i.test(lowerHeader)) {
       result.measurementType = 'wind_speed';
       result.statisticType = 'sd';
     }
-    
+
     // Wind shear
     else if (/wind[._]?shear|shear/i.test(lowerHeader)) {
       result.measurementType = 'wind_speed';
-      
+
       // Extract height range from shear measurements
       const shearMatch = /(\d+)m-(\d+)m/.exec(header);
       if (shearMatch) {
@@ -411,11 +403,11 @@ export function MeasurementStep() {
         result.height = (upperHeight + lowerHeight) / 2; // Use average height
       }
     }
-    
+
     // Wind veer
     else if (/wind[._]?veer|veer/i.test(lowerHeader)) {
       result.measurementType = 'wind_direction';
-      
+
       // Extract height range from veer measurements
       const veerMatch = /(\d+)m-(\d+)m/.exec(header);
       if (veerMatch) {
@@ -424,28 +416,28 @@ export function MeasurementStep() {
         result.height = (upperHeight + lowerHeight) / 2; // Use average height
       }
     }
-    
+
     // Turbulence intensity
     else if (/turbulence|ti\d+m|ti[._]?\d+|intensity|ti\b/i.test(lowerHeader)) {
       result.measurementType = 'wind_speed';
       result.statisticType = 'ti';
     }
-    
+
     // Temperature
     else if (/temp|temperature/i.test(lowerHeader)) {
       result.measurementType = 'temperature';
     }
-    
+
     // Pressure
     else if (/press|pressure|baro/i.test(lowerHeader)) {
       result.measurementType = 'pressure';
     }
-    
+
     // Humidity
     else if (/humid|humidity|rh\b/i.test(lowerHeader)) {
       result.measurementType = 'humidity';
     }
-    
+
     // Wave measurements
     else if (/significantwaveheight|significant[._]?wave|hsig|hs\b/i.test(lowerHeader)) {
       result.measurementType = 'wave_height';
@@ -463,7 +455,7 @@ export function MeasurementStep() {
     else if (/wavedirection|wave[._]?direction|mwd\b|direction/i.test(lowerHeader)) {
       result.measurementType = 'wave_direction';
     }
-    
+
     // Position/GPS
     else if (/gps|lat|lon|position|coordinate/i.test(lowerHeader)) {
       result.measurementType = 'position';
@@ -520,25 +512,25 @@ export function MeasurementStep() {
               return;
             }
 
-            const { headers, timeColIndex } = validation.data as { headers: string[], headerRowIndex: number, timeColIndex: number };
+            const { headers, timeColIndex } = validation.data;
             console.log('CSV headers', headers);
-            
+
             // Process all columns except the timestamp column
             const dataColumns = headers.filter((_, i) => i !== timeColIndex);
             console.log('Data columns', dataColumns);
-            
+
             // Parse each column header to extract metadata (without changing the name)
             const measurementColumns = dataColumns.map(parseColumnHeader);
             console.log('Parsed columns', measurementColumns);
-            
+
             // Create measurement points from columns (one point per column)
             const measurementPoints: MeasurementPoint[] = [];
-            
+
             measurementColumns.forEach(column => {
               if (column.height === null) {
                 column.height = 0; // Default height if none detected
               }
-              
+
               // Create the measurement point
               const measurementPoint: MeasurementPoint = {
                 name: column.name, // Use exact original column name
@@ -560,15 +552,15 @@ export function MeasurementStep() {
                 }],
                 sensor: []
               };
-              
+
               measurementPoints.push(measurementPoint);
             });
-            
+
             console.log('Created measurement points', measurementPoints);
 
             // Get existing points for other loggers
             const allCurrentPoints = watch(`measurement_location.${locationIndex}.measurement_point`) || [];
-            const otherLoggersPoints = allCurrentPoints.filter(point => 
+            const otherLoggersPoints = allCurrentPoints.filter(point =>
               point.logger_measurement_config?.[0]?.logger_id !== loggerId
             );
 
@@ -620,59 +612,7 @@ export function MeasurementStep() {
     event.target.value = '';
   };
 
-  const handleBulkEdit = (locationIndex: number, loggerIdentifier: string) => {
-    const points = watch(`measurement_location.${locationIndex}.measurement_point`) || [];
-    const pointsToUpdate = points.filter((_, index) =>
-      selectedPoints[`${locationIndex}-${index}`] &&
-      points[index].logger_measurement_config?.[0]?.logger_id === loggerIdentifier
-    );
 
-    pointsToUpdate.forEach((_, index) => {
-      if (bulkEditValues.measurement_type_id) {
-        setValue(
-          `measurement_location.${locationIndex}.measurement_point.${index}.measurement_type_id`,
-          bulkEditValues.measurement_type_id as MeasurementType
-        );
-      }
-      if (bulkEditValues.height_m) {
-        setValue(
-          `measurement_location.${locationIndex}.measurement_point.${index}.height_m`,
-          parseFloat(bulkEditValues.height_m)
-        );
-      }
-      if (bulkEditValues.height_reference_id) {
-        setValue(
-          `measurement_location.${locationIndex}.measurement_point.${index}.height_reference_id`,
-          bulkEditValues.height_reference_id as HeightReference
-        );
-      }
-    });
-
-    // Reset bulk edit values and selections
-    setBulkEditValues({
-      measurement_type_id: '',
-      height_m: '',
-      height_reference_id: ''
-    });
-    setSelectedPoints({});
-  };
-
-  const toggleSelectAll = (locationIndex: number, loggerIdentifier: string) => {
-    const points = watch(`measurement_location.${locationIndex}.measurement_point`) || [];
-    const relevantPoints = points.filter(point =>
-      point.logger_measurement_config?.[0]?.logger_id === loggerIdentifier
-    );
-
-    const allSelected = relevantPoints.every((_, index) =>
-      selectedPoints[`${locationIndex}-${index}`]
-    );
-
-    const newSelectedPoints = { ...selectedPoints };
-    relevantPoints.forEach((_, index) => {
-      newSelectedPoints[`${locationIndex}-${index}`] = !allSelected;
-    });
-    setSelectedPoints(newSelectedPoints);
-  };
 
   return (
     <div className="space-y-8">
@@ -774,206 +714,17 @@ export function MeasurementStep() {
                           </div>
                         </div>
 
-                        {/* Bulk Edit Controls */}
-                        <div className="mb-4 p-4 bg-muted/30 rounded-lg">
-                          <h5 className="text-sm font-medium mb-3">Bulk Edit Selected Points</h5>
-                          <div className="grid grid-cols-3 gap-4">
-                            <div>
-                              <Label>Measurement Type</Label>
-                              <Select
-                                value={bulkEditValues.measurement_type_id}
-                                onValueChange={(value: MeasurementType) =>
-                                  setBulkEditValues(prev => ({ ...prev, measurement_type_id: value }))
-                                }
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select measurement type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="wind_speed">Wind Speed</SelectItem>
-                                  <SelectItem value="wind_direction">Wind Direction</SelectItem>
-                                  <SelectItem value="temperature">Temperature</SelectItem>
-                                  <SelectItem value="pressure">Pressure</SelectItem>
-                                  <SelectItem value="humidity">Humidity</SelectItem>
-                                  <SelectItem value="wave_height">Wave Height</SelectItem>
-                                  <SelectItem value="wave_period">Wave Period</SelectItem>
-                                  <SelectItem value="wave_direction">Wave Direction</SelectItem>
-                                  <SelectItem value="position">Position</SelectItem>
-                                  <SelectItem value="other">Other</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div>
-                              <Label>Height (m)</Label>
-                              <Input
-                                type="number"
-                                step="0.1"
-                                value={bulkEditValues.height_m}
-                                onChange={(e) => setBulkEditValues(prev => ({ ...prev, height_m: e.target.value }))}
-                                placeholder="Enter height"
-                              />
-                            </div>
-                            <div>
-                              <Label>Height Reference</Label>
-                              <Select
-                                value={bulkEditValues.height_reference_id}
-                                onValueChange={(value: HeightReference) =>
-                                  setBulkEditValues(prev => ({ ...prev, height_reference_id: value }))
-                                }
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select height reference" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="ground_level">Ground Level</SelectItem>
-                                  <SelectItem value="sea_level">Sea Level</SelectItem>
-                                  <SelectItem value="sea_floor">Sea Floor</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-                          <div className="mt-3 flex justify-end">
-                            <Button
-                              type="button"
-                              onClick={() => handleBulkEdit(locationIndex, loggerIdentifier)}
-                              disabled={!Object.values(selectedPoints).some(Boolean)}
-                            >
-                              Apply to Selected
-                            </Button>
-                          </div>
-                        </div>
+                        <MeasurementTable
+                          locationIndex={locationIndex}
+                          loggerIdentifier={loggerIdentifier}
+                          selectedPoints={selectedPoints}
+                          setSelectedPoints={setSelectedPoints}
+                          bulkEditValues={bulkEditValues}
+                          setBulkEditValues={setBulkEditValues}
+                          onRemovePoint={removeMeasurementPoint}
+                        />
 
-                        <div className="overflow-x-auto">
-                          <table className="min-w-full divide-y divide-border">
-                            <thead className="bg-muted/50">
-                              <tr>
-                                <th className="px-4 py-2 text-center align-middle text-xs font-medium text-muted-foreground">
-                                  <Checkbox
-                                    checked={Object.values(selectedPoints).some(Boolean)}
-                                    onCheckedChange={() => toggleSelectAll(locationIndex, loggerIdentifier)}
-                                    aria-label="Select all points"
-                                  />
-                                </th>
-                                <th className="px-4 py-2 text-center align-middle text-xs font-medium text-muted-foreground">Name</th>
-                                <th className="px-4 py-2 text-center align-middle text-xs font-medium text-muted-foreground">Measurement Type</th>
-                                <th className="px-4 py-2 text-center align-middle text-xs font-medium text-muted-foreground">Height (m)</th>
-                                <th className="px-4 py-2 text-center align-middle text-xs font-medium text-muted-foreground">Height Reference</th>
-                                <th className="px-4 py-2 text-center align-middle text-xs font-medium text-muted-foreground">Notes</th>
-                                <th className="px-4 py-2 text-center align-middle text-xs font-medium text-muted-foreground">Remove</th>
-                              </tr>
-                            </thead>
-                            <tbody className="bg-background divide-y divide-border">
-                              {(watch(`measurement_location.${locationIndex}.measurement_point`) || [])
-                                .filter(point =>
-                                  point.logger_measurement_config?.[0]?.logger_id === loggerIdentifier
-                                )
-                                .map((point, pointIndex) => {
-                                  // Find the actual index in the measurement_point array
-                                  const actualPointIndex = watch(`measurement_location.${locationIndex}.measurement_point`)
-                                    .findIndex(p => p === point);
-                                  
-                                  return (
-                                  <tr key={`${loggerId}-${pointIndex}`}>
-                                    <td className="px-4 py-2 text-center align-middle">
-                                      <Checkbox
-                                        checked={selectedPoints[`${locationIndex}-${actualPointIndex}`] || false}
-                                        onCheckedChange={(checked: boolean) =>
-                                          setSelectedPoints(prev => ({
-                                            ...prev,
-                                            [`${locationIndex}-${actualPointIndex}`]: checked
-                                          }))
-                                        }
-                                        aria-label={`Select point ${pointIndex + 1}`}
-                                      />
-                                    </td>
-                                    <td className="px-4 py-2 text-center align-middle">
-                                      <Input
-                                        {...register(`measurement_location.${locationIndex}.measurement_point.${actualPointIndex}.name`)}
-                                        placeholder="Enter measurement name"
-                                      />
-                                    </td>
-                                    <td className="px-4 py-2 text-center align-middle">
-                                      <Select
-                                        onValueChange={(value: MeasurementType) => setValue(
-                                          `measurement_location.${locationIndex}.measurement_point.${actualPointIndex}.measurement_type_id`,
-                                          value
-                                        )}
-                                        value={watch(
-                                          `measurement_location.${locationIndex}.measurement_point.${actualPointIndex}.measurement_type_id`
-                                        ) as MeasurementType}
-                                      >
-                                        <SelectTrigger>
-                                          <SelectValue placeholder="Select measurement type" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          <SelectItem value="wind_speed">Wind Speed</SelectItem>
-                                          <SelectItem value="wind_direction">Wind Direction</SelectItem>
-                                          <SelectItem value="temperature">Temperature</SelectItem>
-                                          <SelectItem value="pressure">Pressure</SelectItem>
-                                          <SelectItem value="humidity">Humidity</SelectItem>
-                                          <SelectItem value="wave_height">Wave Height</SelectItem>
-                                          <SelectItem value="wave_period">Wave Period</SelectItem>
-                                          <SelectItem value="wave_direction">Wave Direction</SelectItem>
-                                          <SelectItem value="position">Position</SelectItem>
-                                          <SelectItem value="other">Other</SelectItem>
-                                        </SelectContent>
-                                      </Select>
-                                    </td>
-                                    <td className="px-4 py-2 text-center align-middle">
-                                      <Input
-                                        type="number"
-                                        step="0.1"
-                                        {...register(
-                                          `measurement_location.${locationIndex}.measurement_point.${actualPointIndex}.height_m`,
-                                          { valueAsNumber: true }
-                                        )}
-                                        placeholder="Enter height"
-                                      />
-                                    </td>
-                                    <td className="px-4 py-2 text-center align-middle">
-                                      <Select
-                                        onValueChange={(value: HeightReference) => setValue(
-                                          `measurement_location.${locationIndex}.measurement_point.${actualPointIndex}.height_reference_id`,
-                                          value
-                                        )}
-                                        value={watch(
-                                          `measurement_location.${locationIndex}.measurement_point.${actualPointIndex}.height_reference_id`
-                                        ) as HeightReference}
-                                      >
-                                        <SelectTrigger>
-                                          <SelectValue placeholder="Select height reference" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          <SelectItem value="ground_level">Ground Level</SelectItem>
-                                          <SelectItem value="sea_level">Sea Level</SelectItem>
-                                          <SelectItem value="sea_floor">Sea Floor</SelectItem>
-                                        </SelectContent>
-                                      </Select>
-                                    </td>
-                                    <td className="px-4 py-2 text-center align-middle">
-                                      <Textarea
-                                        {...register(`measurement_location.${locationIndex}.measurement_point.${actualPointIndex}.notes`)}
-                                        placeholder="Add any additional notes"
-                                        rows={2}
-                                      />
-                                    </td>
-                                    <td className="px-4 py-2 text-center align-middle">
-                                      <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        aria-label="Remove"
-                                        onClick={() => removeMeasurementPoint(locationIndex, actualPointIndex)}
-                                        className="p-2 hover:bg-transparent"
-                                      >
-                                        <Trash2 className="w-6 h-6 text-[#FF0000] hover:text-[#CC0000]" />
-                                      </Button>
-                                    </td>
-                                  </tr>
-                                )})}
-                            </tbody>
-                          </table>
-                        </div>
+
                       </div>
                     )}
                   </div>
