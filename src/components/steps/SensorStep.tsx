@@ -206,7 +206,7 @@ export function SensorStep() {
                   </Label>
                   <Select
                     onValueChange={(value) => setValue(`measurement_location.0.measurement_point.0.sensor.${sensorIndex}.sensor_type_id`, value as SensorType)}
-                    value={watch(`measurement_location.0.measurement_point.0.sensor.${sensorIndex}.sensor_type_id`)}
+                    value={watch(`measurement_location.0.measurement_point.0.sensor.${sensorIndex}.sensor_type_id`) || ''}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select sensor type" />
@@ -260,7 +260,7 @@ export function SensorStep() {
                   </Label>
                   <Select
                     onValueChange={(value) => setValue(`measurement_location.0.measurement_point.0.sensor.${sensorIndex}.is_heated`, value === 'true')}
-                    value={watch(`measurement_location.0.measurement_point.0.sensor.${sensorIndex}.is_heated`)?.toString()}
+                    value={watch(`measurement_location.0.measurement_point.0.sensor.${sensorIndex}.is_heated`)?.toString() || ''}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select if sensor is heated" />
@@ -369,7 +369,7 @@ export function SensorStep() {
                               </Label>
                               <Select
                                 onValueChange={(value) => setValue(`measurement_location.0.measurement_point.0.sensor.${sensorIndex}.calibration.${calIndex}.measurement_type_id`, value as MeasurementType)}
-                                value={watch(`measurement_location.0.measurement_point.0.sensor.${sensorIndex}.calibration.${calIndex}.measurement_type_id`)}
+                                value={watch(`measurement_location.0.measurement_point.0.sensor.${sensorIndex}.calibration.${calIndex}.measurement_type_id`) || ''}
                               >
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select measurement type" />

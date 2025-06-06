@@ -91,7 +91,7 @@ export function LocationStep() {
                   </Label>
                   <Select
                     onValueChange={(value) => setValue('measurement_location.0.measurement_station_type_id', value as any)}
-                    value={watch('measurement_location.0.measurement_station_type_id')}
+                    value={watch('measurement_location.0.measurement_station_type_id') || ''}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select station type" />
@@ -169,7 +169,7 @@ export function LocationStep() {
                       </Label>
                       <Select
                         onValueChange={(value) => setValue('measurement_location.0.mast_properties.mast_geometry_id', value as any)}
-                        value={watch('measurement_location.0.mast_properties.mast_geometry_id') as string}
+                        value={(watch('measurement_location.0.mast_properties.mast_geometry_id') as string) || ''}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select mast geometry" />
@@ -323,7 +323,7 @@ export function LocationStep() {
                               </Label>
                               <Select
                                 onValueChange={(value) => setValue(`measurement_location.0.vertical_profiler_properties.${index}.height_reference_id`, value as any)}
-                                value={watch(`measurement_location.0.vertical_profiler_properties.${index}.height_reference_id`)}
+                                value={watch(`measurement_location.0.vertical_profiler_properties.${index}.height_reference_id`) || ''}
                               >
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select height reference" />
@@ -359,7 +359,7 @@ export function LocationStep() {
                               </Label>
                               <Select
                                 onValueChange={(value) => setValue(`measurement_location.0.vertical_profiler_properties.${index}.orientation_reference_id`, value as any)}
-                                value={watch(`measurement_location.0.vertical_profiler_properties.${index}.orientation_reference_id`)}
+                                value={watch(`measurement_location.0.vertical_profiler_properties.${index}.orientation_reference_id`) || ''}
                               >
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select orientation reference" />
@@ -378,7 +378,7 @@ export function LocationStep() {
                               </Label>
                               <Select
                                 onValueChange={(value) => setValue(`measurement_location.0.vertical_profiler_properties.${index}.device_vertical_orientation`, value as any)}
-                                value={watch(`measurement_location.0.vertical_profiler_properties.${index}.device_vertical_orientation`) as string}
+                                value={(watch(`measurement_location.0.vertical_profiler_properties.${index}.device_vertical_orientation`) as string) || ''}
                               >
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select vertical orientation" />

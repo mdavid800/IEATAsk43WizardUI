@@ -396,7 +396,7 @@ export function LoggerSection({ locationIndex }: LoggerSectionProps) {
                                 </Label>
                                 <Select
                                   onValueChange={(value) => setValue(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.measurement_point.${measurementIndex}.measurement_type_id`, value)}
-                                  value={getValues(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.measurement_point.${measurementIndex}.measurement_type_id`)}
+                                  value={getValues(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.measurement_point.${measurementIndex}.measurement_type_id`) || ''}
                                 >
                                   <SelectTrigger>
                                     <SelectValue placeholder="Select measurement type" />
@@ -434,7 +434,7 @@ export function LoggerSection({ locationIndex }: LoggerSectionProps) {
                                 </Label>
                                 <Select
                                   onValueChange={(value) => setValue(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.measurement_point.${measurementIndex}.height_reference_id`, value)}
-                                  value={getValues(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.measurement_point.${measurementIndex}.height_reference_id`)}
+                                  value={getValues(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.measurement_point.${measurementIndex}.height_reference_id`) || ''}
                                 >
                                   <SelectTrigger>
                                     <SelectValue placeholder="Select height reference" />

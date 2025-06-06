@@ -156,7 +156,7 @@ export function LoggerStep() {
                                 `measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.logger_oem_id`,
                                 value as LoggerOEM
                               )}
-                              value={watch(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.logger_oem_id`)}
+                              value={watch(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.logger_oem_id`) || ''}
                             >
                               <SelectTrigger>
                                 <SelectValue placeholder="Select manufacturer" />
@@ -324,7 +324,7 @@ export function LoggerStep() {
                                 `measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.timestamp_is_end_of_period`,
                                 value === 'true'
                               )}
-                              value={watch(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.timestamp_is_end_of_period`)?.toString()}
+                              value={watch(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.timestamp_is_end_of_period`)?.toString() || ''}
                             >
                               <SelectTrigger>
                                 <SelectValue placeholder="Select timestamp position" />
@@ -345,7 +345,7 @@ export function LoggerStep() {
                                 `measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.clock_is_auto_synced`,
                                 value === 'true'
                               )}
-                              value={watch(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.clock_is_auto_synced`)?.toString()}
+                              value={watch(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.clock_is_auto_synced`)?.toString() || ''}
                             >
                               <SelectTrigger>
                                 <SelectValue placeholder="Select if clock is auto-synced" />
