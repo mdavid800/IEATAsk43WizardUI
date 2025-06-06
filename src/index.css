@@ -249,6 +249,10 @@ input[type="checkbox"]:focus {
     @apply opacity-10;
   }
 
+  .step-indicator:hover::before {
+    @apply opacity-20;
+  }
+
   .step-number {
     @apply relative w-10 h-10 flex items-center justify-center rounded-full bg-white text-sm font-medium border border-border transition-all duration-300;
   }
@@ -289,6 +293,10 @@ input[type="checkbox"]:focus {
 
 .step-indicator.active::before {
   @apply opacity-10;
+}
+
+.step-indicator:hover::before {
+  @apply opacity-20;
 }
 
 .step-number {

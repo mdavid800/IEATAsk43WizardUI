@@ -57,6 +57,12 @@ export function FormWizard() {
     }
   };
 
+  const goToStep = (stepIndex: number) => {
+    if (stepIndex >= 0 && stepIndex < steps.length) {
+      setCurrentStep(stepIndex);
+    }
+  };
+
   const onSubmit = (data: IEATask43Schema) => {
     if (currentStep === steps.length - 1) {
       // Format the data according to the schema
@@ -124,29 +130,43 @@ export function FormWizard() {
   return (
     <div className="space-y-8">
       {/* Progress Steps */}
-      <nav className="mb-8">
+      <nav className="mb-8" role="navigation" aria-label="Form progress">
         <div className="flex items-center">
           {steps.map((step, index) => (
             <React.Fragment key={step.id}>
               <div className="flex items-center">
-                <div className={cn(
-                  "step-indicator",
-                  index <= currentStep && "active"
-                )}>
+                <button
+                  type="button"
+                  onClick={() => goToStep(index)}
+                  className={cn(
+                    "step-indicator group cursor-pointer transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-full",
+                    index <= currentStep && "active"
+                  )}
+                  aria-label={`Go to step ${index + 1}: ${step.name}`}
+                  tabIndex={0}
+                >
                   <div className={cn(
-                    "step-number",
+                    "step-number group-hover:border-primary/70 group-hover:shadow-md transition-all duration-200",
                     index <= currentStep && "active",
-                    index < currentStep && "bg-primary text-white"
+                    index < currentStep && "bg-primary text-white",
+                    index === currentStep && "ring-2 ring-primary/30"
                   )}>
                     {index < currentStep ? '✓' : index + 1}
                   </div>
-                </div>
-                <span className={cn(
-                  "step-text",
-                  index <= currentStep ? "text-primary" : "text-muted-foreground"
-                )}>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => goToStep(index)}
+                  className={cn(
+                    "step-text cursor-pointer transition-all duration-200 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded px-2 py-1",
+                    index <= currentStep ? "text-primary" : "text-muted-foreground",
+                    index === currentStep && "font-semibold"
+                  )}
+                  aria-label={`Go to step ${index + 1}: ${step.name}`}
+                  tabIndex={0}
+                >
                   {step.name}
-                </span>
+                </button>
               </div>
               {index < steps.length - 1 && (
                 <div className={cn(
