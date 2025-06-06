@@ -1,6 +1,6 @@
 import { useFormContext } from 'react-hook-form';
-import { PlusCircle, Trash2, Upload, ChevronDown, AlertCircle } from 'lucide-react';
-import { useState, useRef } from 'react';
+import { PlusCircle, Trash2, Upload, ChevronDown, AlertCircle, Search, X } from 'lucide-react';
+import { useState, useRef, useMemo } from 'react';
 import Papa from 'papaparse';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,6 +41,14 @@ interface ColumnInfo {
   statisticType: StatisticType;
 }
 
+interface TableFilters {
+  name: string;
+  measurementType: string;
+  height: string;
+  heightReference: string;
+  notes: string;
+}
+
 export function MeasurementStep() {
   const { register, setValue, watch } = useFormContext<IEATask43Schema>();
   const locations = watch('measurement_location');
@@ -57,6 +65,90 @@ export function MeasurementStep() {
     height_m: '',
     height_reference_id: ''
   });
+  
+  // Filter state for each logger
+  const [tableFilters, setTableFilters] = useState<{ [key: string]: TableFilters }>({});
+
+  // Initialize filters for a logger if they don't exist
+  const getFiltersForLogger = (loggerIdentifier: string): TableFilters => {
+    return tableFilters[loggerIdentifier] || {
+      name: '',
+      measurementType: '',
+      height: '',
+      heightReference: '',
+      notes: ''
+    };
+  };
+
+  // Update filters for a specific logger
+  const updateFilter = (loggerIdentifier: string, field: keyof TableFilters, value: string) => {
+    setTableFilters(prev => ({
+      ...prev,
+      [loggerIdentifier]: {
+        ...getFiltersForLogger(loggerIdentifier),
+        [field]: value
+      }
+    }));
+  };
+
+  // Clear all filters for a logger
+  const clearFilters = (loggerIdentifier: string) => {
+    setTableFilters(prev => ({
+      ...prev,
+      [loggerIdentifier]: {
+        name: '',
+        measurementType: '',
+        height: '',
+        heightReference: '',
+        notes: ''
+      }
+    }));
+  };
+
+  // Filter measurement points based on current filters
+  const getFilteredPoints = (locationIndex: number, loggerIdentifier: string) => {
+    const allPoints = watch(`measurement_location.${locationIndex}.measurement_point`) || [];
+    const relevantPoints = allPoints.filter(point =>
+      point.logger_measurement_config?.[0]?.logger_id === loggerIdentifier
+    );
+    
+    const filters = getFiltersForLogger(loggerIdentifier);
+    
+    // If no filters are active, return all points
+    if (!Object.values(filters).some(filter => filter.trim() !== '')) {
+      return relevantPoints.map((point, index) => ({
+        point,
+        originalIndex: allPoints.findIndex(p => p === point),
+        displayIndex: index
+      }));
+    }
+
+    // Apply filters
+    return relevantPoints
+      .map((point, index) => ({
+        point,
+        originalIndex: allPoints.findIndex(p => p === point),
+        displayIndex: index
+      }))
+      .filter(({ point }) => {
+        const matchesName = !filters.name || 
+          (point.name || '').toLowerCase().includes(filters.name.toLowerCase());
+        
+        const matchesType = !filters.measurementType || 
+          point.measurement_type_id === filters.measurementType;
+        
+        const matchesHeight = !filters.height || 
+          point.height_m.toString().includes(filters.height);
+        
+        const matchesHeightRef = !filters.heightReference || 
+          point.height_reference_id === filters.heightReference;
+        
+        const matchesNotes = !filters.notes || 
+          (point.notes || '').toLowerCase().includes(filters.notes.toLowerCase());
+
+        return matchesName && matchesType && matchesHeight && matchesHeightRef && matchesNotes;
+      });
+  };
 
   const addMeasurementPoint = (locationIndex: number, loggerIndex: number) => {
     const logger = watch(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}`);
@@ -658,18 +750,15 @@ export function MeasurementStep() {
   };
 
   const toggleSelectAll = (locationIndex: number, loggerIdentifier: string) => {
-    const points = watch(`measurement_location.${locationIndex}.measurement_point`) || [];
-    const relevantPoints = points.filter(point =>
-      point.logger_measurement_config?.[0]?.logger_id === loggerIdentifier
-    );
+    const filteredPoints = getFilteredPoints(locationIndex, loggerIdentifier);
 
-    const allSelected = relevantPoints.every((_, index) =>
-      selectedPoints[`${locationIndex}-${index}`]
+    const allSelected = filteredPoints.every(({ originalIndex }) =>
+      selectedPoints[`${locationIndex}-${originalIndex}`]
     );
 
     const newSelectedPoints = { ...selectedPoints };
-    relevantPoints.forEach((_, index) => {
-      newSelectedPoints[`${locationIndex}-${index}`] = !allSelected;
+    filteredPoints.forEach(({ originalIndex }) => {
+      newSelectedPoints[`${locationIndex}-${originalIndex}`] = !allSelected;
     });
     setSelectedPoints(newSelectedPoints);
   };
@@ -701,6 +790,8 @@ export function MeasurementStep() {
               {(location.logger_main_config || []).map((logger, loggerIndex) => {
                 const loggerId = `${location.uuid}-${loggerIndex}`;
                 const loggerIdentifier = logger.logger_id || logger.logger_serial_number;
+                const filteredPoints = getFilteredPoints(locationIndex, loggerIdentifier);
+                const filters = getFiltersForLogger(loggerIdentifier);
 
                 return (
                   <div key={loggerId} className="mb-6 last:mb-0">
@@ -716,6 +807,9 @@ export function MeasurementStep() {
                         <h4 className="text-base font-medium">Logger {loggerIndex + 1}</h4>
                         <div className="text-sm text-muted-foreground">
                           {logger.logger_name || logger.logger_serial_number || 'Unnamed Logger'}
+                        </div>
+                        <div className="text-sm text-primary font-medium">
+                          {filteredPoints.length} points
                         </div>
                       </div>
                     </div>
@@ -742,8 +836,22 @@ export function MeasurementStep() {
                         )}
 
                         <div className="flex justify-between items-center mb-4">
-                          <div className="text-sm text-muted-foreground">
-                            Measurement Points
+                          <div className="flex items-center gap-2">
+                            <div className="text-sm text-muted-foreground">
+                              Measurement Points
+                            </div>
+                            {Object.values(filters).some(filter => filter.trim() !== '') && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => clearFilters(loggerIdentifier)}
+                                className="text-xs text-primary hover:text-primary/90"
+                              >
+                                <X className="w-3 h-3 mr-1" />
+                                Clear Filters
+                              </Button>
+                            )}
                           </div>
                           <div className="flex gap-2">
                             <input
@@ -849,7 +957,9 @@ export function MeasurementStep() {
                               <tr>
                                 <th className="px-4 py-2 text-center align-middle text-xs font-medium text-muted-foreground">
                                   <Checkbox
-                                    checked={Object.values(selectedPoints).some(Boolean)}
+                                    checked={filteredPoints.length > 0 && filteredPoints.every(({ originalIndex }) =>
+                                      selectedPoints[`${locationIndex}-${originalIndex}`]
+                                    )}
                                     onCheckedChange={() => toggleSelectAll(locationIndex, loggerIdentifier)}
                                     aria-label="Select all points"
                                   />
@@ -861,45 +971,130 @@ export function MeasurementStep() {
                                 <th className="px-4 py-2 text-center align-middle text-xs font-medium text-muted-foreground">Notes</th>
                                 <th className="px-4 py-2 text-center align-middle text-xs font-medium text-muted-foreground">Remove</th>
                               </tr>
+                              {/* Filter Row */}
+                              <tr className="bg-muted/30">
+                                <td className="px-4 py-2">
+                                  <div className="w-6"></div>
+                                </td>
+                                <td className="px-4 py-2">
+                                  <div className="relative">
+                                    <Search className="w-3 h-3 absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                                    <Input
+                                      type="text"
+                                      placeholder="Filter name..."
+                                      value={filters.name}
+                                      onChange={(e) => updateFilter(loggerIdentifier, 'name', e.target.value)}
+                                      className="pl-7 h-8 text-xs"
+                                    />
+                                  </div>
+                                </td>
+                                <td className="px-4 py-2">
+                                  <Select
+                                    value={filters.measurementType}
+                                    onValueChange={(value) => updateFilter(loggerIdentifier, 'measurementType', value)}
+                                  >
+                                    <SelectTrigger className="h-8 text-xs">
+                                      <SelectValue placeholder="Filter type..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="">All Types</SelectItem>
+                                      <SelectItem value="wind_speed">Wind Speed</SelectItem>
+                                      <SelectItem value="wind_direction">Wind Direction</SelectItem>
+                                      <SelectItem value="temperature">Temperature</SelectItem>
+                                      <SelectItem value="pressure">Pressure</SelectItem>
+                                      <SelectItem value="humidity">Humidity</SelectItem>
+                                      <SelectItem value="wave_height">Wave Height</SelectItem>
+                                      <SelectItem value="wave_period">Wave Period</SelectItem>
+                                      <SelectItem value="wave_direction">Wave Direction</SelectItem>
+                                      <SelectItem value="position">Position</SelectItem>
+                                      <SelectItem value="other">Other</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </td>
+                                <td className="px-4 py-2">
+                                  <div className="relative">
+                                    <Search className="w-3 h-3 absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                                    <Input
+                                      type="text"
+                                      placeholder="Filter height..."
+                                      value={filters.height}
+                                      onChange={(e) => updateFilter(loggerIdentifier, 'height', e.target.value)}
+                                      className="pl-7 h-8 text-xs"
+                                    />
+                                  </div>
+                                </td>
+                                <td className="px-4 py-2">
+                                  <Select
+                                    value={filters.heightReference}
+                                    onValueChange={(value) => updateFilter(loggerIdentifier, 'heightReference', value)}
+                                  >
+                                    <SelectTrigger className="h-8 text-xs">
+                                      <SelectValue placeholder="Filter ref..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="">All References</SelectItem>
+                                      <SelectItem value="ground_level">Ground Level</SelectItem>
+                                      <SelectItem value="sea_level">Sea Level</SelectItem>
+                                      <SelectItem value="sea_floor">Sea Floor</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </td>
+                                <td className="px-4 py-2">
+                                  <div className="relative">
+                                    <Search className="w-3 h-3 absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                                    <Input
+                                      type="text"
+                                      placeholder="Filter notes..."
+                                      value={filters.notes}
+                                      onChange={(e) => updateFilter(loggerIdentifier, 'notes', e.target.value)}
+                                      className="pl-7 h-8 text-xs"
+                                    />
+                                  </div>
+                                </td>
+                                <td className="px-4 py-2">
+                                  <div className="w-6"></div>
+                                </td>
+                              </tr>
                             </thead>
                             <tbody className="bg-background divide-y divide-border">
-                              {(watch(`measurement_location.${locationIndex}.measurement_point`) || [])
-                                .filter(point =>
-                                  point.logger_measurement_config?.[0]?.logger_id === loggerIdentifier
-                                )
-                                .map((point, pointIndex) => {
-                                  // Find the actual index in the measurement_point array
-                                  const actualPointIndex = watch(`measurement_location.${locationIndex}.measurement_point`)
-                                    .findIndex(p => p === point);
-                                  
-                                  return (
-                                  <tr key={`${loggerId}-${pointIndex}`}>
+                              {filteredPoints.length === 0 ? (
+                                <tr>
+                                  <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
+                                    {Object.values(filters).some(filter => filter.trim() !== '') 
+                                      ? 'No measurement points match the current filters.'
+                                      : 'No measurement points found for this logger.'
+                                    }
+                                  </td>
+                                </tr>
+                              ) : (
+                                filteredPoints.map(({ point, originalIndex, displayIndex }) => (
+                                  <tr key={`${loggerId}-${originalIndex}`}>
                                     <td className="px-4 py-2 text-center align-middle">
                                       <Checkbox
-                                        checked={selectedPoints[`${locationIndex}-${actualPointIndex}`] || false}
+                                        checked={selectedPoints[`${locationIndex}-${originalIndex}`] || false}
                                         onCheckedChange={(checked: boolean) =>
                                           setSelectedPoints(prev => ({
                                             ...prev,
-                                            [`${locationIndex}-${actualPointIndex}`]: checked
+                                            [`${locationIndex}-${originalIndex}`]: checked
                                           }))
                                         }
-                                        aria-label={`Select point ${pointIndex + 1}`}
+                                        aria-label={`Select point ${displayIndex + 1}`}
                                       />
                                     </td>
                                     <td className="px-4 py-2 text-center align-middle">
                                       <Input
-                                        {...register(`measurement_location.${locationIndex}.measurement_point.${actualPointIndex}.name`)}
+                                        {...register(`measurement_location.${locationIndex}.measurement_point.${originalIndex}.name`)}
                                         placeholder="Enter measurement name"
                                       />
                                     </td>
                                     <td className="px-4 py-2 text-center align-middle">
                                       <Select
                                         onValueChange={(value: MeasurementType) => setValue(
-                                          `measurement_location.${locationIndex}.measurement_point.${actualPointIndex}.measurement_type_id`,
+                                          `measurement_location.${locationIndex}.measurement_point.${originalIndex}.measurement_type_id`,
                                           value
                                         )}
                                         value={watch(
-                                          `measurement_location.${locationIndex}.measurement_point.${actualPointIndex}.measurement_type_id`
+                                          `measurement_location.${locationIndex}.measurement_point.${originalIndex}.measurement_type_id`
                                         ) as MeasurementType}
                                       >
                                         <SelectTrigger>
@@ -924,7 +1119,7 @@ export function MeasurementStep() {
                                         type="number"
                                         step="0.1"
                                         {...register(
-                                          `measurement_location.${locationIndex}.measurement_point.${actualPointIndex}.height_m`,
+                                          `measurement_location.${locationIndex}.measurement_point.${originalIndex}.height_m`,
                                           { valueAsNumber: true }
                                         )}
                                         placeholder="Enter height"
@@ -933,11 +1128,11 @@ export function MeasurementStep() {
                                     <td className="px-4 py-2 text-center align-middle">
                                       <Select
                                         onValueChange={(value: HeightReference) => setValue(
-                                          `measurement_location.${locationIndex}.measurement_point.${actualPointIndex}.height_reference_id`,
+                                          `measurement_location.${locationIndex}.measurement_point.${originalIndex}.height_reference_id`,
                                           value
                                         )}
                                         value={watch(
-                                          `measurement_location.${locationIndex}.measurement_point.${actualPointIndex}.height_reference_id`
+                                          `measurement_location.${locationIndex}.measurement_point.${originalIndex}.height_reference_id`
                                         ) as HeightReference}
                                       >
                                         <SelectTrigger>
@@ -952,7 +1147,7 @@ export function MeasurementStep() {
                                     </td>
                                     <td className="px-4 py-2 text-center align-middle">
                                       <Textarea
-                                        {...register(`measurement_location.${locationIndex}.measurement_point.${actualPointIndex}.notes`)}
+                                        {...register(`measurement_location.${locationIndex}.measurement_point.${originalIndex}.notes`)}
                                         placeholder="Add any additional notes"
                                         rows={2}
                                       />
@@ -963,14 +1158,15 @@ export function MeasurementStep() {
                                         variant="ghost"
                                         size="icon"
                                         aria-label="Remove"
-                                        onClick={() => removeMeasurementPoint(locationIndex, actualPointIndex)}
+                                        onClick={() => removeMeasurementPoint(locationIndex, originalIndex)}
                                         className="p-2 hover:bg-transparent"
                                       >
                                         <Trash2 className="w-6 h-6 text-[#FF0000] hover:text-[#CC0000]" />
                                       </Button>
                                     </td>
                                   </tr>
-                                )})}
+                                ))
+                              )}
                             </tbody>
                           </table>
                         </div>
