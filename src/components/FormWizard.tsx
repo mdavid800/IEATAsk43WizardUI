@@ -159,6 +159,46 @@ export function FormWizard() {
         </div>
       </nav>
 
+      {/* Top Navigation */}
+      <div className="flex justify-between items-center pt-4 pb-6 border-b border-border">
+        <Button
+          type="button"
+          onClick={prev}
+          disabled={currentStep === 0}
+          variant="outline"
+          className="border-border hover:border-primary/50 shadow-sm"
+          aria-label={`Go to previous step: ${currentStep > 0 ? steps[currentStep - 1].name : 'None'}`}
+        >
+          <ChevronLeft className="w-4 h-4 mr-1" />
+          Previous
+        </Button>
+        
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span className="font-medium">Step {currentStep + 1} of {steps.length}</span>
+          <span className="text-xs">•</span>
+          <span>{steps[currentStep].name}</span>
+        </div>
+
+        <Button
+          type="button"
+          onClick={() => onSubmit(methods.getValues())}
+          className="bg-primary hover:bg-primary/90 shadow-sm"
+          aria-label={currentStep === steps.length - 1 ? 'Export JSON file' : `Go to next step: ${currentStep < steps.length - 1 ? steps[currentStep + 1].name : 'Review'}`}
+        >
+          {currentStep === steps.length - 1 ? (
+            <>
+              <Save className="w-4 h-4 mr-1" />
+              Export JSON
+            </>
+          ) : (
+            <>
+              Next
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </>
+          )}
+        </Button>
+      </div>
+
       {/* Form Content */}
       <FormProvider {...methods}>
         <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-8">
@@ -166,7 +206,7 @@ export function FormWizard() {
             <CurrentStepComponent />
           </div>
 
-          {/* Navigation */}
+          {/* Bottom Navigation */}
           <div className="flex justify-between pt-4">
             <Button
               type="button"
@@ -174,6 +214,7 @@ export function FormWizard() {
               disabled={currentStep === 0}
               variant="outline"
               className="border-border hover:border-primary/50 shadow-sm"
+              aria-label={`Go to previous step: ${currentStep > 0 ? steps[currentStep - 1].name : 'None'}`}
             >
               <ChevronLeft className="w-4 h-4 mr-1" />
               Previous
@@ -181,6 +222,7 @@ export function FormWizard() {
             <Button
               type="submit"
               className="bg-primary hover:bg-primary/90 shadow-sm"
+              aria-label={currentStep === steps.length - 1 ? 'Export JSON file' : `Go to next step: ${currentStep < steps.length - 1 ? steps[currentStep + 1].name : 'Review'}`}
             >
               {currentStep === steps.length - 1 ? (
                 <>
