@@ -61,7 +61,7 @@ export function ClearableSelect({
         <SelectContent>
           {clearable && (
             <>
-              <SelectItem value="" className="text-muted-foreground italic">
+              <SelectItem value="\" className="text-muted-foreground italic">
                 {placeholder}
               </SelectItem>
               <hr className="my-1 border-border" />
