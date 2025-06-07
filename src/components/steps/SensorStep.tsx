@@ -1,6 +1,6 @@
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { PlusCircle, Trash2, ChevronDown, Plus } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -361,7 +361,7 @@ function CalibrationArray({
   });
 
   // Effect to notify parent when a new calibration is added and should be expanded
-  const prevCalFieldsLength = React.useRef(calibrationFields.length);
+  const prevCalFieldsLength = useRef(calibrationFields.length);
   useEffect(() => {
     if (calibrationFields.length > prevCalFieldsLength.current) {
       const newField = calibrationFields[calibrationFields.length - 1];
