@@ -47,7 +47,8 @@ export function MeasurementStep() {
   const [bulkEditValues, setBulkEditValues] = useState<BulkEditValues>({
     measurement_type_id: '',
     height_m: '',
-    height_reference_id: ''
+    height_reference_id: '',
+    unit: ''
   });
 
   const addMeasurementPoint = (locationIndex: number, loggerIndex: number) => {

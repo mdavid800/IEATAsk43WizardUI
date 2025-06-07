@@ -17,6 +17,7 @@ export interface BulkEditValues {
     measurement_type_id: MeasurementType | '';
     height_m: string;
     height_reference_id: HeightReference | '';
+    unit: string;
 }
 
 interface FilterValues {
@@ -24,6 +25,7 @@ interface FilterValues {
     measurement_type_id: MeasurementType | 'all';
     height_m: string;
     height_reference_id: HeightReference | 'all';
+    unit: string;
     notes: string;
 }
 
@@ -53,6 +55,7 @@ export function MeasurementTable({
         measurement_type_id: 'all',
         height_m: '',
         height_reference_id: 'all',
+        unit: '',
         notes: ''
     });
 
@@ -64,11 +67,12 @@ export function MeasurementTable({
             measurement_type_id: 'all',
             height_m: '',
             height_reference_id: 'all',
+            unit: '',
             notes: ''
         });
     };
 
-    const hasActiveFilters = filters.name !== '' || filters.measurement_type_id !== 'all' || filters.height_m !== '' || filters.height_reference_id !== 'all' || filters.notes !== '';
+    const hasActiveFilters = filters.name !== '' || filters.measurement_type_id !== 'all' || filters.height_m !== '' || filters.height_reference_id !== 'all' || filters.unit !== '' || filters.notes !== '';
 
     // First filter by logger identifier, then apply user filters
     const allPoints = watch(`measurement_location.${locationIndex}.measurement_point`) || [];
@@ -92,6 +96,9 @@ export function MeasurementTable({
             return false;
         }
         if (filters.height_reference_id !== 'all' && pointData.height_reference_id !== filters.height_reference_id) {
+            return false;
+        }
+        if (filters.unit && !pointData.unit?.toLowerCase().includes(filters.unit.toLowerCase())) {
             return false;
         }
         if (filters.notes && !pointData.notes?.toLowerCase().includes(filters.notes.toLowerCase())) {
@@ -127,6 +134,12 @@ export function MeasurementTable({
                         bulkEditValues.height_reference_id as HeightReference
                     );
                 }
+                if (bulkEditValues.unit) {
+                    setValue(
+                        `measurement_location.${locationIndex}.measurement_point.${actualIndex}.unit`,
+                        bulkEditValues.unit
+                    );
+                }
             }
         });
 
@@ -134,7 +147,8 @@ export function MeasurementTable({
         setBulkEditValues(() => ({
             measurement_type_id: '',
             height_m: '',
-            height_reference_id: ''
+            height_reference_id: '',
+            unit: ''
         }));
         setSelectedPoints(() => ({}));
     };
@@ -159,6 +173,9 @@ export function MeasurementTable({
         return selectedPoints[`${locationIndex}-${actualIndex}`];
     });
 
+    // Get unique units for the unit filter dropdown
+    const allUnits = [...new Set(loggerFilteredPoints.map(point => point.unit).filter(Boolean))].sort();
+
     return (
         <div>
             {/* Filter Toggle and Clear */}
@@ -179,6 +196,7 @@ export function MeasurementTable({
                                 filters.measurement_type_id !== 'all',
                                 filters.height_m !== '',
                                 filters.height_reference_id !== 'all',
+                                filters.unit !== '',
                                 filters.notes !== ''
                             ].filter(Boolean).length}
                         </span>
@@ -202,7 +220,7 @@ export function MeasurementTable({
             {showFilters && (
                 <div className="mb-4 p-4 bg-muted/30 rounded-lg">
                     <h5 className="text-sm font-medium mb-3">Filter Points</h5>
-                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
                         <div>
                             <Label>Name</Label>
                             <Input
@@ -265,6 +283,25 @@ export function MeasurementTable({
                             </Select>
                         </div>
                         <div>
+                            <Label>Unit</Label>
+                            <Select
+                                value={filters.unit}
+                                onValueChange={(value) =>
+                                    setFilters(prev => ({ ...prev, unit: value }))
+                                }
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="All units" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="">All units</SelectItem>
+                                    {allUnits.map(unit => (
+                                        <SelectItem key={unit} value={unit}>{unit}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div>
                             <Label>Notes</Label>
                             <Input
                                 value={filters.notes}
@@ -285,7 +322,7 @@ export function MeasurementTable({
             {/* Bulk Edit Controls */}
             <div className="mb-4 p-4 bg-muted/30 rounded-lg">
                 <h5 className="text-sm font-medium mb-3">Bulk Edit Selected Points</h5>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-4 gap-4">
                     <div>
                         <Label>Measurement Type</Label>
                         <Select
@@ -339,6 +376,14 @@ export function MeasurementTable({
                             </SelectContent>
                         </Select>
                     </div>
+                    <div>
+                        <Label>Unit</Label>
+                        <Input
+                            value={bulkEditValues.unit}
+                            onChange={(e) => setBulkEditValues(prev => ({ ...prev, unit: e.target.value }))}
+                            placeholder="Enter unit (e.g., m/s, deg)"
+                        />
+                    </div>
                 </div>
                 <div className="mt-3 flex justify-end">
                     <Button
@@ -371,6 +416,7 @@ export function MeasurementTable({
                             <th className="px-4 py-2 text-center align-middle text-xs font-medium text-muted-foreground">Measurement Type</th>
                             <th className="px-4 py-2 text-center align-middle text-xs font-medium text-muted-foreground">Height (m)</th>
                             <th className="px-4 py-2 text-center align-middle text-xs font-medium text-muted-foreground">Height Reference</th>
+                            <th className="px-4 py-2 text-center align-middle text-xs font-medium text-muted-foreground">Unit</th>
                             <th className="px-4 py-2 text-center align-middle text-xs font-medium text-muted-foreground">Notes</th>
                             <th className="px-4 py-2 text-center align-middle text-xs font-medium text-muted-foreground">Remove</th>
                         </tr>
@@ -456,6 +502,12 @@ export function MeasurementTable({
                                         </Select>
                                     </td>
                                     <td className="px-4 py-2 text-center align-middle">
+                                        <Input
+                                            {...register(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.unit`)}
+                                            placeholder="Enter unit (e.g., m/s, deg)"
+                                        />
+                                    </td>
+                                    <td className="px-4 py-2 text-center align-middle">
                                         <Textarea
                                             {...register(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.notes`)}
                                             placeholder="Add any additional notes"
@@ -498,4 +550,4 @@ export function MeasurementTable({
             )}
         </div>
     );
-} 
+}
