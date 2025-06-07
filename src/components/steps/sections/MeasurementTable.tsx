@@ -427,7 +427,7 @@ export function MeasurementTable({
                         <Label>Sensors</Label>
                         <MultiSelect
                             options={sensorOptions}
-                            selected={bulkEditValues.sensors} // Pass the array of Sensor objects directly
+                            selected={bulkEditValues.sensors || []} // Ensure sensors is always an array
                             onChange={(selectedSensorValues: Sensor[]) => {
                                 setBulkEditValues(prev => ({ ...prev, sensors: selectedSensorValues }));
                             }}
