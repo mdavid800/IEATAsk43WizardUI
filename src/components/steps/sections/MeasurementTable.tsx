@@ -56,16 +56,20 @@ export function MeasurementTable({
     // Get available sensors for this location
     const availableSensors = watch(`measurement_location.${locationIndex}.sensor`) || [];
 
-    // Memoize and prepare sensor options for the multi-select
+    // Memoize and prepare sensor options for the multi-select with proper formatting
     const sensorOptions = useMemo(() => {
+        const validSensors = availableSensors.filter((sensor: Sensor) => 
+            sensor.model && sensor.serial_number
+        );
+        
         const groupedByOem: { [key: string]: { label: string; value: Sensor }[] } = {};
-        availableSensors.forEach((sensor: Sensor) => {
-            if (!sensor.oem) return; // Skip if OEM is not defined
-            if (!groupedByOem[sensor.oem]) {
-                groupedByOem[sensor.oem] = [];
+        validSensors.forEach((sensor: Sensor) => {
+            const oem = sensor.oem || 'Unknown';
+            if (!groupedByOem[oem]) {
+                groupedByOem[oem] = [];
             }
-            groupedByOem[sensor.oem].push({
-                label: `${sensor.oem} (${sensor.serial_number || 'N/A'})`,
+            groupedByOem[oem].push({
+                label: `${sensor.model} (${sensor.serial_number})`,
                 value: sensor,
             });
         });
@@ -168,11 +172,6 @@ export function MeasurementTable({
                 }
                 // Apply selected sensors
                 if (bulkEditValues.sensors && bulkEditValues.sensors.length > 0) {
-                    // Assuming measurement_point.sensor is the target field.
-                    // The schema might expect an array of sensor UUIDs or the full sensor objects.
-                    // For now, let's assume it expects the full sensor objects as per BulkEditValues.sensors type.
-                    // Adjust if it expects sensor_id or similar.
-                    // This will REPLACE existing sensors with the selected ones.
                     setValue(
                         `measurement_location.${locationIndex}.measurement_point.${actualIndex}.sensor`,
                         bulkEditValues.sensors
@@ -214,6 +213,15 @@ export function MeasurementTable({
 
     // Get unique units for the unit filter dropdown
     const allUnits = [...new Set(loggerFilteredPoints.map(point => point.unit).filter(Boolean))].sort();
+
+    // Helper function to get sensor display text
+    const getSensorDisplayText = (sensors: Sensor[] = []) => {
+        if (!sensors || sensors.length === 0) return 'No sensors';
+        return sensors
+            .filter(sensor => sensor.model && sensor.serial_number)
+            .map(sensor => `${sensor.model} (${sensor.serial_number})`)
+            .join(', ') || 'No valid sensors';
+    };
 
     return (
         <div>
@@ -361,7 +369,7 @@ export function MeasurementTable({
             {/* Bulk Edit Controls */}
             <div className="mb-4 p-4 bg-muted/30 rounded-lg">
                 <h5 className="text-sm font-medium mb-3">Bulk Edit Selected Points</h5>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4"> {/* Adjusted grid for new field */}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                     <div>
                         <Label>Measurement Type</Label>
                         <Select
@@ -468,12 +476,15 @@ export function MeasurementTable({
                             <th className="px-4 py-2 text-center align-middle text-xs font-medium text-muted-foreground">Height (m)</th>
                             <th className="px-4 py-2 text-center align-middle text-xs font-medium text-muted-foreground">Height Reference</th>
                             <th className="px-4 py-2 text-center align-middle text-xs font-medium text-muted-foreground">Unit</th>
+                            <th className="px-4 py-2 text-center align-middle text-xs font-medium text-muted-foreground">Sensors</th>
                             <th className="px-4 py-2 text-center align-middle text-xs font-medium text-muted-foreground">Notes</th>
                             <th className="px-4 py-2 text-center align-middle text-xs font-medium text-muted-foreground">Remove</th>
                         </tr>
                     </thead>
                     <tbody className="bg-background divide-y divide-border">
                         {filteredPointsWithIndices.map(({ point, actualIndex }, displayIndex) => {
+                            const pointSensors = watch(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.sensor`) || [];
+                            
                             return (
                                 <tr key={`${loggerIdentifier}-${actualIndex}`}>
                                     <td className="px-4 py-2 text-center align-middle">
@@ -556,6 +567,20 @@ export function MeasurementTable({
                                         <Input
                                             {...register(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.unit`)}
                                             placeholder="Enter unit (e.g., m/s, deg)"
+                                        />
+                                    </td>
+                                    <td className="px-4 py-2 text-center align-middle">
+                                        <MultiSelect
+                                            options={sensorOptions}
+                                            selected={pointSensors}
+                                            onChange={(selectedSensors: Sensor[]) => {
+                                                setValue(
+                                                    `measurement_location.${locationIndex}.measurement_point.${actualIndex}.sensor`,
+                                                    selectedSensors
+                                                );
+                                            }}
+                                            placeholder="Select sensors"
+                                            className="w-full min-w-[200px]"
                                         />
                                     </td>
                                     <td className="px-4 py-2 text-center align-middle">

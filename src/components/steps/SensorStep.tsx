@@ -25,7 +25,7 @@ interface NestedExpandedState {
 }
 
 export function SensorStep() {
-  const { control, register, setValue, watch } = useFormContext<IEATask43Schema>();
+  const { control, register, setValue, watch, formState: { errors } } = useFormContext<IEATask43Schema>();
   const allLocations = watch('measurement_location') || [];
 
   // States are now objects keyed by location index
@@ -83,7 +83,7 @@ export function SensorStep() {
   };
 
   if (allLocations.length === 0) {
-    return <p className="text-muted-foreground">No measurement locations defined. Please add locations in the 'Location\' step.</p>;
+    return <p className="text-muted-foreground">No measurement locations defined. Please add locations in the 'Location' step.</p>;
   }
 
   return (
@@ -99,6 +99,7 @@ export function SensorStep() {
             register={register}
             setValue={setValue}
             watch={watch}
+            errors={errors}
             expandedSensors={expandedSensors[locationIndex] || {}}
             expandedCalibrations={expandedCalibrations[locationIndex] || {}}
             toggleExpandSensor={(sensorId) => toggleExpandSensor(locationIndex, sensorId)}
@@ -119,6 +120,7 @@ interface LocationSensorManagerProps {
   register: any;
   setValue: any;
   watch: any;
+  errors: any;
   expandedSensors: ExpandedState;
   expandedCalibrations: NestedExpandedState; // This will be further nested or specific to this location's sensors
   toggleExpandSensor: (sensorFieldId: string) => void;
@@ -133,6 +135,7 @@ function LocationSensorManager({
   register,
   setValue,
   watch,
+  errors,
   expandedSensors,
   expandedCalibrations,
   toggleExpandSensor,
@@ -230,13 +233,35 @@ function LocationSensorManager({
                   <Input {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.oem`)} placeholder="Manufacturer" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.model`}>Model</Label>
-                  <Input {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.model`)} placeholder="Model name" />
+                  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.model`}>
+                    Model <span className="text-red-500">*</span>
+                  </Label>
+                  <Input 
+                    {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.model`, {
+                      required: "Model is required"
+                    })} 
+                    placeholder="Model name" 
+                    className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.model ? 'border-red-500' : ''}
+                  />
+                  {errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.model && (
+                    <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensor[sensorIndex].model.message}</p>
+                  )}
                 </div>
                 {/* ... other sensor fields with updated paths ... */}
                  <div className="space-y-2">
-                  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.serial_number`}>Serial Number</Label>
-                  <Input {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.serial_number`)} placeholder="Serial number"/>
+                  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.serial_number`}>
+                    Serial Number <span className="text-red-500">*</span>
+                  </Label>
+                  <Input 
+                    {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.serial_number`, {
+                      required: "Serial number is required"
+                    })} 
+                    placeholder="Serial number"
+                    className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.serial_number ? 'border-red-500' : ''}
+                  />
+                  {errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.serial_number && (
+                    <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensor[sensorIndex].serial_number.message}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.sensor_type_id`}>Sensor Type</Label>
