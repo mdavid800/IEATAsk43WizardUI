@@ -29,6 +29,10 @@ export function ClearableSelect({
     onValueChange(undefined)
   }
 
+  // Determine padding based on whether clear button is shown
+  const showClearButton = clearable && value && !disabled
+  const triggerPadding = showClearButton ? "pr-14" : "pr-8"
+
   return (
     <div className="relative">
       <Select
@@ -43,14 +47,14 @@ export function ClearableSelect({
         disabled={disabled}
         {...props}
       >
-        <SelectTrigger className={cn("pr-8", className)}>
+        <SelectTrigger className={cn(triggerPadding, className)}>
           <SelectValue placeholder={placeholder} />
-          {clearable && value && !disabled && (
+          {showClearButton && (
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              className="absolute right-8 top-1/2 -translate-y-1/2 h-5 w-5 p-0 hover:bg-transparent opacity-50 hover:opacity-100"
+              className="absolute right-10 top-1/2 -translate-y-1/2 h-5 w-5 p-0 hover:bg-transparent opacity-50 hover:opacity-100 z-10"
               onClick={handleClear}
               tabIndex={-1}
             >
@@ -61,7 +65,7 @@ export function ClearableSelect({
         <SelectContent>
           {clearable && (
             <>
-              <SelectItem value="\" className="text-muted-foreground italic">
+              <SelectItem value="" className="text-muted-foreground italic">
                 {placeholder}
               </SelectItem>
               <hr className="my-1 border-border" />
