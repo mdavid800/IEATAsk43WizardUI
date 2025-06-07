@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ClearableSelect } from '@/components/ui/clearable-select';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { MultiSelect } from '@/components/ui/multi-select';
@@ -269,29 +270,24 @@ export function MeasurementTable({
                         </div>
                         <div>
                             <Label>Measurement Type</Label>
-                            <Select
-                                value={filters.measurement_type_id}
+                            <ClearableSelect
+                                value={filters.measurement_type_id === 'all' ? undefined : filters.measurement_type_id}
                                 onValueChange={(value) =>
-                                    setFilters(prev => ({ ...prev, measurement_type_id: value as MeasurementType | 'all' }))
+                                    setFilters(prev => ({ ...prev, measurement_type_id: (value as MeasurementType) || 'all' }))
                                 }
+                                placeholder="All types"
                             >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="All types" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All types</SelectItem>
-                                    <SelectItem value="wind_speed">Wind Speed</SelectItem>
-                                    <SelectItem value="wind_direction">Wind Direction</SelectItem>
-                                    <SelectItem value="temperature">Temperature</SelectItem>
-                                    <SelectItem value="pressure">Pressure</SelectItem>
-                                    <SelectItem value="humidity">Humidity</SelectItem>
-                                    <SelectItem value="wave_height">Wave Height</SelectItem>
-                                    <SelectItem value="wave_period">Wave Period</SelectItem>
-                                    <SelectItem value="wave_direction">Wave Direction</SelectItem>
-                                    <SelectItem value="position">Position</SelectItem>
-                                    <SelectItem value="other">Other</SelectItem>
-                                </SelectContent>
-                            </Select>
+                                <SelectItem value="wind_speed">Wind Speed</SelectItem>
+                                <SelectItem value="wind_direction">Wind Direction</SelectItem>
+                                <SelectItem value="temperature">Temperature</SelectItem>
+                                <SelectItem value="pressure">Pressure</SelectItem>
+                                <SelectItem value="humidity">Humidity</SelectItem>
+                                <SelectItem value="wave_height">Wave Height</SelectItem>
+                                <SelectItem value="wave_period">Wave Period</SelectItem>
+                                <SelectItem value="wave_direction">Wave Direction</SelectItem>
+                                <SelectItem value="position">Position</SelectItem>
+                                <SelectItem value="other">Other</SelectItem>
+                            </ClearableSelect>
                         </div>
                         <div>
                             <Label>Height (m)</Label>
@@ -303,22 +299,17 @@ export function MeasurementTable({
                         </div>
                         <div>
                             <Label>Height Reference</Label>
-                            <Select
-                                value={filters.height_reference_id}
+                            <ClearableSelect
+                                value={filters.height_reference_id === 'all' ? undefined : filters.height_reference_id}
                                 onValueChange={(value) =>
-                                    setFilters(prev => ({ ...prev, height_reference_id: value as HeightReference | 'all' }))
+                                    setFilters(prev => ({ ...prev, height_reference_id: (value as HeightReference) || 'all' }))
                                 }
+                                placeholder="All references"
                             >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="All references" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All references</SelectItem>
-                                    <SelectItem value="ground_level">Ground Level</SelectItem>
-                                    <SelectItem value="sea_level">Sea Level</SelectItem>
-                                    <SelectItem value="sea_floor">Sea Floor</SelectItem>
-                                </SelectContent>
-                            </Select>
+                                <SelectItem value="ground_level">Ground Level</SelectItem>
+                                <SelectItem value="sea_level">Sea Level</SelectItem>
+                                <SelectItem value="sea_floor">Sea Floor</SelectItem>
+                            </ClearableSelect>
                         </div>
                         <div>
                             <Label>Unit</Label>
@@ -363,28 +354,24 @@ export function MeasurementTable({
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                     <div>
                         <Label>Measurement Type</Label>
-                        <Select
-                            value={bulkEditValues.measurement_type_id}
-                            onValueChange={(value: MeasurementType) =>
-                                setBulkEditValues(prev => ({ ...prev, measurement_type_id: value }))
+                        <ClearableSelect
+                            value={bulkEditValues.measurement_type_id || undefined}
+                            onValueChange={(value: MeasurementType | undefined) =>
+                                setBulkEditValues(prev => ({ ...prev, measurement_type_id: value || '' }))
                             }
+                            placeholder="Select measurement type"
                         >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select measurement type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="wind_speed">Wind Speed</SelectItem>
-                                <SelectItem value="wind_direction">Wind Direction</SelectItem>
-                                <SelectItem value="temperature">Temperature</SelectItem>
-                                <SelectItem value="pressure">Pressure</SelectItem>
-                                <SelectItem value="humidity">Humidity</SelectItem>
-                                <SelectItem value="wave_height">Wave Height</SelectItem>
-                                <SelectItem value="wave_period">Wave Period</SelectItem>
-                                <SelectItem value="wave_direction">Wave Direction</SelectItem>
-                                <SelectItem value="position">Position</SelectItem>
-                                <SelectItem value="other">Other</SelectItem>
-                            </SelectContent>
-                        </Select>
+                            <SelectItem value="wind_speed">Wind Speed</SelectItem>
+                            <SelectItem value="wind_direction">Wind Direction</SelectItem>
+                            <SelectItem value="temperature">Temperature</SelectItem>
+                            <SelectItem value="pressure">Pressure</SelectItem>
+                            <SelectItem value="humidity">Humidity</SelectItem>
+                            <SelectItem value="wave_height">Wave Height</SelectItem>
+                            <SelectItem value="wave_period">Wave Period</SelectItem>
+                            <SelectItem value="wave_direction">Wave Direction</SelectItem>
+                            <SelectItem value="position">Position</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                        </ClearableSelect>
                     </div>
                     <div>
                         <Label>Height (m)</Label>
@@ -398,21 +385,17 @@ export function MeasurementTable({
                     </div>
                     <div>
                         <Label>Height Reference</Label>
-                        <Select
-                            value={bulkEditValues.height_reference_id}
-                            onValueChange={(value: HeightReference) =>
-                                setBulkEditValues(prev => ({ ...prev, height_reference_id: value }))
+                        <ClearableSelect
+                            value={bulkEditValues.height_reference_id || undefined}
+                            onValueChange={(value: HeightReference | undefined) =>
+                                setBulkEditValues(prev => ({ ...prev, height_reference_id: value || '' }))
                             }
+                            placeholder="Select height reference"
                         >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select height reference" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="ground_level">Ground Level</SelectItem>
-                                <SelectItem value="sea_level">Sea Level</SelectItem>
-                                <SelectItem value="sea_floor">Sea Floor</SelectItem>
-                            </SelectContent>
-                        </Select>
+                            <SelectItem value="ground_level">Ground Level</SelectItem>
+                            <SelectItem value="sea_level">Sea Level</SelectItem>
+                            <SelectItem value="sea_floor">Sea Floor</SelectItem>
+                        </ClearableSelect>
                     </div>
                     <div>
                         <Label>Unit</Label>
@@ -497,31 +480,27 @@ export function MeasurementTable({
                                         />
                                     </td>
                                     <td className="px-4 py-2 text-center align-middle">
-                                        <Select
-                                            onValueChange={(value: MeasurementType) => setValue(
+                                        <ClearableSelect
+                                            value={watch(
+                                                `measurement_location.${locationIndex}.measurement_point.${actualIndex}.measurement_type_id`
+                                            ) as MeasurementType || undefined}
+                                            onValueChange={(value: MeasurementType | undefined) => setValue(
                                                 `measurement_location.${locationIndex}.measurement_point.${actualIndex}.measurement_type_id`,
                                                 value
                                             )}
-                                            value={watch(
-                                                `measurement_location.${locationIndex}.measurement_point.${actualIndex}.measurement_type_id`
-                                            ) as MeasurementType}
+                                            placeholder="Select measurement type"
                                         >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select measurement type" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="wind_speed">Wind Speed</SelectItem>
-                                                <SelectItem value="wind_direction">Wind Direction</SelectItem>
-                                                <SelectItem value="temperature">Temperature</SelectItem>
-                                                <SelectItem value="pressure">Pressure</SelectItem>
-                                                <SelectItem value="humidity">Humidity</SelectItem>
-                                                <SelectItem value="wave_height">Wave Height</SelectItem>
-                                                <SelectItem value="wave_period">Wave Period</SelectItem>
-                                                <SelectItem value="wave_direction">Wave Direction</SelectItem>
-                                                <SelectItem value="position">Position</SelectItem>
-                                                <SelectItem value="other">Other</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                            <SelectItem value="wind_speed">Wind Speed</SelectItem>
+                                            <SelectItem value="wind_direction">Wind Direction</SelectItem>
+                                            <SelectItem value="temperature">Temperature</SelectItem>
+                                            <SelectItem value="pressure">Pressure</SelectItem>
+                                            <SelectItem value="humidity">Humidity</SelectItem>
+                                            <SelectItem value="wave_height">Wave Height</SelectItem>
+                                            <SelectItem value="wave_period">Wave Period</SelectItem>
+                                            <SelectItem value="wave_direction">Wave Direction</SelectItem>
+                                            <SelectItem value="position">Position</SelectItem>
+                                            <SelectItem value="other">Other</SelectItem>
+                                        </ClearableSelect>
                                     </td>
                                     <td className="px-4 py-2 text-center align-middle">
                                         <Input
@@ -535,24 +514,20 @@ export function MeasurementTable({
                                         />
                                     </td>
                                     <td className="px-4 py-2 text-center align-middle">
-                                        <Select
-                                            onValueChange={(value: HeightReference) => setValue(
+                                        <ClearableSelect
+                                            value={watch(
+                                                `measurement_location.${locationIndex}.measurement_point.${actualIndex}.height_reference_id`
+                                            ) as HeightReference || undefined}
+                                            onValueChange={(value: HeightReference | undefined) => setValue(
                                                 `measurement_location.${locationIndex}.measurement_point.${actualIndex}.height_reference_id`,
                                                 value
                                             )}
-                                            value={watch(
-                                                `measurement_location.${locationIndex}.measurement_point.${actualIndex}.height_reference_id`
-                                            ) as HeightReference}
+                                            placeholder="Select height reference"
                                         >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select height reference" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="ground_level">Ground Level</SelectItem>
-                                                <SelectItem value="sea_level">Sea Level</SelectItem>
-                                                <SelectItem value="sea_floor">Sea Floor</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                            <SelectItem value="ground_level">Ground Level</SelectItem>
+                                            <SelectItem value="sea_level">Sea Level</SelectItem>
+                                            <SelectItem value="sea_floor">Sea Floor</SelectItem>
+                                        </ClearableSelect>
                                     </td>
                                     <td className="px-4 py-2 text-center align-middle">
                                         <Input
