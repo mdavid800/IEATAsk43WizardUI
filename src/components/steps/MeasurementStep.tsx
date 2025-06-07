@@ -59,6 +59,7 @@ export function MeasurementStep() {
       name: '',
       measurement_type_id: 'other' as const,
       height_m: 0,
+      unit: '', // Add this line
       height_reference_id: 'ground_level' as const,
       update_at: new Date().toISOString(),
       logger_measurement_config: [{
@@ -536,6 +537,7 @@ export function MeasurementStep() {
                 name: column.name, // Use exact original column name
                 measurement_type_id: column.measurementType,
                 height_m: column.height || 0,
+                unit: column.unit, // Assign the unit from ColumnInfo
                 height_reference_id: 'ground_level',
                 update_at: new Date().toISOString(),
                 logger_measurement_config: [{

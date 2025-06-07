@@ -75,6 +75,7 @@ export interface MeasurementPoint {
   measurement_type_id: 'wind_speed' | 'wind_direction' | 'temperature' | 'pressure' | 'humidity' | 'wave_height' | 'wave_period' | 'wave_direction' | 'position' | 'other';
   height_m: number;
   height_reference_id: 'ground_level' | 'sea_level' | 'sea_floor';
+  unit?: string;
   notes?: string;
   update_at: string;
   logger_measurement_config: LoggerMeasurementConfig[];
