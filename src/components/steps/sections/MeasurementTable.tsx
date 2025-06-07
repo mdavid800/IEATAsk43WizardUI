@@ -6,11 +6,13 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useState } from 'react';
+import { MultiSelect } from '@/components/ui/multi-select'; // Assuming this path
+import { useState, useMemo } from 'react';
 import type {
     IEATask43Schema,
     MeasurementType,
-    HeightReference
+    HeightReference,
+    Sensor
 } from '@/types/schema';
 
 export interface BulkEditValues {
@@ -18,6 +20,7 @@ export interface BulkEditValues {
     height_m: string;
     height_reference_id: HeightReference | '';
     unit: string;
+    sensors: Sensor[];
 }
 
 interface FilterValues {
@@ -49,6 +52,29 @@ export function MeasurementTable({
     onRemovePoint
 }: MeasurementTableProps) {
     const { register, setValue, watch } = useFormContext<IEATask43Schema>();
+
+    // Get available sensors for this location
+    const availableSensors = watch(`measurement_location.${locationIndex}.sensor`) || [];
+
+    // Memoize and prepare sensor options for the multi-select
+    const sensorOptions = useMemo(() => {
+        const groupedByOem: { [key: string]: { label: string; value: Sensor }[] } = {};
+        availableSensors.forEach((sensor: Sensor) => {
+            if (!sensor.oem) return; // Skip if OEM is not defined
+            if (!groupedByOem[sensor.oem]) {
+                groupedByOem[sensor.oem] = [];
+            }
+            groupedByOem[sensor.oem].push({
+                label: `${sensor.oem} (${sensor.serial_number || 'N/A'})`,
+                value: sensor,
+            });
+        });
+
+        return Object.keys(groupedByOem).map(oem => ({
+            label: oem,
+            options: groupedByOem[oem],
+        }));
+    }, [availableSensors]);
 
     const [filters, setFilters] = useState<FilterValues>({
         name: '',
@@ -140,6 +166,18 @@ export function MeasurementTable({
                         bulkEditValues.unit
                     );
                 }
+                // Apply selected sensors
+                if (bulkEditValues.sensors && bulkEditValues.sensors.length > 0) {
+                    // Assuming measurement_point.sensor is the target field.
+                    // The schema might expect an array of sensor UUIDs or the full sensor objects.
+                    // For now, let's assume it expects the full sensor objects as per BulkEditValues.sensors type.
+                    // Adjust if it expects sensor_id or similar.
+                    // This will REPLACE existing sensors with the selected ones.
+                    setValue(
+                        `measurement_location.${locationIndex}.measurement_point.${actualIndex}.sensor`,
+                        bulkEditValues.sensors
+                    );
+                }
             }
         });
 
@@ -148,7 +186,8 @@ export function MeasurementTable({
             measurement_type_id: '',
             height_m: '',
             height_reference_id: '',
-            unit: ''
+            unit: '',
+            sensors: []
         }));
         setSelectedPoints(() => ({}));
     };
@@ -322,7 +361,7 @@ export function MeasurementTable({
             {/* Bulk Edit Controls */}
             <div className="mb-4 p-4 bg-muted/30 rounded-lg">
                 <h5 className="text-sm font-medium mb-3">Bulk Edit Selected Points</h5>
-                <div className="grid grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4"> {/* Adjusted grid for new field */}
                     <div>
                         <Label>Measurement Type</Label>
                         <Select
@@ -382,6 +421,18 @@ export function MeasurementTable({
                             value={bulkEditValues.unit}
                             onChange={(e) => setBulkEditValues(prev => ({ ...prev, unit: e.target.value }))}
                             placeholder="Enter unit (e.g., m/s, deg)"
+                        />
+                    </div>
+                    <div>
+                        <Label>Sensors</Label>
+                        <MultiSelect
+                            options={sensorOptions}
+                            selected={bulkEditValues.sensors} // Pass the array of Sensor objects directly
+                            onChange={(selectedSensorValues: Sensor[]) => {
+                                setBulkEditValues(prev => ({ ...prev, sensors: selectedSensorValues }));
+                            }}
+                            placeholder="Select sensors"
+                            className="w-full"
                         />
                     </div>
                 </div>
