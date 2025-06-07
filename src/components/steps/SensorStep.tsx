@@ -83,7 +83,7 @@ export function SensorStep() {
   };
 
   if (allLocations.length === 0) {
-    return <p className="text-muted-foreground">No measurement locations defined. Please add locations in the 'Location' step.</p>;
+    return <p className="text-muted-foreground">No measurement locations defined. Please add locations in the 'Location\' step.</p>;
   }
 
   return (
