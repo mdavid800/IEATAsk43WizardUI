@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { MultiSelect } from '@/components/ui/multi-select'; // Assuming this path
+import { MultiSelect } from '@/components/ui/multi-select';
 import { useState, useMemo } from 'react';
 import type {
     IEATask43Schema,
@@ -56,27 +56,27 @@ export function MeasurementTable({
     // Get available sensors for this location
     const availableSensors = watch(`measurement_location.${locationIndex}.sensor`) || [];
 
-    // Memoize and prepare sensor options for the multi-select with proper formatting
+    // Memoize and prepare sensor options grouped by MODEL (not OEM) with proper formatting
     const sensorOptions = useMemo(() => {
         const validSensors = availableSensors.filter((sensor: Sensor) => 
             sensor.model && sensor.serial_number
         );
         
-        const groupedByOem: { [key: string]: { label: string; value: Sensor }[] } = {};
+        const groupedByModel: { [key: string]: { label: string; value: Sensor }[] } = {};
         validSensors.forEach((sensor: Sensor) => {
-            const oem = sensor.oem || 'Unknown';
-            if (!groupedByOem[oem]) {
-                groupedByOem[oem] = [];
+            const model = sensor.model || 'Unknown Model';
+            if (!groupedByModel[model]) {
+                groupedByModel[model] = [];
             }
-            groupedByOem[oem].push({
+            groupedByModel[model].push({
                 label: `${sensor.model} (${sensor.serial_number})`,
                 value: sensor,
             });
         });
 
-        return Object.keys(groupedByOem).map(oem => ({
-            label: oem,
-            options: groupedByOem[oem],
+        return Object.keys(groupedByModel).map(model => ({
+            label: model,
+            options: groupedByModel[model],
         }));
     }, [availableSensors]);
 
@@ -213,15 +213,6 @@ export function MeasurementTable({
 
     // Get unique units for the unit filter dropdown
     const allUnits = [...new Set(loggerFilteredPoints.map(point => point.unit).filter(Boolean))].sort();
-
-    // Helper function to get sensor display text
-    const getSensorDisplayText = (sensors: Sensor[] = []) => {
-        if (!sensors || sensors.length === 0) return 'No sensors';
-        return sensors
-            .filter(sensor => sensor.model && sensor.serial_number)
-            .map(sensor => `${sensor.model} (${sensor.serial_number})`)
-            .join(', ') || 'No valid sensors';
-    };
 
     return (
         <div>
@@ -435,7 +426,7 @@ export function MeasurementTable({
                         <Label>Sensors</Label>
                         <MultiSelect
                             options={sensorOptions}
-                            selected={bulkEditValues.sensors || []} // Ensure sensors is always an array
+                            selected={bulkEditValues.sensors || []}
                             onChange={(selectedSensorValues: Sensor[]) => {
                                 setBulkEditValues(prev => ({ ...prev, sensors: selectedSensorValues }));
                             }}
