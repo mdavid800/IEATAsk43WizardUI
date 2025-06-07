@@ -55,7 +55,7 @@ export function MeasurementTable({
         measurement_type_id: 'all',
         height_m: '',
         height_reference_id: 'all',
-        unit: '',
+        unit: 'all',
         notes: ''
     });
 
@@ -67,12 +67,12 @@ export function MeasurementTable({
             measurement_type_id: 'all',
             height_m: '',
             height_reference_id: 'all',
-            unit: '',
+            unit: 'all',
             notes: ''
         });
     };
 
-    const hasActiveFilters = filters.name !== '' || filters.measurement_type_id !== 'all' || filters.height_m !== '' || filters.height_reference_id !== 'all' || filters.unit !== '' || filters.notes !== '';
+    const hasActiveFilters = filters.name !== '' || filters.measurement_type_id !== 'all' || filters.height_m !== '' || filters.height_reference_id !== 'all' || filters.unit !== 'all' || filters.notes !== '';
 
     // First filter by logger identifier, then apply user filters
     const allPoints = watch(`measurement_location.${locationIndex}.measurement_point`) || [];
@@ -98,7 +98,7 @@ export function MeasurementTable({
         if (filters.height_reference_id !== 'all' && pointData.height_reference_id !== filters.height_reference_id) {
             return false;
         }
-        if (filters.unit && !pointData.unit?.toLowerCase().includes(filters.unit.toLowerCase())) {
+        if (filters.unit !== 'all' && !pointData.unit?.toLowerCase().includes(filters.unit.toLowerCase())) {
             return false;
         }
         if (filters.notes && !pointData.notes?.toLowerCase().includes(filters.notes.toLowerCase())) {
@@ -196,7 +196,7 @@ export function MeasurementTable({
                                 filters.measurement_type_id !== 'all',
                                 filters.height_m !== '',
                                 filters.height_reference_id !== 'all',
-                                filters.unit !== '',
+                                filters.unit !== 'all',
                                 filters.notes !== ''
                             ].filter(Boolean).length}
                         </span>
@@ -294,7 +294,7 @@ export function MeasurementTable({
                                     <SelectValue placeholder="All units" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">All units</SelectItem>
+                                    <SelectItem value="all">All units</SelectItem>
                                     {allUnits.map(unit => (
                                         <SelectItem key={unit} value={unit}>{unit}</SelectItem>
                                     ))}
