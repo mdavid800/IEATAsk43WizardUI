@@ -4,12 +4,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
     DropdownMenu,
     DropdownMenuContent,
-    DropdownMenuItem, // Will use DropdownMenuCheckboxItem instead for items
+    DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
     DropdownMenuCheckboxItem
-} from '@/components/ui/dropdown-menu'; // Assuming these are standard shadcn/ui exports
+} from '@radix-ui/react-dropdown-menu';
 import { ChevronDown } from 'lucide-react';
 
 // Define the shape of individual options and groups
@@ -146,7 +146,9 @@ export function MultiSelect<T extends { id?: string | number }>({
                                 <Checkbox
                                     id={`group-${group.label}`}
                                     checked={isAllSelectedInGroup}
-                                    indeterminate={isPartiallySelectedInGroup}
+                                    ref={(node) => {
+                                        if (node) node.indeterminate = isPartiallySelectedInGroup;
+                                    }}
                                     onCheckedChange={(checked) => handleSelectAllGroup(group.options, !!checked)}
                                     className="mr-2"
                                 />
@@ -159,7 +161,6 @@ export function MultiSelect<T extends { id?: string | number }>({
                                         key={option.id || (typeof option.value === 'string' || typeof option.value === 'number' ? option.value : option.label)}
                                         checked={isSelected}
                                         onCheckedChange={(checked) => handleSelectItem(option.value, !!checked)}
-                                        // onSelect={(event) => event.preventDefault()} // Prevent closing on select
                                     >
                                         {option.label}
                                     </DropdownMenuCheckboxItem>
