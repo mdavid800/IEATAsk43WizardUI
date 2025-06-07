@@ -32,7 +32,7 @@ export function ClearableSelect({
 
   // Determine padding based on whether clear button is shown
   const showClearButton = clearable && value && !disabled
-  const triggerPadding = showClearButton ? "pr-14" : "pr-8"
+  const triggerPadding = showClearButton ? "pl-10 pr-8" : "pl-3 pr-8" // Move padding to left side
 
   return (
     <div className="relative">
@@ -54,7 +54,7 @@ export function ClearableSelect({
         <SelectContent>
           {clearable && (
             <>
-              <SelectItem value="\" className="text-muted-foreground italic">
+              <SelectItem value="" className="text-muted-foreground italic">
                 {placeholder}
               </SelectItem>
               <hr className="my-1 border-border" />
@@ -64,20 +64,20 @@ export function ClearableSelect({
         </SelectContent>
       </Select>
       
-      {/* Clear button positioned outside of SelectTrigger to prevent click conflicts */}
+      {/* Clear button positioned on the LEFT side to match sensors dropdown styling */}
       {showClearButton && (
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          className="absolute right-10 top-1/2 -translate-y-1/2 h-5 w-5 p-0 hover:bg-transparent opacity-50 hover:opacity-100 z-20 pointer-events-auto"
+          className="absolute left-2 top-1/2 -translate-y-1/2 h-6 w-6 p-0 hover:bg-transparent opacity-50 hover:opacity-100 z-20 pointer-events-auto"
           onClick={handleClear}
-          onMouseDown={handleClear} // Also handle mousedown to ensure it triggers before any other events
+          onMouseDown={handleClear}
           tabIndex={-1}
         >
-          <X className="h-3 w-3" />
+          <X className="h-4 w-4" />
         </Button>
       )}
     </div>
   )
-}
+}</action>

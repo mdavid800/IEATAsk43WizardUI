@@ -116,6 +116,8 @@ export function MultiSelect<T extends { model?: string; serial_number?: string }
         onChange([]);
     };
 
+    const hasSelection = selected && selected.length > 0;
+
     return (
         <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
             <DropdownMenuTrigger asChild className={className}>
@@ -123,20 +125,28 @@ export function MultiSelect<T extends { model?: string; serial_number?: string }
                     variant="outline"
                     role="combobox"
                     aria-expanded={isOpen}
-                    className={`w-full justify-between border-border hover:border-primary/50 bg-background text-foreground ${triggerClassName}`}
+                    className={`w-full justify-between border-border hover:border-primary/50 bg-background text-foreground ${hasSelection ? 'pl-10' : 'pl-3'} pr-8 ${triggerClassName}`}
                 >
                     <span className="truncate">{getSelectedItemsText()}</span>
-                    <div className="flex items-center gap-2">
-                        {selected && selected.length > 0 && (
-                            <X 
-                                className="h-4 w-4 shrink-0 opacity-50 hover:opacity-100 cursor-pointer" 
-                                onClick={clearSelection}
-                            />
-                        )}
-                        <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
-                    </div>
+                    <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </DropdownMenuTrigger>
+            
+            {/* Clear button positioned on the LEFT side to match consistent styling */}
+            {hasSelection && (
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 h-6 w-6 p-0 hover:bg-transparent opacity-50 hover:opacity-100 z-20 pointer-events-auto"
+                    onClick={clearSelection}
+                    onMouseDown={clearSelection}
+                    tabIndex={-1}
+                >
+                    <X className="h-4 w-4" />
+                </Button>
+            )}
+            
             <DropdownMenuContent 
                 className="w-[--radix-dropdown-menu-trigger-width] max-h-[300px] overflow-y-auto bg-background border border-border shadow-lg rounded-lg p-2"
                 align="start"
