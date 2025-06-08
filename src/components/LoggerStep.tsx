@@ -1,6 +1,6 @@
+import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { PlusCircle, Trash2, ChevronDown, Settings, Info } from 'lucide-react';
-import { useState } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';

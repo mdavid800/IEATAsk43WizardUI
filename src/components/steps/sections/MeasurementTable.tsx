@@ -1,3 +1,4 @@
+import React, { useState, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Trash2, Filter, X, ChevronDown, ChevronRight, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,7 +9,6 @@ import { ClearableSelect } from '@/components/ui/clearable-select';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { MultiSelect } from '@/components/ui/multi-select';
-import { useState, useMemo } from 'react';
 import type {
     IEATask43Schema,
     MeasurementType,

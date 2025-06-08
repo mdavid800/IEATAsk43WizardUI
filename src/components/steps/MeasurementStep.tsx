@@ -1,6 +1,6 @@
+import React, { useState, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { PlusCircle, Upload, ChevronDown, AlertCircle } from 'lucide-react';
-import { useState, useRef } from 'react';
 import Papa from 'papaparse';
 import { Button } from '@/components/ui/button';
 import type {
@@ -22,8 +22,6 @@ interface CSVValidationResult {
   errors: CSVValidationError[];
   data: { headers: string[]; headerRowIndex: number; timeColIndex: number } | null;
 }
-
-
 
 interface ColumnInfo {
   name: string;
@@ -615,8 +613,6 @@ export function MeasurementStep() {
     event.target.value = '';
   };
 
-
-
   return (
     <div className="space-y-8">
       <h2 className="text-xl font-semibold text-foreground">Measurement Points</h2>
@@ -726,8 +722,6 @@ export function MeasurementStep() {
                           setBulkEditValues={setBulkEditValues}
                           onRemovePoint={removeMeasurementPoint}
                         />
-
-
                       </div>
                     )}
                   </div>
