@@ -229,8 +229,19 @@ function LocationSensorManager({
               {/* Sensor Details (paths need locationIndex) */}
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.oem`}>OEM</Label>
-                  <Input {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.oem`)} placeholder="Manufacturer" />
+                  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.oem`}>
+                    OEM <span className="text-red-500">*</span>
+                  </Label>
+                  <Input 
+                    {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.oem`, {
+                      required: "OEM is required"
+                    })} 
+                    placeholder="Manufacturer" 
+                    className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.oem ? 'border-red-500' : ''}
+                  />
+                  {errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.oem && (
+                    <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensor[sensorIndex].oem.message}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.model`}>
