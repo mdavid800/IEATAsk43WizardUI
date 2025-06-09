@@ -89,7 +89,7 @@ export function LandingPage({ onStartForm }: LandingPageProps) {
                 
                 <p className="text-xl text-gray-600 leading-relaxed max-w-2xl">
                   A proof of concept implementation of the IEA Task 43 digital Wind Resource Assessment data model. 
-                  Standardize the digital representation of measurement station configurations including met masts, 
+                  Standardize the digital representation of your measurement station configurations including met masts, 
                   lidars, sodars, floating lidars, and solar installations.
                 </p>
               </div>
@@ -150,14 +150,14 @@ export function LandingPage({ onStartForm }: LandingPageProps) {
                   <div className="absolute -top-4 -left-4 bg-white/90 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-white/50">
                     <div className="flex items-center gap-3">
                       <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
-                      <span className="text-sm font-medium text-gray-700">Data Collection Active</span>
+                      <span className="text-sm font-medium text-gray-700">Data Collection</span>
                     </div>
                   </div>
                   
                   <div className="absolute -bottom-4 -right-4 bg-white/90 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-white/50">
                     <div className="flex items-center gap-2">
                       <CheckCircle className="w-5 h-5 text-green-500" />
-                      <span className="text-sm font-medium text-gray-700">Validated</span>
+                      <span className="text-sm font-medium text-gray-700">Standardized</span>
                     </div>
                   </div>
                 </div>
