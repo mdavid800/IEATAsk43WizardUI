@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wind, ArrowRight, CheckCircle, Users, Globe, BarChart3, ChevronDown } from 'lucide-react';
+import { Wind, ArrowRight, CheckCircle, Users, Globe, BarChart3, ChevronDown, Github, ExternalLink } from 'lucide-react';
 import { Button } from './ui/button';
 
 interface LandingPageProps {
@@ -21,23 +21,23 @@ export function LandingPage({ onStartForm }: LandingPageProps) {
   const features = [
     {
       icon: <Wind className="w-8 h-8" />,
-      title: "Standardized Data Collection",
-      description: "Collect wind and wave measurement data using the IEA Task 43 standardized format for global compatibility."
+      title: "Digital Station Configuration",
+      description: "Digitally represent the complete configuration of met masts, lidars, sodars, floating lidars, and solar measurement stations with precise location and equipment details."
     },
     {
       icon: <BarChart3 className="w-8 h-8" />,
-      title: "Comprehensive Measurements",
-      description: "Support for wind speed, direction, wave height, temperature, pressure, and more measurement types."
+      title: "Comprehensive Measurement Tracking",
+      description: "Track measurement heights, sensor specifications, mounting arrangements, logger configurations, and how these properties change over time."
     },
     {
       icon: <Users className="w-8 h-8" />,
-      title: "Collaborative Research",
-      description: "Contribute to the global renewable energy research community with standardized data sharing."
+      title: "Open Source Standard",
+      description: "Built on the IEA Task 43 open source digital WRA data standard, enabling standardized data exchange across the renewable energy industry."
     },
     {
       icon: <Globe className="w-8 h-8" />,
-      title: "Global Standard",
-      description: "Align with international best practices for renewable energy measurement and assessment."
+      title: "Industry Collaboration",
+      description: "Contribute to the development of industry-wide standards for wind and solar resource assessment data management and sharing."
     }
   ];
 
@@ -74,22 +74,23 @@ export function LandingPage({ onStartForm }: LandingPageProps) {
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900">IEA Task 43</h1>
-                  <p className="text-gray-600 text-sm">Data Model Wizard</p>
+                  <p className="text-gray-600 text-sm">WRA Data Model</p>
                 </div>
               </div>
 
               {/* Main Headline */}
               <div className="space-y-6">
                 <h2 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-gray-900 leading-tight">
-                  Standardize Your
+                  Digital WRA
                   <span className="block bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                    Renewable Data
+                    Data Standard
                   </span>
                 </h2>
                 
                 <p className="text-xl text-gray-600 leading-relaxed max-w-2xl">
-                  Create comprehensive measurement data models following IEA Task 43 standards. 
-                  Streamline your wind and wave energy research with our intuitive wizard interface.
+                  A proof of concept implementation of the IEA Task 43 digital Wind Resource Assessment data model. 
+                  Standardize the digital representation of measurement station configurations including met masts, 
+                  lidars, sodars, floating lidars, and solar installations.
                 </p>
               </div>
 
@@ -99,34 +100,34 @@ export function LandingPage({ onStartForm }: LandingPageProps) {
                   onClick={onStartForm}
                   className="group bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-8 py-4 text-lg font-semibold rounded-2xl shadow-lg shadow-green-500/25 hover:shadow-green-500/40 transition-all duration-300 hover:scale-105"
                 >
-                  Start Data Collection
+                  Try the Data Model
                   <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
                 
                 <Button
                   variant="outline"
-                  className="px-8 py-4 text-lg font-semibold rounded-2xl border-2 border-gray-200 hover:border-green-500 hover:text-green-600 transition-all duration-300"
-                  onClick={() => {
-                    document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
-                  }}
+                  className="px-8 py-4 text-lg font-semibold rounded-2xl border-2 border-gray-200 hover:border-green-500 hover:text-green-600 transition-all duration-300 flex items-center gap-2"
+                  onClick={() => window.open('https://github.com/IEA-Task-43/digital_wra_data_standard', '_blank')}
                 >
-                  Learn More
+                  <Github className="w-5 h-5" />
+                  View on GitHub
+                  <ExternalLink className="w-4 h-4" />
                 </Button>
               </div>
 
               {/* Stats */}
               <div className="grid grid-cols-3 gap-8 pt-8 border-t border-gray-200">
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-green-600">50+</div>
-                  <div className="text-sm text-gray-600">Countries</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-green-600">1000+</div>
-                  <div className="text-sm text-gray-600">Projects</div>
+                  <div className="text-3xl font-bold text-green-600">Open</div>
+                  <div className="text-sm text-gray-600">Source</div>
                 </div>
                 <div className="text-center">
                   <div className="text-3xl font-bold text-green-600">Global</div>
                   <div className="text-sm text-gray-600">Standard</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-green-600">IEA</div>
+                  <div className="text-sm text-gray-600">Task 43</div>
                 </div>
               </div>
             </div>
@@ -141,7 +142,7 @@ export function LandingPage({ onStartForm }: LandingPageProps) {
                 <div className="relative p-6">
                   <img
                     src="https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                    alt="Wind turbines in a field representing renewable energy data collection"
+                    alt="Wind measurement station representing digital WRA data collection"
                     className="w-full h-96 object-cover rounded-2xl shadow-xl"
                   />
                   
@@ -149,14 +150,14 @@ export function LandingPage({ onStartForm }: LandingPageProps) {
                   <div className="absolute -top-4 -left-4 bg-white/90 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-white/50">
                     <div className="flex items-center gap-3">
                       <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
-                      <span className="text-sm font-medium text-gray-700">Data Collection Active</span>
+                      <span className="text-sm font-medium text-gray-700">Station Configuration</span>
                     </div>
                   </div>
                   
                   <div className="absolute -bottom-4 -right-4 bg-white/90 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-white/50">
                     <div className="flex items-center gap-2">
                       <CheckCircle className="w-5 h-5 text-green-500" />
-                      <span className="text-sm font-medium text-gray-700">Validated</span>
+                      <span className="text-sm font-medium text-gray-700">Data Standardized</span>
                     </div>
                   </div>
                 </div>
@@ -176,10 +177,11 @@ export function LandingPage({ onStartForm }: LandingPageProps) {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h3 className="text-4xl font-bold text-gray-900 mb-4">
-              Comprehensive Data Management
+              WRA Data Model Capabilities
             </h3>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Our platform provides everything you need to collect, validate, and standardize renewable energy measurement data.
+              The WRA Data Model provides instructions for digitally representing measurement station configurations, 
+              tracking equipment specifications, mounting arrangements, and temporal changes in setup.
             </p>
           </div>
 
@@ -210,6 +212,47 @@ export function LandingPage({ onStartForm }: LandingPageProps) {
         </div>
       </section>
 
+      {/* Technical Details Section */}
+      <section className="relative py-24 px-4 sm:px-6 lg:px-8 bg-gray-50">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <h3 className="text-3xl font-bold text-gray-900 mb-4">
+              What the Data Model Captures
+            </h3>
+          </div>
+          
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-white/50">
+            <div className="prose prose-lg mx-auto text-gray-700">
+              <p className="text-lg leading-relaxed mb-6">
+                The WRA Data Model implementation can contain comprehensive details including:
+              </p>
+              <ul className="space-y-3 text-base">
+                <li className="flex items-start gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                  <span>Precise latitude and longitude coordinates of measurement station installations</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                  <span>Measurement heights and corresponding sensor specifications for each parameter</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                  <span>Detailed sensor mounting arrangements and physical configurations</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                  <span>Logger channel connections and programming parameters (slopes, offsets, calibration data)</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                  <span>Temporal tracking of configuration changes throughout measurement campaigns</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="relative py-24 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
@@ -224,21 +267,33 @@ export function LandingPage({ onStartForm }: LandingPageProps) {
             
             <div className="relative">
               <h3 className="text-4xl font-bold text-white mb-6">
-                Ready to Standardize Your Data?
+                Ready to Explore the Data Model?
               </h3>
               
               <p className="text-xl text-green-100 mb-8 max-w-2xl mx-auto">
-                Join researchers worldwide in creating standardized renewable energy datasets. 
-                Start your data collection journey today.
+                Try this proof of concept implementation and contribute to the development of 
+                standardized renewable energy measurement data formats.
               </p>
               
-              <Button
-                onClick={onStartForm}
-                className="group bg-white text-green-600 hover:bg-gray-50 px-8 py-4 text-lg font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-              >
-                Begin Data Collection
-                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button
+                  onClick={onStartForm}
+                  className="group bg-white text-green-600 hover:bg-gray-50 px-8 py-4 text-lg font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                >
+                  Start Building Your Data Model
+                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  className="border-2 border-white/30 text-white hover:bg-white/10 px-8 py-4 text-lg font-semibold rounded-2xl transition-all duration-300 flex items-center gap-2"
+                  onClick={() => window.open('https://github.com/IEA-Task-43/digital_wra_data_standard', '_blank')}
+                >
+                  <Github className="w-5 h-5" />
+                  Contribute on GitHub
+                  <ExternalLink className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
