@@ -141,8 +141,8 @@ export function LandingPage({ onStartForm }: LandingPageProps) {
                 {/* Image */}
                 <div className="relative p-6">
                   <img
-                    src="https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                    alt="Wind measurement station representing digital WRA data collection"
+                    src="https://images.unsplash.com/photo-1548337138-e87d889cc369?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                    alt="Offshore wind farm with floating measurement platforms representing advanced WRA data collection systems"
                     className="w-full h-96 object-cover rounded-2xl shadow-xl"
                   />
                   
@@ -150,14 +150,14 @@ export function LandingPage({ onStartForm }: LandingPageProps) {
                   <div className="absolute -top-4 -left-4 bg-white/90 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-white/50">
                     <div className="flex items-center gap-3">
                       <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
-                      <span className="text-sm font-medium text-gray-700">Station Configuration</span>
+                      <span className="text-sm font-medium text-gray-700">Floating LiDAR Ready</span>
                     </div>
                   </div>
                   
                   <div className="absolute -bottom-4 -right-4 bg-white/90 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-white/50">
                     <div className="flex items-center gap-2">
                       <CheckCircle className="w-5 h-5 text-green-500" />
-                      <span className="text-sm font-medium text-gray-700">Data Standardized</span>
+                      <span className="text-sm font-medium text-gray-700">Offshore Compatible</span>
                     </div>
                   </div>
                 </div>
