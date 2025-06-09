@@ -286,7 +286,7 @@ export function LandingPage({ onStartForm }: LandingPageProps) {
                 
                 <Button
                   variant="outline"
-                  className="border-2 border-white/30 text-white hover:bg-white/10 px-8 py-4 text-lg font-semibold rounded-2xl transition-all duration-300 flex items-center gap-2"
+                  className="border-2 border-white/30 bg-white/10 text-gray-900 hover:bg-white/20 hover:text-black px-8 py-4 text-lg font-semibold rounded-2xl transition-all duration-300 flex items-center gap-2"
                   onClick={() => window.open('https://github.com/IEA-Task-43/digital_wra_data_standard', '_blank')}
                 >
                   <Github className="w-5 h-5" />
