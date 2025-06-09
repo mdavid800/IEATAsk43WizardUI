@@ -110,7 +110,7 @@ export function LandingPage({ onStartForm }: LandingPageProps) {
                   onClick={() => window.open('https://github.com/IEA-Task-43/digital_wra_data_standard', '_blank')}
                 >
                   <Github className="w-5 h-5" />
-                  Data Standard Repo
+                  Data Standard Specification
                   <ExternalLink className="w-4 h-4" />
                 </Button>
               </div>
@@ -286,11 +286,11 @@ export function LandingPage({ onStartForm }: LandingPageProps) {
                 
                 <Button
                   variant="outline"
-                  className="border-2 border-white/30 bg-white/10 text-gray-900 hover:bg-white/20 hover:text-black px-8 py-4 text-lg font-semibold rounded-2xl transition-all duration-300 flex items-center gap-2"
+                  className="border-2 border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white px-8 py-4 text-lg font-semibold rounded-2xl transition-all duration-300 flex items-center gap-2"
                   onClick={() => window.open('https://github.com/IEA-Task-43/digital_wra_data_standard', '_blank')}
                 >
                   <Github className="w-5 h-5" />
-                  Data Standard Repo
+                  Data Standard Specification
                   <ExternalLink className="w-4 h-4" />
                 </Button>
               </div>
@@ -298,20 +298,35 @@ export function LandingPage({ onStartForm }: LandingPageProps) {
               {/* App Source Code Section */}
               <div className="pt-8 border-t border-white/20">
                 <h4 className="text-xl font-semibold text-white mb-4">
-                  Open Source Implementation
+                  Open Source Form Builder Application
                 </h4>
-                <p className="text-green-100 mb-4 max-w-2xl mx-auto">
-                  This application is completely open source. Download, modify, and use it freely for your own projects.
+                <p className="text-green-100 mb-6 max-w-2xl mx-auto">
+                  This form builder application is completely open source and available under MIT license. 
+                  Download, modify, and use it freely for your own projects - no restrictions!
                 </p>
-                <Button
-                  variant="outline"
-                  className="border-2 border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-gray-900 px-6 py-3 font-semibold rounded-xl transition-all duration-300 flex items-center gap-2 mx-auto"
-                  onClick={() => window.open('https://github.com/mdavid800/IEATAsk43WizardUI', '_blank')}
-                >
-                  <Code className="w-5 h-5" />
-                  App Source Code
-                  <ExternalLink className="w-4 h-4" />
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Button
+                    variant="outline"
+                    className="border-2 border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white px-6 py-3 font-semibold rounded-xl transition-all duration-300 flex items-center gap-2"
+                    onClick={() => window.open('https://github.com/mdavid800/IEATAsk43WizardUI', '_blank')}
+                  >
+                    <Code className="w-5 h-5" />
+                    Form Builder Source Code
+                    <ExternalLink className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="border-2 border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white px-6 py-3 font-semibold rounded-xl transition-all duration-300 flex items-center gap-2"
+                    onClick={() => window.open('https://github.com/mdavid800/IEATAsk43WizardUI/archive/main.zip', '_blank')}
+                  >
+                    <Github className="w-5 h-5" />
+                    Download ZIP
+                    <ExternalLink className="w-4 h-4" />
+                  </Button>
+                </div>
+                <p className="text-green-100/80 text-sm mt-4">
+                  MIT License • Free to use commercially • Fork and customize as needed
+                </p>
               </div>
             </div>
           </div>
