@@ -38,7 +38,8 @@ export function FormWizard() {
         longitude_ddeg: 0,
         measurement_station_type_id: 'mast',
         update_at: new Date().toISOString(),
-        measurement_point: []
+        measurement_point: [],
+        sensor: [] // Add sensor array here
       }]
     }
   });

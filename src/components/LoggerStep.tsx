@@ -1,6 +1,6 @@
+import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { PlusCircle, Trash2, ChevronDown, Settings, Info } from 'lucide-react';
-import { useState } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -112,7 +112,7 @@ export function LoggerStep() {
 
               <div className="space-y-6">
                 {(watch(`measurement_location.${locationIndex}.logger_main_config`) || []).map((logger, loggerIndex) => (
-                  <div className="border border-border rounded-xl overflow-hidden mb-6 shadow-sm transition-transform hover:border-primary/20" key={loggerIndex}>
+                  <div className="border border-border rounded-xl overflow-hidden mb-6 shadow-sm transition-transform hover:border-primary/20\" key={loggerIndex}>
                     <div
                       className="flex items-center gap-3 cursor-pointer select-none px-6 py-3 bg-secondary/20 hover:bg-secondary/30 transition-colors border-b border-border"
                       onClick={() => toggleLoggerExpand(loggerIndex)}

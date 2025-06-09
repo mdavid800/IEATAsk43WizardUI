@@ -1,6 +1,6 @@
+import React, { useState, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { PlusCircle, Trash2, ChevronDown, Upload, HardDrive, Gauge } from 'lucide-react';
-import { useState, useRef } from 'react';
 import Papa from 'papaparse';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
