@@ -150,14 +150,14 @@ export function LandingPage({ onStartForm }: LandingPageProps) {
                   <div className="absolute -top-4 -left-4 bg-white/90 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-white/50">
                     <div className="flex items-center gap-3">
                       <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
-                      <span className="text-sm font-medium text-gray-700">Floating LiDAR Ready</span>
+                      <span className="text-sm font-medium text-gray-700">Data Collection Active</span>
                     </div>
                   </div>
                   
                   <div className="absolute -bottom-4 -right-4 bg-white/90 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-white/50">
                     <div className="flex items-center gap-2">
                       <CheckCircle className="w-5 h-5 text-green-500" />
-                      <span className="text-sm font-medium text-gray-700">Offshore Compatible</span>
+                      <span className="text-sm font-medium text-gray-700">Validated</span>
                     </div>
                   </div>
                 </div>
