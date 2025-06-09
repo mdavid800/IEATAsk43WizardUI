@@ -114,8 +114,7 @@ export function LandingPage({ onStartForm }: LandingPageProps) {
                   <ExternalLink className="w-4 h-4" />
                 </Button>
               </div>
-
-             
+            </div>
 
             {/* Right Content - Hero Image */}
             <div className={`relative transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
