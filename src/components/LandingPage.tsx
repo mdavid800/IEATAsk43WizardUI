@@ -115,22 +115,7 @@ export function LandingPage({ onStartForm }: LandingPageProps) {
                 </Button>
               </div>
 
-              {/* Stats */}
-              <div className="grid grid-cols-3 gap-8 pt-8 border-t border-gray-200">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-green-600">Open</div>
-                  <div className="text-sm text-gray-600">Source</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-green-600">Global</div>
-                  <div className="text-sm text-gray-600">Standard</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-green-600">IEA</div>
-                  <div className="text-sm text-gray-600">Task 43</div>
-                </div>
-              </div>
-            </div>
+             
 
             {/* Right Content - Hero Image */}
             <div className={`relative transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
