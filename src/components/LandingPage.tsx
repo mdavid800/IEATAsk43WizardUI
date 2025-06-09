@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wind, ArrowRight, CheckCircle, Users, Globe, BarChart3, ChevronDown, Github, ExternalLink } from 'lucide-react';
+import { Wind, ArrowRight, CheckCircle, Users, Globe, BarChart3, ChevronDown, Github, ExternalLink, Code } from 'lucide-react';
 import { Button } from './ui/button';
 
 interface LandingPageProps {
@@ -110,7 +110,7 @@ export function LandingPage({ onStartForm }: LandingPageProps) {
                   onClick={() => window.open('https://github.com/IEA-Task-43/digital_wra_data_standard', '_blank')}
                 >
                   <Github className="w-5 h-5" />
-                  View on GitHub
+                  Data Standard Repo
                   <ExternalLink className="w-4 h-4" />
                 </Button>
               </div>
@@ -275,7 +275,7 @@ export function LandingPage({ onStartForm }: LandingPageProps) {
                 standardized renewable energy measurement data formats.
               </p>
               
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
                 <Button
                   onClick={onStartForm}
                   className="group bg-white text-green-600 hover:bg-gray-50 px-8 py-4 text-lg font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
@@ -290,7 +290,26 @@ export function LandingPage({ onStartForm }: LandingPageProps) {
                   onClick={() => window.open('https://github.com/IEA-Task-43/digital_wra_data_standard', '_blank')}
                 >
                   <Github className="w-5 h-5" />
-                  Contribute on GitHub
+                  Data Standard Repo
+                  <ExternalLink className="w-4 h-4" />
+                </Button>
+              </div>
+
+              {/* App Source Code Section */}
+              <div className="pt-8 border-t border-white/20">
+                <h4 className="text-xl font-semibold text-white mb-4">
+                  Open Source Implementation
+                </h4>
+                <p className="text-green-100 mb-4 max-w-2xl mx-auto">
+                  This application is completely open source. Download, modify, and use it freely for your own projects.
+                </p>
+                <Button
+                  variant="outline"
+                  className="border-2 border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-gray-900 px-6 py-3 font-semibold rounded-xl transition-all duration-300 flex items-center gap-2 mx-auto"
+                  onClick={() => window.open('https://github.com/mdavid800/IEATAsk43WizardUI', '_blank')}
+                >
+                  <Code className="w-5 h-5" />
+                  App Source Code
                   <ExternalLink className="w-4 h-4" />
                 </Button>
               </div>
