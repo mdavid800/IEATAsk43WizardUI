@@ -48,7 +48,7 @@ const TooltipWrapper = ({ children, text, className = "" }: { children: React.Re
     const [showTooltip, setShowTooltip] = useState(false);
 
     return (
-        <div 
+        <div
             className={`relative ${className}`}
             onMouseEnter={() => setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
@@ -65,15 +65,15 @@ const TooltipWrapper = ({ children, text, className = "" }: { children: React.Re
 };
 
 // Expandable row component for mobile view
-const ExpandableRow = ({ 
-    point, 
-    actualIndex, 
-    locationIndex, 
+const ExpandableRow = ({
+    point,
+    actualIndex,
+    locationIndex,
     displayIndex,
     isSelected,
     onToggleSelect,
     onRemove,
-    sensorOptions 
+    sensorOptions
 }: {
     point: any;
     actualIndex: number;
@@ -91,7 +91,7 @@ const ExpandableRow = ({
     return (
         <div className="border border-border rounded-lg mb-4 bg-background">
             {/* Header - Always visible */}
-            <div 
+            <div
                 className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50"
                 onClick={() => setIsExpanded(!isExpanded)}
             >
@@ -112,7 +112,7 @@ const ExpandableRow = ({
                             {watch(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.measurement_type_id`) || 'No type'}
                         </div>
                     </div>
-                    <ChevronRight 
+                    <ChevronRight
                         className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
                     />
                 </div>
@@ -143,15 +143,17 @@ const ExpandableRow = ({
                                 className="mt-1"
                             />
                         </div>
-                        
+
                         <div>
                             <Label className="text-xs text-muted-foreground">Measurement Type</Label>
                             <ClearableSelect
-                                value={watch(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.measurement_type_id`) as MeasurementType || undefined}
-                                onValueChange={(value: MeasurementType | undefined) => setValue(
-                                    `measurement_location.${locationIndex}.measurement_point.${actualIndex}.measurement_type_id`,
-                                    value
-                                )}
+                                value={watch(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.measurement_type_id`) || undefined}
+                                onValueChange={(value: string | undefined) => {
+                                    setValue(
+                                        `measurement_location.${locationIndex}.measurement_point.${actualIndex}.measurement_type_id`,
+                                        value as MeasurementType
+                                    );
+                                }}
                                 placeholder="Select measurement type"
                             >
                                 <SelectItem value="wind_speed">Wind Speed</SelectItem>
@@ -190,10 +192,12 @@ const ExpandableRow = ({
                             <Label className="text-xs text-muted-foreground">Height Reference</Label>
                             <ClearableSelect
                                 value={watch(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.height_reference_id`) as HeightReference || undefined}
-                                onValueChange={(value: HeightReference | undefined) => setValue(
-                                    `measurement_location.${locationIndex}.measurement_point.${actualIndex}.height_reference_id`,
-                                    value
-                                )}
+                                onValueChange={(value: string | undefined) =>
+                                    setValue(
+                                        `measurement_location.${locationIndex}.measurement_point.${actualIndex}.height_reference_id`,
+                                        value as HeightReference
+                                    )
+                                }
                                 placeholder="Select height reference"
                             >
                                 <SelectItem value="ground_level">Ground Level</SelectItem>
@@ -246,14 +250,14 @@ export function MeasurementTable({
     const [isMobileView, setIsMobileView] = useState(false);
 
     // Get available sensors for this location
-    const availableSensors = watch(`measurement_location.${locationIndex}.sensor`) || [];
+    const availableSensors = (watch(`measurement_location.${locationIndex}.sensor` as any) as Sensor[]) || [];
 
     // Memoize and prepare sensor options grouped by OEM (not MODEL) with proper formatting
     const sensorOptions = useMemo(() => {
-        const validSensors = availableSensors.filter((sensor: Sensor) => 
-            sensor.oem && sensor.serial_number
+        const validSensors = availableSensors.filter((sensor: Sensor) =>
+            sensor && typeof sensor === 'object' && sensor.oem && sensor.serial_number
         );
-        
+
         const groupedByOEM: { [key: string]: { label: string; value: Sensor }[] } = {};
         validSensors.forEach((sensor: Sensor) => {
             const oem = sensor.oem || 'Unknown OEM';
@@ -281,8 +285,6 @@ export function MeasurementTable({
         notes: ''
     });
 
-    const [showFilters, setShowFilters] = useState(false);
-
     const clearFilters = () => {
         setFilters({
             name: '',
@@ -304,6 +306,10 @@ export function MeasurementTable({
         .map((point, actualIndex) => ({ point, actualIndex }))
         .filter(({ point }) => point.logger_measurement_config?.[0]?.logger_id === loggerIdentifier);
 
+    // Add sensorsFilter state
+    const [sensorsFilter, setSensorsFilter] = useState<Sensor[]>([]);
+
+    // Update filtering logic to include sensors filter
     const filteredPointsWithIndices = loggerFilteredPointsWithIndices.filter(({ point, actualIndex }) => {
         const pointData = watch(`measurement_location.${locationIndex}.measurement_point.${actualIndex}`);
 
@@ -326,7 +332,14 @@ export function MeasurementTable({
         if (filters.notes && !pointData.notes?.toLowerCase().includes(filters.notes.toLowerCase())) {
             return false;
         }
-
+        // Sensors filter: if any sensors are selected, point must have at least one of them
+        if (sensorsFilter.length > 0) {
+            const pointSensors = pointData.sensor || [];
+            const hasMatch = sensorsFilter.some(selectedSensor =>
+                pointSensors.some((ps: Sensor) => ps && ps.serial_number === selectedSensor.serial_number && ps.oem === selectedSensor.oem)
+            );
+            if (!hasMatch) return false;
+        }
         return true;
     });
 
@@ -404,7 +417,7 @@ export function MeasurementTable({
     });
 
     // Get unique units for the unit filter dropdown
-    const allUnits = [...new Set(loggerFilteredPoints.map(point => point.unit).filter(Boolean))].sort();
+    const allUnits = [...new Set(loggerFilteredPoints.map(point => point.unit).filter((u): u is string => !!u))].sort();
 
     // Check if we should show mobile view
     React.useEffect(() => {
@@ -419,133 +432,8 @@ export function MeasurementTable({
 
     return (
         <div className="w-full">
-            {/* Filter Toggle and Clear */}
-            <div className="mb-4 flex items-center justify-between">
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowFilters(!showFilters)}
-                    className="flex items-center gap-2"
-                >
-                    <Filter className="w-4 h-4" />
-                    {showFilters ? 'Hide Filters' : 'Show Filters'}
-                    {hasActiveFilters && (
-                        <span className="bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full">
-                            {[
-                                filters.name !== '',
-                                filters.measurement_type_id !== 'all',
-                                filters.height_m !== '',
-                                filters.height_reference_id !== 'all',
-                                filters.unit !== 'all',
-                                filters.notes !== ''
-                            ].filter(Boolean).length}
-                        </span>
-                    )}
-                </Button>
-                {hasActiveFilters && (
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={clearFilters}
-                        className="flex items-center gap-2"
-                    >
-                        <X className="w-4 h-4" />
-                        Clear Filters
-                    </Button>
-                )}
-            </div>
-
-            {/* Filter Controls */}
-            {showFilters && (
-                <div className="mb-4 p-4 bg-muted/30 rounded-lg">
-                    <h5 className="text-sm font-medium mb-3">Filter Points</h5>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
-                        <div>
-                            <Label>Name</Label>
-                            <Input
-                                value={filters.name}
-                                onChange={(e) => setFilters(prev => ({ ...prev, name: e.target.value }))}
-                                placeholder="Filter by name..."
-                            />
-                        </div>
-                        <div>
-                            <Label>Measurement Type</Label>
-                            <ClearableSelect
-                                value={filters.measurement_type_id === 'all' ? undefined : filters.measurement_type_id}
-                                onValueChange={(value) =>
-                                    setFilters(prev => ({ ...prev, measurement_type_id: (value as MeasurementType) || 'all' }))
-                                }
-                                placeholder="All types"
-                            >
-                                <SelectItem value="wind_speed">Wind Speed</SelectItem>
-                                <SelectItem value="wind_direction">Wind Direction</SelectItem>
-                                <SelectItem value="temperature">Temperature</SelectItem>
-                                <SelectItem value="pressure">Pressure</SelectItem>
-                                <SelectItem value="humidity">Humidity</SelectItem>
-                                <SelectItem value="wave_height">Wave Height</SelectItem>
-                                <SelectItem value="wave_period">Wave Period</SelectItem>
-                                <SelectItem value="wave_direction">Wave Direction</SelectItem>
-                                <SelectItem value="position">Position</SelectItem>
-                                <SelectItem value="other">Other</SelectItem>
-                            </ClearableSelect>
-                        </div>
-                        <div>
-                            <Label>Height (m)</Label>
-                            <Input
-                                value={filters.height_m}
-                                onChange={(e) => setFilters(prev => ({ ...prev, height_m: e.target.value }))}
-                                placeholder="Filter by height..."
-                            />
-                        </div>
-                        <div>
-                            <Label>Height Reference</Label>
-                            <ClearableSelect
-                                value={filters.height_reference_id === 'all' ? undefined : filters.height_reference_id}
-                                onValueChange={(value) =>
-                                    setFilters(prev => ({ ...prev, height_reference_id: (value as HeightReference) || 'all' }))
-                                }
-                                placeholder="All references"
-                            >
-                                <SelectItem value="ground_level">Ground Level</SelectItem>
-                                <SelectItem value="sea_level">Sea Level</SelectItem>
-                                <SelectItem value="sea_floor">Sea Floor</SelectItem>
-                            </ClearableSelect>
-                        </div>
-                        <div>
-                            <Label>Unit</Label>
-                            <Select
-                                value={filters.unit}
-                                onValueChange={(value) =>
-                                    setFilters(prev => ({ ...prev, unit: value }))
-                                }
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="All units" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All units</SelectItem>
-                                    {allUnits.map(unit => (
-                                        <SelectItem key={unit} value={unit}>{unit}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div>
-                            <Label>Notes</Label>
-                            <Input
-                                value={filters.notes}
-                                onChange={(e) => setFilters(prev => ({ ...prev, notes: e.target.value }))}
-                                placeholder="Filter by notes..."
-                            />
-                        </div>
-                    </div>
-                </div>
-            )}
-
             {/* Results Summary */}
-            <div className="mb-4 text-sm text-muted-foreground">
+            <div className="mb-2 text-sm text-muted-foreground">
                 Showing {filteredPoints.length} of {loggerFilteredPoints.length} points
                 {hasActiveFilters && ' (filtered)'}
             </div>
@@ -558,8 +446,8 @@ export function MeasurementTable({
                         <Label>Measurement Type</Label>
                         <ClearableSelect
                             value={bulkEditValues.measurement_type_id || undefined}
-                            onValueChange={(value: MeasurementType | undefined) =>
-                                setBulkEditValues(prev => ({ ...prev, measurement_type_id: value || '' }))
+                            onValueChange={(value: string | undefined) =>
+                                setBulkEditValues(prev => ({ ...prev, measurement_type_id: (value as MeasurementType) || '' }))
                             }
                             placeholder="Select measurement type"
                         >
@@ -589,8 +477,8 @@ export function MeasurementTable({
                         <Label>Height Reference</Label>
                         <ClearableSelect
                             value={bulkEditValues.height_reference_id || undefined}
-                            onValueChange={(value: HeightReference | undefined) =>
-                                setBulkEditValues(prev => ({ ...prev, height_reference_id: value || '' }))
+                            onValueChange={(value: string | undefined) =>
+                                setBulkEditValues(prev => ({ ...prev, height_reference_id: (value as HeightReference) || '' }))
                             }
                             placeholder="Select height reference"
                         >
@@ -705,12 +593,129 @@ export function MeasurementTable({
                                         <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground min-w-[200px]">Notes</th>
                                         <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground min-w-[80px]">Remove</th>
                                     </tr>
+                                    {/* Filter Row */}
+                                    <tr>
+                                        {/* Select (empty) */}
+                                        <td></td>
+                                        {/* Name */}
+                                        <td>
+                                            <Input
+                                                value={filters.name}
+                                                onChange={(e) => setFilters(prev => ({ ...prev, name: e.target.value }))}
+                                                placeholder="Filter by name..."
+                                                className="w-full"
+                                            />
+                                        </td>
+                                        {/* Measurement Type */}
+                                        <td>
+                                            <ClearableSelect
+                                                value={filters.measurement_type_id === 'all' ? undefined : filters.measurement_type_id}
+                                                onValueChange={(value: string | undefined) =>
+                                                    setFilters(prev => ({ ...prev, measurement_type_id: (value as MeasurementType) || 'all' }))
+                                                }
+                                                placeholder="All types"
+                                            >
+                                                <SelectItem value="wind_speed">Wind Speed</SelectItem>
+                                                <SelectItem value="wind_direction">Wind Direction</SelectItem>
+                                                <SelectItem value="temperature">Temperature</SelectItem>
+                                                <SelectItem value="pressure">Pressure</SelectItem>
+                                                <SelectItem value="humidity">Humidity</SelectItem>
+                                                <SelectItem value="wave_height">Wave Height</SelectItem>
+                                                <SelectItem value="wave_period">Wave Period</SelectItem>
+                                                <SelectItem value="wave_direction">Wave Direction</SelectItem>
+                                                <SelectItem value="position">Position</SelectItem>
+                                                <SelectItem value="other">Other</SelectItem>
+                                            </ClearableSelect>
+                                        </td>
+                                        {/* Height (m) */}
+                                        <td>
+                                            <Input
+                                                value={filters.height_m}
+                                                onChange={(e) => setFilters(prev => ({ ...prev, height_m: e.target.value }))}
+                                                placeholder="Filter by height..."
+                                                className="w-full"
+                                            />
+                                        </td>
+                                        {/* Height Reference */}
+                                        <td>
+                                            <ClearableSelect
+                                                value={filters.height_reference_id === 'all' ? undefined : filters.height_reference_id}
+                                                onValueChange={(value: string | undefined) =>
+                                                    setFilters(prev => ({ ...prev, height_reference_id: (value as HeightReference) || 'all' }))
+                                                }
+                                                placeholder="All references"
+                                            >
+                                                <SelectItem value="ground_level">Ground Level</SelectItem>
+                                                <SelectItem value="sea_level">Sea Level</SelectItem>
+                                                <SelectItem value="sea_floor">Sea Floor</SelectItem>
+                                            </ClearableSelect>
+                                        </td>
+                                        {/* Unit */}
+                                        <td>
+                                            <TooltipWrapper text="Enter a unit, e.g. m/s, deg">
+                                                <Select
+                                                    value={filters.unit}
+                                                    onValueChange={(value) =>
+                                                        setFilters(prev => ({ ...prev, unit: value }))
+                                                    }
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="All units" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="all">All units</SelectItem>
+                                                        {allUnits.map(unit => (
+                                                            <SelectItem key={unit} value={unit}>{unit}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </TooltipWrapper>
+                                        </td>
+                                        {/* Sensors */}
+                                        <td>
+                                            <TooltipWrapper text="Filter by one or more sensors">
+                                                <MultiSelect
+                                                    options={sensorOptions}
+                                                    selected={sensorsFilter}
+                                                    onChange={setSensorsFilter}
+                                                    placeholder="Filter by sensors"
+                                                    className="w-full"
+                                                />
+                                            </TooltipWrapper>
+                                        </td>
+                                        {/* Notes */}
+                                        <td>
+                                            <TooltipWrapper text="Filter by notes or keywords">
+                                                <Input
+                                                    value={filters.notes}
+                                                    onChange={(e) => setFilters(prev => ({ ...prev, notes: e.target.value }))}
+                                                    placeholder="Filter by notes..."
+                                                    className="w-full"
+                                                />
+                                            </TooltipWrapper>
+                                        </td>
+                                        {/* Remove (clear button) */}
+                                        <td className="text-center">
+                                            {(hasActiveFilters || sensorsFilter.length > 0) && (
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => { clearFilters(); setSensorsFilter([]); }}
+                                                    className="flex items-center gap-2"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                    Clear
+                                                </Button>
+                                            )}
+                                        </td>
+                                    </tr>
                                 </thead>
                                 <tbody className="divide-y divide-border">
                                     {filteredPointsWithIndices.map(({ point, actualIndex }, displayIndex) => {
                                         const pointSensors = watch(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.sensor`) || [];
                                         const pointName = watch(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.name`) || '';
-                                        
+
                                         return (
                                             <tr key={`${loggerIdentifier}-${actualIndex}`} className="hover:bg-muted/30 transition-colors">
                                                 <td className="sticky left-0 z-10 bg-background px-4 py-3 border-r border-border">
@@ -736,11 +741,13 @@ export function MeasurementTable({
                                                 </td>
                                                 <td className="px-4 py-3 min-w-[160px]">
                                                     <ClearableSelect
-                                                        value={watch(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.measurement_type_id`) as MeasurementType || undefined}
-                                                        onValueChange={(value: MeasurementType | undefined) => setValue(
-                                                            `measurement_location.${locationIndex}.measurement_point.${actualIndex}.measurement_type_id`,
-                                                            value
-                                                        )}
+                                                        value={watch(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.measurement_type_id`) || undefined}
+                                                        onValueChange={(value: string | undefined) => {
+                                                            setValue(
+                                                                `measurement_location.${locationIndex}.measurement_point.${actualIndex}.measurement_type_id`,
+                                                                value as MeasurementType
+                                                            );
+                                                        }}
                                                         placeholder="Select type"
                                                     >
                                                         <SelectItem value="wind_speed">Wind Speed</SelectItem>
@@ -765,11 +772,13 @@ export function MeasurementTable({
                                                 </td>
                                                 <td className="px-4 py-3 min-w-[140px]">
                                                     <ClearableSelect
-                                                        value={watch(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.height_reference_id`) as HeightReference || undefined}
-                                                        onValueChange={(value: HeightReference | undefined) => setValue(
-                                                            `measurement_location.${locationIndex}.measurement_point.${actualIndex}.height_reference_id`,
-                                                            value
-                                                        )}
+                                                        value={watch(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.height_reference_id`) || undefined}
+                                                        onValueChange={(value: string | undefined) =>
+                                                            setValue(
+                                                                `measurement_location.${locationIndex}.measurement_point.${actualIndex}.height_reference_id`,
+                                                                value as HeightReference
+                                                            )
+                                                        }
                                                         placeholder="Select reference"
                                                     >
                                                         <SelectItem value="ground_level">Ground Level</SelectItem>
@@ -801,25 +810,20 @@ export function MeasurementTable({
                                                     />
                                                 </td>
                                                 <td className="px-4 py-3 min-w-[200px]">
-                                                    <TooltipWrapper text={watch(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.notes`) || ''}>
-                                                        <Textarea
-                                                            {...register(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.notes`)}
-                                                            placeholder="Add notes"
-                                                            rows={2}
-                                                            className="resize-none"
-                                                        />
-                                                    </TooltipWrapper>
+                                                    <Textarea
+                                                        {...register(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.notes`)}
+                                                        placeholder="Add any additional notes"
+                                                        rows={2}
+                                                    />
                                                 </td>
-                                                <td className="px-4 py-3 text-center min-w-[80px]">
+                                                <td className="px-4 py-3 text-center text-xs font-medium text-muted-foreground min-w-[80px]">
                                                     <Button
                                                         type="button"
                                                         variant="ghost"
-                                                        size="icon"
-                                                        aria-label="Remove"
+                                                        size="sm"
                                                         onClick={() => onRemovePoint(locationIndex, actualIndex)}
-                                                        className="p-2 hover:bg-transparent"
                                                     >
-                                                        <Trash2 className="w-4 h-4 text-red-500 hover:text-red-700" />
+                                                        Remove
                                                     </Button>
                                                 </td>
                                             </tr>
@@ -829,22 +833,6 @@ export function MeasurementTable({
                             </table>
                         </div>
                     </div>
-                </div>
-            )}
-
-            {/* No Results Message */}
-            {filteredPoints.length === 0 && loggerFilteredPoints.length > 0 && (
-                <div className="text-center py-8 text-muted-foreground">
-                    <p>No points match the current filters.</p>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={clearFilters}
-                        className="mt-2"
-                    >
-                        Clear Filters
-                    </Button>
                 </div>
             )}
         </div>

@@ -27,16 +27,16 @@ const generateId = () => crypto.randomUUID();
 
 export function LoggerSection({ locationIndex }: LoggerSectionProps) {
   const { register, setValue, getValues } = useFormContext();
-  const [loggers, setLoggers] = useState<Logger[]>([{ 
-    id: generateId(), 
+  const [loggers, setLoggers] = useState<Logger[]>([{
+    id: generateId(),
     isExpanded: true,
     measurements: [{ id: generateId(), isExpanded: true }]
   }]);
   const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
 
   const addLogger = () => {
-    setLoggers([...loggers, { 
-      id: generateId(), 
+    setLoggers([...loggers, {
+      id: generateId(),
       isExpanded: true,
       measurements: [{ id: generateId(), isExpanded: true }]
     }]);
@@ -47,42 +47,42 @@ export function LoggerSection({ locationIndex }: LoggerSectionProps) {
   };
 
   const toggleLoggerExpand = (loggerId: string) => {
-    setLoggers(loggers.map(logger => 
+    setLoggers(loggers.map(logger =>
       logger.id === loggerId ? { ...logger, isExpanded: !logger.isExpanded } : logger
     ));
   };
 
   const addMeasurement = (loggerId: string) => {
-    setLoggers(loggers.map(logger => 
-      logger.id === loggerId 
-        ? { 
-            ...logger, 
-            measurements: [...logger.measurements, { id: generateId(), isExpanded: true }]
-          }
+    setLoggers(loggers.map(logger =>
+      logger.id === loggerId
+        ? {
+          ...logger,
+          measurements: [...logger.measurements, { id: generateId(), isExpanded: true }]
+        }
         : logger
     ));
   };
 
   const removeMeasurement = (loggerId: string, measurementId: string) => {
-    setLoggers(loggers.map(logger => 
-      logger.id === loggerId 
+    setLoggers(loggers.map(logger =>
+      logger.id === loggerId
         ? {
-            ...logger,
-            measurements: logger.measurements.filter(m => m.id !== measurementId)
-          }
+          ...logger,
+          measurements: logger.measurements.filter(m => m.id !== measurementId)
+        }
         : logger
     ));
   };
 
   const toggleMeasurementExpand = (loggerId: string, measurementId: string) => {
-    setLoggers(loggers.map(logger => 
-      logger.id === loggerId 
+    setLoggers(loggers.map(logger =>
+      logger.id === loggerId
         ? {
-            ...logger,
-            measurements: logger.measurements.map(m => 
-              m.id === measurementId ? { ...m, isExpanded: !m.isExpanded } : m
-            )
-          }
+          ...logger,
+          measurements: logger.measurements.map(m =>
+            m.id === measurementId ? { ...m, isExpanded: !m.isExpanded } : m
+          )
+        }
         : logger
     ));
   };
@@ -109,7 +109,7 @@ export function LoggerSection({ locationIndex }: LoggerSectionProps) {
         }
 
         const measurementNames = headers.slice(1).filter(name => name && name.trim() !== '');
-        
+
         if (measurementNames.length === 0) {
           alert('No valid measurement points found in the CSV file.');
           return;
@@ -119,7 +119,7 @@ export function LoggerSection({ locationIndex }: LoggerSectionProps) {
           const cleanName = name.trim();
           const type = determineMeasurementType(cleanName);
           const height = extractHeight(cleanName);
-          
+
           return {
             id: generateId(),
             isExpanded: true,
@@ -130,8 +130,8 @@ export function LoggerSection({ locationIndex }: LoggerSectionProps) {
           };
         });
 
-        setLoggers(loggers.map(logger => 
-          logger.id === loggerId 
+        setLoggers(loggers.map(logger =>
+          logger.id === loggerId
             ? { ...logger, measurements: newMeasurements }
             : logger
         ));
@@ -154,7 +154,7 @@ export function LoggerSection({ locationIndex }: LoggerSectionProps) {
 
   const determineMeasurementType = (name: string): string => {
     const lowerName = name.toLowerCase();
-    
+
     if (lowerName.includes('significantwaveheight')) return 'wave_height';
     if (lowerName.includes('maximumwaveheight')) return 'wave_height';
     if (lowerName.includes('peakperiod')) return 'wave_period';
@@ -166,7 +166,7 @@ export function LoggerSection({ locationIndex }: LoggerSectionProps) {
     if (lowerName.includes('press')) return 'pressure';
     if (lowerName.includes('humid')) return 'humidity';
     if (lowerName.includes('gps')) return 'position';
-    
+
     return 'other';
   };
 
@@ -200,7 +200,7 @@ export function LoggerSection({ locationIndex }: LoggerSectionProps) {
         {loggers.map((logger, loggerIndex) => (
           <div key={logger.id} className="logger-card">
             {/* Logger Header */}
-            <div 
+            <div
               className="bg-primary p-4 cursor-pointer hover:bg-primary/90 transition-colors"
               onClick={() => toggleLoggerExpand(logger.id)}
             >
@@ -316,14 +316,19 @@ export function LoggerSection({ locationIndex }: LoggerSectionProps) {
                       <h4 className="text-base font-semibold text-foreground">Measurement Points</h4>
                     </div>
                     <div className="flex gap-2">
+                      <Label htmlFor={`fileInput_${logger.id}`}>
+                        Upload CSV
+                      </Label>
                       <input
+                        id={`fileInput_${logger.id}`}
                         ref={el => fileInputRefs.current[logger.id] = el}
                         type="file"
                         accept=".csv"
                         onChange={(e) => handleFileUpload(e, logger.id, loggerIndex)}
                         className="hidden"
+                        title="Upload CSV file"
                       />
-                      <Button 
+                      <Button
                         type="button"
                         variant="outline"
                         className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
@@ -332,7 +337,7 @@ export function LoggerSection({ locationIndex }: LoggerSectionProps) {
                         <Upload className="w-4 h-4 mr-2" />
                         Upload CSV
                       </Button>
-                      <Button 
+                      <Button
                         type="button"
                         className="bg-primary hover:bg-primary/90 text-primary-foreground"
                         onClick={() => addMeasurement(logger.id)}
@@ -347,7 +352,7 @@ export function LoggerSection({ locationIndex }: LoggerSectionProps) {
                     {logger.measurements.map((measurement, measurementIndex) => (
                       <div key={measurement.id} className="measurement-card mb-4">
                         {/* Measurement Header */}
-                        <div 
+                        <div
                           className="bg-primary/90 p-4 cursor-pointer hover:bg-primary/80 transition-colors"
                           onClick={() => toggleMeasurementExpand(logger.id, measurement.id)}
                         >

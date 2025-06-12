@@ -26,7 +26,7 @@ export function MeasurementSection({ locationIndex }: MeasurementSectionProps) {
   };
 
   const toggleExpand = (id: number) => {
-    setMeasurements(measurements.map(m => 
+    setMeasurements(measurements.map(m =>
       m.id === id ? { ...m, isExpanded: !m.isExpanded } : m
     ));
   };
@@ -55,7 +55,7 @@ export function MeasurementSection({ locationIndex }: MeasurementSectionProps) {
 
         // Skip the timestamp column (first column) and filter out empty headers
         const measurementNames = headers.slice(1).filter(name => name && name.trim() !== '');
-        
+
         if (measurementNames.length === 0) {
           alert('No valid measurement points found in the CSV file.');
           return;
@@ -66,7 +66,7 @@ export function MeasurementSection({ locationIndex }: MeasurementSectionProps) {
           const cleanName = name.trim();
           const type = determineMeasurementType(cleanName);
           const height = extractHeight(cleanName);
-          
+
           return {
             id: Date.now() + index,
             isExpanded: true,
@@ -79,7 +79,7 @@ export function MeasurementSection({ locationIndex }: MeasurementSectionProps) {
 
         // Update form state with new measurements
         setMeasurements(newMeasurements);
-        
+
         // Update form values for each measurement
         newMeasurements.forEach((measurement, index) => {
           setValue(`measurement_location.${locationIndex}.measurement_point.${index}.name`, measurement.name);
@@ -99,24 +99,24 @@ export function MeasurementSection({ locationIndex }: MeasurementSectionProps) {
 
   const determineMeasurementType = (name: string): string => {
     const lowerName = name.toLowerCase();
-    
+
     // Wave measurements
     if (lowerName.includes('significantwaveheight')) return 'wave_height';
     if (lowerName.includes('maximumwaveheight')) return 'wave_height';
     if (lowerName.includes('peakperiod')) return 'wave_period';
     if (lowerName.includes('meanspectralperiod')) return 'wave_period';
     if (lowerName.includes('wavedirection')) return 'wave_direction';
-    
+
     // Wind measurements
     if (lowerName.includes('windspeed')) return 'wind_speed';
     if (lowerName.includes('winddirection')) return 'wind_direction';
-    
+
     // Other measurements
     if (lowerName.includes('temp')) return 'temperature';
     if (lowerName.includes('press')) return 'pressure';
     if (lowerName.includes('humid')) return 'humidity';
     if (lowerName.includes('gps')) return 'position';
-    
+
     return 'other';
   };
 
@@ -139,16 +139,17 @@ export function MeasurementSection({ locationIndex }: MeasurementSectionProps) {
             accept=".csv"
             onChange={handleFileUpload}
             className="hidden"
+            title="Upload CSV file"
           />
-          <Button 
+          <Button
             type="button"
-            variant="outline" 
+            variant="outline"
             onClick={handleUploadClick}
           >
             <Upload className="w-4 h-4 mr-2" />
             Upload CSV
           </Button>
-          <Button 
+          <Button
             type="button"
             variant="outline"
             onClick={addMeasurement}
@@ -163,7 +164,7 @@ export function MeasurementSection({ locationIndex }: MeasurementSectionProps) {
         {measurements.map((measurement, index) => (
           <div key={measurement.id} className="border border-border rounded-lg overflow-hidden">
             {/* Measurement Header */}
-            <div 
+            <div
               className="bg-card p-4 cursor-pointer hover:bg-muted/50 transition-colors"
               onClick={() => toggleExpand(measurement.id)}
             >
