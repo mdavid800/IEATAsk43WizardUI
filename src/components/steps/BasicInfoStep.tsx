@@ -3,7 +3,8 @@ import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 
 export function BasicInfoStep() {
-  const { register } = useFormContext();
+  const { register, watch } = useFormContext();
+  const campaignStatus = watch('campaignStatus');
 
   return (
     <div className="space-y-6">
@@ -37,11 +38,11 @@ export function BasicInfoStep() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="date">Date</Label>
+          <Label htmlFor="startDate">Start Date</Label>
           <Input
             type="date"
-            id="date"
-            {...register('date')}
+            id="startDate"
+            {...register('startDate')}
           />
         </div>
 
@@ -56,6 +57,17 @@ export function BasicInfoStep() {
             <option value="historical">Historical</option>
           </select>
         </div>
+
+        {campaignStatus === 'historical' && (
+          <div className="space-y-2">
+            <Label htmlFor="endDate">End Date</Label>
+            <Input
+              type="date"
+              id="endDate"
+              {...register('endDate')}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

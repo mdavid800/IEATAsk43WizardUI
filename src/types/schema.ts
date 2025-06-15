@@ -2,9 +2,10 @@
 export interface IEATask43Schema {
   author: string;
   organisation: string;
-  date: string;
+  startDate: string; // Renamed from 'date'
   version: string;
   campaignStatus: 'live' | 'historical'; // Added for issue #5: Indicate if campaign is live or historical
+  endDate?: string; // Optional: Added for historical campaigns
   plant_name: string;
   plant_type: 'onshore_wind' | 'offshore_wind' | 'solar' | null;
   measurement_location: MeasurementLocation[];

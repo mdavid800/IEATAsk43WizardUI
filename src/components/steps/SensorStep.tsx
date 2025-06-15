@@ -88,10 +88,13 @@ export function SensorStep() {
 
   return (
     <div className="space-y-8">
+      <div className="text-muted-foreground mb-6">
+        Provide details for each sensor which produces data included in the logger file. It may be necessary to input multiple sensors for some parameters to reflect sensor swap outs throughout the measurement campaign e.g. in response to sensor failures or planned maintenance swap outs. A sensor entry should also be made for periods where no sensor was installed but the logger reports null data; in these cases, the OEM and model should be stated but the serial number stated as N/A and a note entered to indicate why this sensor is unavailable
+      </div>
       {allLocations.map((location, locationIndex) => (
-        <div key={location.id || `location-${locationIndex}`} className="space-y-6 p-6 border rounded-lg bg-card">
+        <div key={location.uuid || `location-${locationIndex}`} className="space-y-6 p-6 border rounded-lg bg-card">
           <h2 className="text-xl font-semibold text-foreground">
-            Sensors for Location: {location.name_of_location || `Location ${locationIndex + 1}`}
+            Sensors for Location: {location.name || `Location ${locationIndex + 1}`}
           </h2>
           <LocationSensorManager
             locationIndex={locationIndex}

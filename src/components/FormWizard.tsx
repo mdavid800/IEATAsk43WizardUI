@@ -27,9 +27,10 @@ export function FormWizard() {
     defaultValues: {
       author: '',
       organisation: '',
-      date: new Date().toISOString().split('T')[0],
+      startDate: new Date().toISOString().split('T')[0], // Renamed from date
       version: '1.3.0-2024.03',
       campaignStatus: 'live', // Added for issue #5
+      endDate: undefined, // Optional: Added for historical campaigns
       plant_name: '',
       plant_type: null,
       measurement_location: [{
