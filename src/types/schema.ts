@@ -4,6 +4,7 @@ export interface IEATask43Schema {
   organisation: string;
   date: string;
   version: string;
+  campaignStatus: 'live' | 'historical'; // Added for issue #5: Indicate if campaign is live or historical
   plant_name: string;
   plant_type: 'onshore_wind' | 'offshore_wind' | 'solar' | null;
   measurement_location: MeasurementLocation[];

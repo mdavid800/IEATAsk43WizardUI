@@ -29,6 +29,7 @@ export function FormWizard() {
       organisation: '',
       date: new Date().toISOString().split('T')[0],
       version: '1.3.0-2024.03',
+      campaignStatus: 'live', // Added for issue #5
       plant_name: '',
       plant_type: null,
       measurement_location: [{
@@ -38,8 +39,7 @@ export function FormWizard() {
         longitude_ddeg: 0,
         measurement_station_type_id: 'mast',
         update_at: new Date().toISOString(),
-        measurement_point: [],
-        sensor: [] // Add sensor array here
+        measurement_point: []
       }]
     }
   });
