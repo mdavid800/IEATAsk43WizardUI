@@ -27,7 +27,7 @@ interface ColumnInfo {
   name: string;
   measurementType: MeasurementType;
   height: number | null;
-  unit: string | null;
+  unit?: string;
   statisticType: StatisticType;
 }
 
@@ -46,7 +46,8 @@ export function MeasurementStep() {
     measurement_type_id: '',
     height_m: '',
     height_reference_id: '',
-    unit: ''
+    unit: '',
+    sensors: []
   });
 
   const addMeasurementPoint = (locationIndex: number, loggerIndex: number) => {
@@ -304,7 +305,7 @@ export function MeasurementStep() {
       name: header, // Preserve original header name exactly
       measurementType: 'other',
       height: null,
-      unit: null,
+      unit: undefined,
       statisticType: 'avg'
     };
 
@@ -512,6 +513,10 @@ export function MeasurementStep() {
               return;
             }
 
+            if (!validation.data) {
+              console.error('Validation passed but data is null');
+              return;
+            }
             const { headers, timeColIndex } = validation.data;
             console.log('CSV headers', headers);
 
