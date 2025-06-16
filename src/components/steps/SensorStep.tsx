@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
-import { PlusCircle, Trash2, ChevronDown, Plus } from 'lucide-react';
+import { PlusCircle, Trash2, ChevronDown, Plus, Copy } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -23,6 +23,26 @@ interface ExpandedState {
 interface NestedExpandedState {
   [key: string]: ExpandedState;
 }
+
+// Re-usable tooltip wrapper (matching style from MeasurementTable)
+const TooltipWrapper = ({ children, text, className = "" }: { children: React.ReactNode; text: string; className?: string }) => {
+  const [showTooltip, setShowTooltip] = React.useState(false);
+  return (
+    <div
+      className={`relative ${className}`}
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
+    >
+      {children}
+      {showTooltip && text && (
+        <div className="absolute z-50 px-3 py-2 text-sm leading-snug text-white bg-gray-800 rounded-md shadow-lg bottom-full mb-2 left-1/2 -translate-x-1/2 whitespace-normal break-words text-center max-w-md w-72">
+          {text}
+          <div className="absolute top-full left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 transform rotate-45 -translate-y-1" />
+        </div>
+      )}
+    </div>
+  );
+};
 
 export function SensorStep() {
   const { control, register, setValue, watch, formState: { errors } } = useFormContext<IEATask43Schema>();
@@ -146,7 +166,7 @@ function LocationSensorManager({
   onCalibrationRemoved,
   onToggleExpandCalibration,
 }: LocationSensorManagerProps) {
-  const { fields: sensorFields, append: appendSensor, remove: removeSensorAt } = useFieldArray({
+  const { fields: sensorFields, append: appendSensor, insert: insertSensor, remove: removeSensorAt } = useFieldArray({
     control,
     name: `measurement_location.${locationIndex}.sensor`
   });
@@ -164,11 +184,38 @@ function LocationSensorManager({
 
   const addSensorForLocation = () => {
     appendSensor({
-      oem: '', model: '', serial_number: '', sensor_type_id: undefined, classification: '',
-      instrument_poi_height_mm: 0, is_heated: false, sensor_body_size_mm: 0,
-      date_from: '', date_to: '', notes: '', calibration: [], logger_measurement_config: []
+      oem: '',
+      model: '',
+      serial_number: '',
+      sensor_type_id: undefined,
+      classification: '',
+      instrument_poi_height_mm: 0,
+      is_heated: false,
+      sensor_body_size_mm: 0,
+      date_from: '',
+      date_to: '',
+      notes: '',
+      calibration: [],
+      logger_measurement_config: [],
     });
     // Expansion of new sensor is handled by parent's toggle called from useEffect
+  };
+
+  // Duplicate current sensor (copy OEM/model etc.) and insert right after
+  const duplicateSensorForLocation = (sensorIndex: number) => {
+    const currentSensor = watch(`measurement_location.${locationIndex}.sensor.${sensorIndex}`);
+    if (!currentSensor) return;
+
+    const newSensor = {
+      ...currentSensor,
+      serial_number: '', // clear serial so user enters new one
+      date_from: currentSensor?.date_to || '', // next sensor starts when this one ends
+      date_to: '', // leave end date empty
+      calibration: [], // start with empty calibration arrays
+      logger_measurement_config: [],
+    } as typeof currentSensor;
+
+    insertSensor(sensorIndex + 1, newSensor);
   };
 
   const removeSensorForLocation = (sensorIndex: number) => {
@@ -196,7 +243,7 @@ function LocationSensorManager({
         </div>
 
       {sensorFields.map((sensorField, sensorIndex) => (
-        <div key={sensorField.id} className="bg-background/50 border rounded-lg overflow-hidden"> {/* Slightly different bg for nested items */}
+        <div key={sensorField.id} className="bg-background/50 border rounded-lg overflow-visible"> {/* Slightly different bg for nested items */}
           <div 
             className="bg-primary/10 p-4 cursor-pointer hover:bg-primary/20 transition-colors"
             onClick={() => toggleExpandSensor(sensorField.id)}
@@ -210,19 +257,37 @@ function LocationSensorManager({
                 </div>
               </div>
               {sensorFields.length > 0 && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Remove Sensor"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeSensorForLocation(sensorIndex);
-                  }}
-                  className="p-2 hover:bg-transparent"
-                >
-                  <Trash2 className="w-6 h-6 text-[#FF0000] hover:text-[#CC0000]" />
-                </Button>
+                <div className="flex items-center gap-2">
+                  <TooltipWrapper text="Creates a new sensor entry below this one. All fields except Serial Number and End Date are copied. Start Date is set to the End Date of the current sensor.">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      aria-label="Add follow on device"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        duplicateSensorForLocation(sensorIndex);
+                      }}
+                      className="border-primary/20 hover:border-primary/50"
+                    >
+                      <Copy className="w-4 h-4 mr-1" />
+                      Add follow on device
+                    </Button>
+                  </TooltipWrapper>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Remove Sensor"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeSensorForLocation(sensorIndex);
+                    }}
+                    className="p-2 hover:bg-transparent"
+                  >
+                    <Trash2 className="w-6 h-6 text-[#FF0000] hover:text-[#CC0000]" />
+                  </Button>
+                </div>
               )}
             </div>
           </div>
