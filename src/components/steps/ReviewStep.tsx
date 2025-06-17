@@ -27,6 +27,7 @@ export function ReviewStep() {
 
     if (!author) issues.push('Author is required');
     if (!organisation) issues.push('Organisation is required');
+    
     if (!startDate) issues.push('Start date is required');
     if (campaignStatus === 'historical' && !endDate) issues.push('End date is required');
 

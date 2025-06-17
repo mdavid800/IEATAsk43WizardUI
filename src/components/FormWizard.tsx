@@ -31,6 +31,7 @@ export function FormWizard() {
       version: '1.3.0-2024.03',
       campaignStatus: 'live', // Added for issue #5
       endDate: undefined, // Optional: Added for historical campaigns
+      // Plant information
       plant_name: '',
       plant_type: null,
       measurement_location: [{
@@ -67,7 +68,9 @@ export function FormWizard() {
 
   const onSubmit = (data: IEATask43Schema) => {
     if (currentStep === steps.length - 1) {
-      // Format the data according to the schema
+      // Use custom plant type if selected
+      // If plant_type is 'custom', use the value from the input field (which will be set to plant_type).
+      // No need to reference plant_type_custom anymore.
       const formattedData = {
         ...data,
         measurement_location: [{

@@ -3,8 +3,14 @@ import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 
 export function BasicInfoStep() {
-  const { register, watch } = useFormContext();
+  const { register, watch, setValue } = useFormContext();
   const campaignStatus = watch('campaignStatus');
+  const plantType = watch('plant_type');
+
+  // Handler for custom input
+  const handleCustomPlantTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setValue('plant_type', e.target.value);
+  }
 
   return (
     <div className="space-y-6">
@@ -26,6 +32,45 @@ export function BasicInfoStep() {
             {...register('organisation')}
             placeholder="Enter organisation name"
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="plant_name">Plant Name</Label>
+          <Input
+            id="plant_name"
+            {...register('plant_name')}
+            placeholder="Enter plant name"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="plant_type">Plant Type</Label>
+          <select
+            id="plant_type"
+            {...register('plant_type')}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <option value="">Select plant type</option>
+            <option value="onshore_wind">Onshore Wind</option>
+            <option value="offshore_wind">Offshore Wind</option>
+            <option value="solar">Solar</option>
+            <option value="custom">Custom...</option>
+          </select>
+          {(
+            plantType === 'custom' ||
+            (plantType && !['onshore_wind', 'offshore_wind', 'solar'].includes(plantType))
+          ) && (
+            <div className="mt-2">
+              <Label htmlFor="plant_type">Custom Plant Type</Label>
+              <Input
+                id="plant_type"
+                placeholder="Enter custom plant type"
+                value={['onshore_wind', 'offshore_wind', 'solar', 'custom'].includes(plantType) ? '' : plantType}
+                onChange={handleCustomPlantTypeChange}
+                autoFocus
+              />
+            </div>
+          )}
         </div>
 
         <div className="space-y-2">

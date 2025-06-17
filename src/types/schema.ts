@@ -6,8 +6,10 @@ export interface IEATask43Schema {
   version: string;
   campaignStatus: 'live' | 'historical'; // Added for issue #5: Indicate if campaign is live or historical
   endDate?: string; // Optional: Added for historical campaigns
+  /** Name of the plant */
   plant_name: string;
-  plant_type: 'onshore_wind' | 'offshore_wind' | 'solar' | null;
+  /** Type of plant: onshore wind, offshore wind, solar, or any custom string */
+  plant_type: 'onshore_wind' | 'offshore_wind' | 'solar' | string | null;
   measurement_location: MeasurementLocation[];
 }
 
