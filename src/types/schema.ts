@@ -24,6 +24,7 @@ export interface MeasurementLocation {
   mast_properties?: MastProperties;
   vertical_profiler_properties?: VerticalProfilerProperty[];
   logger_main_config?: LoggerMainConfig[];
+  sensors?: Sensor[]; // Added to support sensors directly under a location as per SensorStep.tsx
   measurement_point: MeasurementPoint[];
 }
 

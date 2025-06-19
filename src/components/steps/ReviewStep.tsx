@@ -3,7 +3,7 @@ import { useFormContext } from 'react-hook-form';
 import { FileJson, Check, AlertCircle } from 'lucide-react';
 import { Button } from '../ui/button';
 import { cn } from '../../utils/cn';
-import type { IEATask43Schema } from '../../types/schema';
+import type { IEATask43Schema, Sensor } from '../../types/schema';
 
 export function ReviewStep() {
   const { watch } = useFormContext<IEATask43Schema>();
@@ -123,21 +123,32 @@ export function ReviewStep() {
     const issues: string[] = [];
 
     formData.measurement_location?.forEach((location, locIndex) => {
-      location.measurement_point?.forEach((point, pointIndex) => {
-        if (!point.sensor?.length) {
-          issues.push(`Location ${locIndex + 1}, Point ${pointIndex + 1}: At least one sensor is required`);
-          return;
-        }
-
-        point.sensor.forEach((sensor, sensorIndex) => {
+      // Check if location.sensors exists and has items
+      if (location.sensors && location.sensors.length > 0) {
+        location.sensors.forEach((sensor: Sensor, sensorIndex: number) => {
+          if (!sensor.oem) {
+            issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: OEM is required`);
+          }
+          if (!sensor.model) {
+            issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Model is required`);
+          }
           if (!sensor.serial_number) {
-            issues.push(`Location ${locIndex + 1}, Point ${pointIndex + 1}, Sensor ${sensorIndex + 1}: Serial number is required`);
+            issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Serial Number is required`);
           }
           if (!sensor.sensor_type_id) {
-            issues.push(`Location ${locIndex + 1}, Point ${pointIndex + 1}, Sensor ${sensorIndex + 1}: Sensor type is required`);
+            issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Sensor Type is required`);
+          }
+          if (!sensor.date_from) {
+            issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Date From is required`);
+          }
+          if (!sensor.date_to) {
+            issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Date To is required`);
           }
         });
-      });
+      } else {
+        // Optionally, if every location *must* have sensors, you can add a check here.
+        // For now, we only validate sensors if they exist, consistent with other checks.
+      }
     });
 
     return {
