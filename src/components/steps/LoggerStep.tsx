@@ -7,6 +7,7 @@ import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Textarea } from '../ui/textarea';
 import type { IEATask43Schema, LoggerOEM } from '../../types/schema';
+import DynamicLoggerOptionalFields from './DynamicLoggerOptionalFields';
 
 export function LoggerStep() {
   const { register, setValue, watch } = useFormContext<IEATask43Schema>();
@@ -240,136 +241,16 @@ export function LoggerStep() {
                             />
                           </div>
 
-                          <div className="space-y-2">
-                            <Label htmlFor={`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.encryption_pin_or_key`}>
-                              Encryption PIN/Key
-                            </Label>
-                            <Input
-                              type="password"
-                              {...register(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.encryption_pin_or_key`)}
-                              placeholder="Enter encryption PIN or key"
+                          {/* Dynamic Optional Fields UI */}
+                          {typeof window !== 'undefined' && (
+                            <DynamicLoggerOptionalFields
+                              locationIndex={locationIndex}
+                              loggerIndex={loggerIndex}
+                              register={register}
+                              setValue={setValue}
+                              watch={watch}
                             />
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label htmlFor={`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.enclosure_lock_details`}>
-                              Enclosure Lock Details
-                            </Label>
-                            <Input
-                              {...register(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.enclosure_lock_details`)}
-                              placeholder="Enter lock details"
-                            />
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label htmlFor={`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.offset_from_utc_hrs`}>
-                              UTC Offset (hours)
-                            </Label>
-                            <Input
-                              type="number"
-                              step="0.5"
-                              {...register(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.offset_from_utc_hrs`, { 
-                                valueAsNumber: true 
-                              })}
-                              placeholder="Enter UTC offset"
-                            />
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label htmlFor={`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.sampling_rate_sec`}>
-                              Sampling Rate (seconds)
-                            </Label>
-                            <Input
-                              type="number"
-                              {...register(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.sampling_rate_sec`, { 
-                                valueAsNumber: true 
-                              })}
-                              placeholder="Enter sampling rate"
-                            />
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label htmlFor={`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.averaging_period_minutes`}>
-                              Averaging Period (minutes)
-                            </Label>
-                            <Input
-                              type="number"
-                              {...register(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.averaging_period_minutes`, { 
-                                valueAsNumber: true 
-                              })}
-                              placeholder="Enter averaging period"
-                            />
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label htmlFor={`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.timestamp_is_end_of_period`}>
-                              Timestamp at End of Period
-                            </Label>
-                            <Select
-                              onValueChange={(value) => setValue(
-                                `measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.timestamp_is_end_of_period`,
-                                value === 'true'
-                              )}
-                              value={watch(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.timestamp_is_end_of_period`)?.toString()}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select timestamp position" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="true">Yes</SelectItem>
-                                <SelectItem value="false">No</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label htmlFor={`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.clock_is_auto_synced`}>
-                              Auto-Synced Clock
-                            </Label>
-                            <Select
-                              onValueChange={(value) => setValue(
-                                `measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.clock_is_auto_synced`,
-                                value === 'true'
-                              )}
-                              value={watch(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.clock_is_auto_synced`)?.toString()}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select if clock is auto-synced" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="true">Yes</SelectItem>
-                                <SelectItem value="false">No</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label htmlFor={`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.logger_acquisition_uncertainty`}>
-                              Acquisition Uncertainty (%)
-                            </Label>
-                            <Input
-                              type="number"
-                              step="0.01"
-                              {...register(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.logger_acquisition_uncertainty`, { 
-                                valueAsNumber: true 
-                              })}
-                              placeholder="Enter uncertainty percentage"
-                            />
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label htmlFor={`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.uncertainty_k_factor`}>
-                              Uncertainty K Factor
-                            </Label>
-                            <Input
-                              type="number"
-                              step="0.1"
-                              {...register(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.uncertainty_k_factor`, { 
-                                valueAsNumber: true 
-                              })}
-                              placeholder="Enter k factor"
-                            />
-                          </div>
+                          )}
 
                           <div className="sm:col-span-2 space-y-2">
                             <Label htmlFor={`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.data_transfer_details`}>
