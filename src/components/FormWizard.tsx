@@ -7,7 +7,7 @@ import { BasicInfoStep } from './steps/BasicInfoStep';
 import { LocationStep } from './steps/LocationStep';
 import { LoggerStep } from './steps/LoggerStep';
 import { MeasurementStep } from './steps/MeasurementStep';
-import { SensorStep } from './steps/SensorStep';
+import { SensorsStep } from './steps/SensorStep';
 import { ReviewStep } from './steps/ReviewStep';
 import { Button } from './ui/button';
 import type { IEATask43Schema } from '../types/schema';
@@ -16,7 +16,7 @@ const steps = [
   { id: 'basic-info', name: 'Basic Information', component: BasicInfoStep },
   { id: 'location', name: 'Location & Properties', component: LocationStep },
   { id: 'loggers', name: 'Loggers', component: LoggerStep },
-  { id: 'sensors', name: 'Sensors', component: SensorStep },
+  { id: 'sensors', name: 'Sensors', component: SensorsStep },
   { id: 'measurements', name: 'Measurement Points', component: MeasurementStep },
   { id: 'review', name: 'Review & Export', component: ReviewStep },
 ];

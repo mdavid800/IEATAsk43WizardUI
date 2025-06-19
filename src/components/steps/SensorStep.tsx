@@ -10,10 +10,10 @@ import type { IEATask43Schema, SensorType, MeasurementType } from '../../types/s
 
 // Define types for managing expanded states locally per location
 interface LocationExpandedState {
-  [locationKey: string]: ExpandedState; // locationKey (e.g. locationIndex) -> sensorFieldId -> boolean
+  [locationKey: string]: ExpandedState; // locationKey (e.g. locationIndex) -> sensorsFieldId -> boolean
 }
 interface LocationNestedExpandedState {
-  [locationKey: string]: NestedExpandedState; // locationKey -> sensorFieldId -> calibrationFieldId -> boolean
+  [locationKey: string]: NestedExpandedState; // locationKey -> sensorsFieldId -> calibrationFieldId -> boolean
 }
 
 interface ExpandedState {
@@ -44,7 +44,7 @@ const TooltipWrapper = ({ children, text, className = "" }: { children: React.Re
   );
 };
 
-export function SensorStep() {
+export function SensorsStep() {
   const { control, register, setValue, watch, formState: { errors } } = useFormContext<IEATask43Schema>();
   const allLocations = watch('measurement_location') || [];
 
@@ -53,35 +53,35 @@ export function SensorStep() {
   const [expandedCalibrations, setExpandedCalibrations] = useState<LocationNestedExpandedState>({});
 
   // Adjust handlers to take locationIndex
-  const toggleExpandSensor = (locationIndex: number, sensorFieldId: string) => {
+  const toggleExpandSensor = (locationIndex: number, sensorsFieldId: string) => {
     setExpandedSensors(prev => ({
       ...prev,
       [locationIndex]: {
         ...(prev[locationIndex] || {}),
-        [sensorFieldId]: !prev[locationIndex]?.[sensorFieldId],
+        [sensorsFieldId]: !prev[locationIndex]?.[sensorsFieldId],
       }
     }));
   };
 
-  const handleCalibrationAdded = (locationIndex: number, sensorFieldId: string, newCalibrationFieldId: string) => {
+  const handleCalibrationAdded = (locationIndex: number, sensorsFieldId: string, newCalibrationFieldId: string) => {
     setExpandedCalibrations(prev => ({
       ...prev,
       [locationIndex]: {
         ...(prev[locationIndex] || {}),
-        [sensorFieldId]: {
-          ...((prev[locationIndex] || {})[sensorFieldId] || {}),
+        [sensorsFieldId]: {
+          ...((prev[locationIndex] || {})[sensorsFieldId] || {}),
           [newCalibrationFieldId]: true,
         },
       },
     }));
   };
 
-  const handleCalibrationRemoved = (locationIndex: number, sensorFieldId: string, calibrationFieldId: string) => {
+  const handleCalibrationRemoved = (locationIndex: number, sensorsFieldId: string, calibrationFieldId: string) => {
     setExpandedCalibrations(prev => {
       const locCalibrations = { ...(prev[locationIndex] || {}) };
-      const sensorCalibrations = { ...(locCalibrations[sensorFieldId] || {}) };
+      const sensorCalibrations = { ...(locCalibrations[sensorsFieldId] || {}) };
       delete sensorCalibrations[calibrationFieldId];
-      locCalibrations[sensorFieldId] = sensorCalibrations;
+      locCalibrations[sensorsFieldId] = sensorCalibrations;
       return {
         ...prev,
         [locationIndex]: locCalibrations,
@@ -89,14 +89,14 @@ export function SensorStep() {
     });
   };
 
-  const toggleExpandCalibration = (locationIndex: number, sensorFieldId: string, calibrationFieldId: string) => {
+  const toggleExpandCalibration = (locationIndex: number, sensorsFieldId: string, calibrationFieldId: string) => {
     setExpandedCalibrations(prev => ({
       ...prev,
       [locationIndex]: {
         ...(prev[locationIndex] || {}),
-        [sensorFieldId]: {
-          ...((prev[locationIndex] || {})[sensorFieldId] || {}),
-          [calibrationFieldId]: !((prev[locationIndex] || {})[sensorFieldId] || {})[calibrationFieldId],
+        [sensorsFieldId]: {
+          ...((prev[locationIndex] || {})[sensorsFieldId] || {}),
+          [calibrationFieldId]: !((prev[locationIndex] || {})[sensorsFieldId] || {})[calibrationFieldId],
         },
       },
     }));
@@ -116,7 +116,7 @@ export function SensorStep() {
           <h2 className="text-xl font-semibold text-foreground">
             Sensors for Location: {location.name || `Location ${locationIndex + 1}`}
           </h2>
-          <LocationSensorManager
+          <LocationSensorsManager
             locationIndex={locationIndex}
             control={control}
             register={register}
@@ -136,8 +136,8 @@ export function SensorStep() {
   );
 }
 
-// --- LocationSensorManager Component ---
-interface LocationSensorManagerProps {
+// --- LocationSensorsManager Component ---
+interface LocationSensorsManagerProps {
   locationIndex: number;
   control: any;
   register: any;
@@ -146,13 +146,13 @@ interface LocationSensorManagerProps {
   errors: any;
   expandedSensors: ExpandedState;
   expandedCalibrations: NestedExpandedState; // This will be further nested or specific to this location's sensors
-  toggleExpandSensor: (sensorFieldId: string) => void;
-  onCalibrationAdded: (sensorFieldId: string, newCalFieldId: string) => void;
-  onCalibrationRemoved: (sensorFieldId: string, calFieldId: string) => void;
-  onToggleExpandCalibration: (sensorFieldId: string, calFieldId: string) => void;
+  toggleExpandSensor: (sensorsFieldId: string) => void;
+  onCalibrationAdded: (sensorsFieldId: string, newCalFieldId: string) => void;
+  onCalibrationRemoved: (sensorsFieldId: string, calFieldId: string) => void;
+  onToggleExpandCalibration: (sensorsFieldId: string, calFieldId: string) => void;
 }
 
-function LocationSensorManager({
+function LocationSensorsManager({
   locationIndex,
   control,
   register,
@@ -165,25 +165,25 @@ function LocationSensorManager({
   onCalibrationAdded,
   onCalibrationRemoved,
   onToggleExpandCalibration,
-}: LocationSensorManagerProps) {
-  const { fields: sensorFields, append: appendSensor, insert: insertSensor, remove: removeSensorAt } = useFieldArray({
+}: LocationSensorsManagerProps) {
+  const { fields: sensorsFields, append: appendSensors, insert: insertSensors, remove: removeSensorsAt } = useFieldArray({
     control,
-    name: `measurement_location.${locationIndex}.sensor`
+    name: `measurement_location.${locationIndex}.sensors`
   });
 
   // Effect to default new sensors in this location to expanded
   useEffect(() => {
-    sensorFields.forEach(field => {
+    sensorsFields.forEach(field => {
       if (typeof expandedSensors[field.id] === 'undefined') {
         toggleExpandSensor(field.id); // This will call parent's toggle which defaults to true if not set
       }
     });
-  }, [sensorFields, expandedSensors, toggleExpandSensor]);
+  }, [sensorsFields, expandedSensors, toggleExpandSensor]);
   // Note: The above useEffect might cause a loop if toggleExpandSensor doesn't correctly handle initial undefined state.
   // Parent's toggleExpandSensor should be robust. Let's assume it is.
 
-  const addSensorForLocation = () => {
-    appendSensor({
+  const addSensorsForLocation = () => {
+    appendSensors({
       oem: '',
       model: '',
       serial_number: '',
@@ -202,31 +202,31 @@ function LocationSensorManager({
   };
 
   // Duplicate current sensor (copy OEM/model etc.) and insert right after
-  const duplicateSensorForLocation = (sensorIndex: number) => {
-    const currentSensor = watch(`measurement_location.${locationIndex}.sensor.${sensorIndex}`);
-    if (!currentSensor) return;
+  const duplicateSensorsForLocation = (sensorsIndex: number) => {
+    const currentSensorss = watch(`measurement_location.${locationIndex}.sensors.${sensorsIndex}`);
+    if (!currentSensorss) return;
 
     const newSensor = {
-      ...currentSensor,
+      ...currentSensorss,
       serial_number: '', // clear serial so user enters new one
-      date_from: currentSensor?.date_to || '', // next sensor starts when this one ends
+      date_from: currentSensorss?.date_to || '', // next sensor starts when this one ends
       date_to: '', // leave end date empty
       calibration: [], // start with empty calibration arrays
       logger_measurement_config: [],
-    } as typeof currentSensor;
+    } as typeof currentSensorss;
 
-    insertSensor(sensorIndex + 1, newSensor);
+    insertSensors(sensorsIndex + 1, newSensor);
   };
 
-  const removeSensorForLocation = (sensorIndex: number) => {
+  const removeSensorsForLocation = (sensorsIndex: number) => {
     // Before removing from RHF, clean up its expansion state via parent if needed
-    const sensorFieldId = sensorFields[sensorIndex]?.id;
+    const sensorsFieldId = sensorsFields[sensorsIndex]?.id;
     // This cleanup might be better handled in the parent's main removeSensor upon RHF update,
     // but if direct child calls are preferred:
-    // if (sensorFieldId) {
+    // if (sensorsFieldId) {
     //   // Call a specific prop function if parent needs to clean up this specific sensor's state from this location
     // }
-    removeSensorAt(sensorIndex);
+    removeSensorsAt(sensorsIndex);
   };
 
   return (
@@ -234,7 +234,7 @@ function LocationSensorManager({
         <div className="flex justify-end">
             <Button
             type="button"
-            onClick={addSensorForLocation}
+            onClick={addSensorsForLocation}
             className="bg-primary hover:bg-primary/90"
             >
             <PlusCircle className="w-4 h-4 mr-2" />
@@ -242,7 +242,7 @@ function LocationSensorManager({
             </Button>
         </div>
 
-      {sensorFields.map((sensorField, sensorIndex) => (
+      {sensorsFields.map((sensorField, sensorsIndex) => (
         <div key={sensorField.id} className="bg-background/50 border rounded-lg overflow-visible"> {/* Slightly different bg for nested items */}
           <div 
             className="bg-primary/10 p-4 cursor-pointer hover:bg-primary/20 transition-colors"
@@ -251,12 +251,12 @@ function LocationSensorManager({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <ChevronDown className={`w-5 h-5 transition-transform ${expandedSensors[sensorField.id] ? 'transform rotate-0' : 'transform -rotate-90'}`} />
-                <h3 className="text-lg font-medium text-foreground">Sensor {sensorIndex + 1}</h3>
+                <h3 className="text-lg font-medium text-foreground">Sensor {sensorsIndex + 1}</h3>
                 <div className="text-sm text-muted-foreground">
-                  {watch(`measurement_location.${locationIndex}.sensor.${sensorIndex}.model`) || 'Unnamed Sensor'}
+                  {watch(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.model`) || 'Unnamed Sensor'}
                 </div>
               </div>
-              {sensorFields.length > 0 && (
+              {sensorsFields.length > 0 && (
                 <div className="flex items-center gap-2">
                   <TooltipWrapper text="Creates a new sensor entry below this one. All fields except Serial Number and End Date are copied. Start Date is set to the End Date of the current sensor.">
                     <Button
@@ -266,7 +266,7 @@ function LocationSensorManager({
                       aria-label="Add follow on device"
                       onClick={(e) => {
                         e.stopPropagation();
-                        duplicateSensorForLocation(sensorIndex);
+                        duplicateSensorsForLocation(sensorsIndex);
                       }}
                       className="border-primary/20 hover:border-primary/50"
                     >
@@ -281,7 +281,7 @@ function LocationSensorManager({
                     aria-label="Remove Sensor"
                     onClick={(e) => {
                       e.stopPropagation();
-                      removeSensorForLocation(sensorIndex);
+                      removeSensorsForLocation(sensorsIndex);
                     }}
                     className="p-2 hover:bg-transparent"
                   >
@@ -297,60 +297,60 @@ function LocationSensorManager({
               {/* Sensor Details (paths need locationIndex) */}
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.oem`}>
-  OEM <span className="text-red-500">*</span>
+                  <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.oem`}>
+  OEM <span className="required-asterisk">*</span>
 </Label>
 <Input
-  {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.oem`, {
+  {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.oem`, {
     required: "OEM is required"
   })}
   placeholder="Manufacturer"
-  className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.oem ? 'border-red-500' : ''}
+  className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.oem ? 'border-red-500' : ''}
 />
-{errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.oem && (
-  <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensor[sensorIndex].oem.message}</p>
+{errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.oem && (
+  <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensors[sensorsIndex].oem.message}</p>
 )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.model`}>
-  Model <span className="text-red-500">*</span>
+                  <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.model`}>
+  Model <span className="required-asterisk">*</span>
 </Label>
 <Input
-  {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.model`, {
+  {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.model`, {
     required: "Model is required"
   })}
   placeholder="Model name"
-  className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.model ? 'border-red-500' : ''}
+  className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.model ? 'border-red-500' : ''}
 />
-{errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.model && (
-  <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensor[sensorIndex].model.message}</p>
+{errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.model && (
+  <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensors[sensorsIndex].model.message}</p>
 )}
                 </div>
                 {/* ... other sensor fields with updated paths ... */}
                  <div className="space-y-2">
-                  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.serial_number`}>
-  Serial Number <span className="text-red-500">*</span>
+                  <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.serial_number`}>
+  Serial Number <span className="required-asterisk">*</span>
 </Label>
 <Input
-  {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.serial_number`, {
+  {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.serial_number`, {
     required: "Serial number is required"
   })}
   placeholder="Serial number"
-  className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.serial_number ? 'border-red-500' : ''}
+  className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.serial_number ? 'border-red-500' : ''}
 />
-{errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.serial_number && (
-  <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensor[sensorIndex].serial_number.message}</p>
+{errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.serial_number && (
+  <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensors[sensorsIndex].serial_number.message}</p>
 )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.sensor_type_id`}>
-  Sensor Type <span className="text-red-500">*</span>
+                  <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.sensor_type_id`}>
+  Sensor Type <span className="required-asterisk">*</span>
 </Label>
 <Select
-  onValueChange={(value) => setValue(`measurement_location.${locationIndex}.sensor.${sensorIndex}.sensor_type_id`, value as SensorType)}
-  value={watch(`measurement_location.${locationIndex}.sensor.${sensorIndex}.sensor_type_id`)}
+  onValueChange={(value) => setValue(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.sensor_type_id`, value as SensorType)}
+  value={watch(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.sensor_type_id`)}
 >
-  <SelectTrigger className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.sensor_type_id ? 'border-red-500' : ''}>
+  <SelectTrigger className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.sensor_type_id ? 'border-red-500' : ''}>
     <SelectValue placeholder="Select sensor type" />
   </SelectTrigger>
   <SelectContent>
@@ -373,23 +373,23 @@ function LocationSensorManager({
     <SelectItem value="other">Other</SelectItem>
   </SelectContent>
 </Select>
-{errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.sensor_type_id && (
-  <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensor[sensorIndex].sensor_type_id.message || 'Sensor type is required'}</p>
+{errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.sensor_type_id && (
+  <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensors[sensorsIndex].sensor_type_id.message || 'Sensor type is required'}</p>
 )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.classification`}>Classification</Label>
-                  <Input {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.classification`)} placeholder="e.g., 1.2A" pattern="^([0-9]{1,2})[.]([0-9]{1,2})[ABCDS]$"/>
+                  <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.classification`}>Classification</Label>
+                  <Input {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.classification`)} placeholder="e.g., 1.2A" pattern="^([0-9]{1,2})[.]([0-9]{1,2})[ABCDS]$"/>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.instrument_poi_height_mm`}>POI Height (mm)</Label>
-                  <Input type="number" {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.instrument_poi_height_mm`, { valueAsNumber: true })} placeholder="Height in mm"/>
+                  <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.instrument_poi_height_mm`}>POI Height (mm)</Label>
+                  <Input type="number" {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.instrument_poi_height_mm`, { valueAsNumber: true })} placeholder="Height in mm"/>
                 </div>
                  <div className="space-y-2">
-                  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.is_heated`}>Heated</Label>
+                  <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.is_heated`}>Heated</Label>
                   <Select
-                    onValueChange={(value) => setValue(`measurement_location.${locationIndex}.sensor.${sensorIndex}.is_heated`, value === 'true')}
-                    value={watch(`measurement_location.${locationIndex}.sensor.${sensorIndex}.is_heated`)?.toString()}
+                    onValueChange={(value) => setValue(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.is_heated`, value === 'true')}
+                    value={watch(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.is_heated`)?.toString()}
                   >
                     <SelectTrigger><SelectValue placeholder="Is sensor heated?" /></SelectTrigger>
                     <SelectContent>
@@ -399,49 +399,49 @@ function LocationSensorManager({
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.sensor_body_size_mm`}>Body Size (mm)</Label>
-                  <Input type="number" {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.sensor_body_size_mm`, { valueAsNumber: true })} placeholder="Body size in mm"/>
+                  <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.sensor_body_size_mm`}>Body Size (mm)</Label>
+                  <Input type="number" {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.sensor_body_size_mm`, { valueAsNumber: true })} placeholder="Body size in mm"/>
                 </div>
                 <div className="space-y-2">
-  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.date_from`}>
-    Date From <span className="text-red-500">*</span>
+  <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.date_from`}>
+    Date From <span className="required-asterisk">*</span>
   </Label>
   <Input
     type="datetime-local"
-    {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.date_from`, {
+    {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.date_from`, {
       required: 'Date From is required'
     })}
-    className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.date_from ? 'border-red-500' : ''}
+    className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.date_from ? 'border-red-500' : ''}
   />
-  {errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.date_from && (
-    <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensor[sensorIndex].date_from.message}</p>
+  {errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.date_from && (
+    <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensors[sensorsIndex].date_from.message}</p>
   )}
 </div>
                 <div className="space-y-2">
-  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.date_to`}>
-    Date To <span className="text-red-500">*</span>
+  <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.date_to`}>
+    Date To <span className="required-asterisk">*</span>
   </Label>
   <Input
     type="datetime-local"
-    {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.date_to`, {
+    {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.date_to`, {
       required: 'Date To is required'
     })}
-    className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.date_to ? 'border-red-500' : ''}
+    className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.date_to ? 'border-red-500' : ''}
   />
-  {errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.date_to && (
-    <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensor[sensorIndex].date_to.message}</p>
+  {errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.date_to && (
+    <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensors[sensorsIndex].date_to.message}</p>
   )}
 </div>
                 <div className="sm:col-span-2 space-y-2">
-                  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.notes`}>Notes</Label>
-                  <Textarea {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.notes`)} placeholder="Additional notes" rows={3}/>
+                  <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.notes`}>Notes</Label>
+                  <Textarea {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.notes`)} placeholder="Additional notes" rows={3}/>
                 </div>
               </div>
 
               <CalibrationArray
                 locationIndex={locationIndex} // Pass locationIndex
-                sensorFieldId={sensorField.id} // This is RHF's field ID for this sensor
-                sensorIndex={sensorIndex} // This is the array index for this sensor
+                sensorsFieldId={sensorField.id} // This is RHF's field ID for this sensor
+                sensorsIndex={sensorsIndex} // This is the array index for this sensor
                 control={control}
                 register={register}
                 setValue={setValue}
@@ -463,8 +463,8 @@ function LocationSensorManager({
 // --- CalibrationArray Component ---
 interface CalibrationArrayProps {
   locationIndex: number; // Added
-  sensorFieldId: string;
-  sensorIndex: number;
+  sensorsFieldId: string;
+  sensorsIndex: number;
   control: any;
   register: any;
   setValue: any;
@@ -477,8 +477,8 @@ interface CalibrationArrayProps {
 
 function CalibrationArray({
   locationIndex, // Added
-  sensorFieldId,
-  sensorIndex,
+  sensorsFieldId,
+  sensorsIndex,
   control,
   register,
   setValue,
@@ -490,7 +490,7 @@ function CalibrationArray({
 }: CalibrationArrayProps) {
   const { fields: calibrationFields, append: appendCalibrationRHF, remove: removeCalibrationRHF } = useFieldArray({
     control,
-    name: `measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration` // Dynamic path
+    name: `measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration` // Dynamic path
   });
 
   // Effect to notify parent when a new calibration is added and should be expanded
@@ -572,12 +572,12 @@ function CalibrationArray({
             <div className="p-6 space-y-6 bg-background">
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.measurement_type_id`}>
+                  <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.measurement_type_id`}>
                     Measurement Type
                   </Label>
                   <Select
-                    onValueChange={(value) => setValue(`measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.measurement_type_id`, value as MeasurementType)}
-                    value={watch(`measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.measurement_type_id`)}
+                    onValueChange={(value) => setValue(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.measurement_type_id`, value as MeasurementType)}
+                    value={watch(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.measurement_type_id`)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select measurement type" />
@@ -594,130 +594,130 @@ function CalibrationArray({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.slope`}>
+                  <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.slope`}>
                     Slope
                   </Label>
                   <Input
                     type="number"
                     step="any" // Allow more precision
-                    {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.slope`, { valueAsNumber: true })}
+                    {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.slope`, { valueAsNumber: true })}
                     placeholder="Enter slope value"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.offset`}>
+                  <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.offset`}>
                     Offset
                   </Label>
                   <Input
                     type="number"
                     step="any"
-                    {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.offset`, { valueAsNumber: true })}
+                    {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.offset`, { valueAsNumber: true })}
                     placeholder="Enter offset value"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.sensitivity`}>
+                  <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.sensitivity`}>
                     Sensitivity
                   </Label>
                   <Input
                     type="number"
                     step="any"
-                    {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.sensitivity`, { valueAsNumber: true })}
+                    {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.sensitivity`, { valueAsNumber: true })}
                     placeholder="Enter sensitivity value"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.calibration_id`}>
+                  <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.calibration_id`}>
                     Calibration ID
                   </Label>
                   <Input
-                    {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.calibration_id`)}
+                    {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.calibration_id`)}
                     placeholder="Enter calibration ID"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.date_of_calibration`}>
+                  <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.date_of_calibration`}>
                     Calibration Date
                   </Label>
                   <Input
                     type="date"
-                    {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.date_of_calibration`)}
+                    {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.date_of_calibration`)}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.calibration_organisation`}>
+                  <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.calibration_organisation`}>
                     Calibration Organisation
                   </Label>
                   <Input
-                    {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.calibration_organisation`)}
+                    {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.calibration_organisation`)}
                     placeholder="Enter organisation name"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.place_of_calibration`}>
+                  <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.place_of_calibration`}>
                     Place of Calibration
                   </Label>
                   <Input
-                    {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.place_of_calibration`)}
+                    {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.place_of_calibration`)}
                     placeholder="Enter calibration location"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.uncertainty_k_factor`}>
+                  <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.uncertainty_k_factor`}>
                     Uncertainty K Factor
                   </Label>
                   <Input
                     type="number"
                     step="any"
-                    {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.uncertainty_k_factor`, { valueAsNumber: true })}
+                    {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.uncertainty_k_factor`, { valueAsNumber: true })}
                     placeholder="Enter k factor"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.revision`}>
+                  <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.revision`}>
                     Revision
                   </Label>
                   <Input
-                    {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.revision`)}
+                    {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.revision`)}
                     placeholder="e.g., 2.0 or B"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.report_file_name`}>
+                  <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.report_file_name`}>
                     Report File Name
                   </Label>
                   <Input
-                    {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.report_file_name`)}
+                    {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.report_file_name`)}
                     placeholder="e.g., calibration_report.pdf"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.report_link`}>
+                  <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.report_link`}>
                     Report Link
                   </Label>
                   <Input
                     type="url"
-                    {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.report_link`)}
+                    {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.report_link`)}
                     placeholder="Enter URL to calibration report"
                   />
                 </div>
 
                 <div className="sm:col-span-2 space-y-2">
-                  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.notes`}>
+                  <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.notes`}>
                     Notes
                   </Label>
                   <Textarea
-                    {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.notes`)}
+                    {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.notes`)}
                     placeholder="Add any additional notes"
                     rows={3}
                   />
@@ -727,7 +727,7 @@ function CalibrationArray({
               {/* Calibration Uncertainty Section */}
               <UncertaintyArray
                 locationIndex={locationIndex} // Pass locationIndex
-                sensorIndex={sensorIndex}
+                sensorsIndex={sensorsIndex}
                 calIndex={calIndex}
                 control={control}
                 register={register}
@@ -744,7 +744,7 @@ function CalibrationArray({
 // --- UncertaintyArray Component ---
 interface UncertaintyArrayProps {
   locationIndex: number; // Added
-  sensorIndex: number;
+  sensorsIndex: number;
   calIndex: number;
   control: any;
   register: any;
@@ -752,14 +752,14 @@ interface UncertaintyArrayProps {
 
 function UncertaintyArray({
   locationIndex, // Added
-  sensorIndex,
+  sensorsIndex,
   calIndex,
   control,
   register,
 }: UncertaintyArrayProps) {
   const { fields: uncertaintyFields, append: appendUncertainty, remove: removeUncertainty } = useFieldArray({
     control,
-    name: `measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.calibration_uncertainty` // Dynamic path
+    name: `measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.calibration_uncertainty` // Dynamic path
   });
 
   const addUncertaintyItem = () => {
@@ -802,35 +802,35 @@ function UncertaintyArray({
             )}
 
             <div className="space-y-2">
-              <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.calibration_uncertainty.${uncIndex}.reference_bin`}>
+              <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.calibration_uncertainty.${uncIndex}.reference_bin`}>
                 Reference Bin
               </Label>
               <Input
                 type="number"
                 step="any"
-                {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.calibration_uncertainty.${uncIndex}.reference_bin`, { valueAsNumber: true })}
+                {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.calibration_uncertainty.${uncIndex}.reference_bin`, { valueAsNumber: true })}
                 placeholder="Enter reference bin"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.calibration_uncertainty.${uncIndex}.reference_unit`}>
+              <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.calibration_uncertainty.${uncIndex}.reference_unit`}>
                 Reference Unit
               </Label>
               <Input
-                {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.calibration_uncertainty.${uncIndex}.reference_unit`)}
+                {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.calibration_uncertainty.${uncIndex}.reference_unit`)}
                 placeholder="e.g., m/s"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.calibration_uncertainty.${uncIndex}.combined_uncertainty`}>
+              <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.calibration_uncertainty.${uncIndex}.combined_uncertainty`}>
                 Combined Uncertainty
               </Label>
               <Input
                 type="number"
                 step="any"
-                {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.calibration.${calIndex}.calibration_uncertainty.${uncIndex}.combined_uncertainty`, { valueAsNumber: true })}
+                {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.calibration_uncertainty.${uncIndex}.combined_uncertainty`, { valueAsNumber: true })}
                 placeholder="Enter combined uncertainty"
               />
             </div>

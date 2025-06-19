@@ -123,32 +123,34 @@ export function ReviewStep() {
     const issues: string[] = [];
 
     formData.measurement_location?.forEach((location, locIndex) => {
-      // Check if location.sensors exists and has items
-      if (location.sensors && location.sensors.length > 0) {
-        location.sensors.forEach((sensor: Sensor, sensorIndex: number) => {
-          if (!sensor.oem) {
-            issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: OEM is required`);
-          }
-          if (!sensor.model) {
-            issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Model is required`);
-          }
-          if (!sensor.serial_number) {
-            issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Serial Number is required`);
-          }
-          if (!sensor.sensor_type_id) {
-            issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Sensor Type is required`);
-          }
-          if (!sensor.date_from) {
-            issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Date From is required`);
-          }
-          if (!sensor.date_to) {
-            issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Date To is required`);
-          }
-        });
-      } else {
-        // Optionally, if every location *must* have sensors, you can add a check here.
-        // For now, we only validate sensors if they exist, consistent with other checks.
+      // Require at least one sensor per location (skip undefined/null entries)
+      const validSensors = Array.isArray(location.sensors)
+        ? location.sensors.filter(Boolean)
+        : [];
+      if (validSensors.length === 0) {
+        issues.push(`Location ${locIndex + 1}: At least one sensor is required`);
+        return;
       }
+      validSensors.forEach((sensor: Sensor, sensorIndex: number) => {
+        if (!sensor.oem) {
+          issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: OEM is required`);
+        }
+        if (!sensor.model) {
+          issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Model is required`);
+        }
+        if (!sensor.serial_number) {
+          issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Serial Number is required`);
+        }
+        if (!sensor.sensor_type_id) {
+          issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Sensor Type is required`);
+        }
+        if (!sensor.date_from) {
+          issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Date From is required`);
+        }
+        if (!sensor.date_to) {
+          issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Date To is required`);
+        }
+      });
     });
 
     return {
@@ -156,6 +158,7 @@ export function ReviewStep() {
       issues
     };
   };
+
 
   const validationResults = validateData();
   const isValid = Object.values(validationResults).every(result => result.valid);
