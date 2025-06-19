@@ -22,12 +22,14 @@ export function ReviewStep() {
   };
 
   const validateBasicInfo = () => {
-    const { author, organisation, startDate, campaignStatus, endDate } = formData;
+    const { author, organisation, plant_name, plant_type, version, startDate, campaignStatus, endDate } = formData;
     const issues: string[] = [];
 
     if (!author) issues.push('Author is required');
     if (!organisation) issues.push('Organisation is required');
-    
+    if (!plant_name) issues.push('Plant name is required');
+    if (!plant_type) issues.push('Plant type is required');
+    if (!version) issues.push('Version is required');
     if (!startDate) issues.push('Start date is required');
     if (campaignStatus === 'historical' && !endDate) issues.push('End date is required');
 
@@ -49,6 +51,7 @@ export function ReviewStep() {
       if (!location.name) issues.push(`Location ${index + 1}: Name is required`);
       if (!location.latitude_ddeg) issues.push(`Location ${index + 1}: Latitude is required`);
       if (!location.longitude_ddeg) issues.push(`Location ${index + 1}: Longitude is required`);
+      if (!location.measurement_station_type_id) issues.push(`Location ${index + 1}: Station Type is required`);
     });
 
     return {
@@ -67,11 +70,20 @@ export function ReviewStep() {
       }
 
       location.logger_main_config.forEach((logger, logIndex) => {
+        if (!logger.logger_oem_id) {
+          issues.push(`Location ${locIndex + 1}, Logger ${logIndex + 1}: Logger Manufacturer is required`);
+        }
+        if (!logger.logger_model_name) {
+          issues.push(`Location ${locIndex + 1}, Logger ${logIndex + 1}: Model Name is required`);
+        }
         if (!logger.logger_serial_number) {
           issues.push(`Location ${locIndex + 1}, Logger ${logIndex + 1}: Serial number is required`);
         }
         if (!logger.date_from) {
-          issues.push(`Location ${locIndex + 1}, Logger ${logIndex + 1}: Start date is required`);
+          issues.push(`Location ${locIndex + 1}, Logger ${logIndex + 1}: Date From is required`);
+        }
+        if (!logger.date_to) {
+          issues.push(`Location ${locIndex + 1}, Logger ${logIndex + 1}: Date To is required`);
         }
       });
     });

@@ -77,7 +77,7 @@ export function LocationStep() {
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="measurement_location.0.name">
-                    Name
+                    Name <span className="required-asterisk">*</span>
                   </Label>
                   <Input
                     {...register('measurement_location.0.name')}
@@ -87,7 +87,7 @@ export function LocationStep() {
 
                 <div className="space-y-2">
                   <Label htmlFor="measurement_location.0.measurement_station_type_id">
-                    Station Type
+                    Station Type <span className="required-asterisk">*</span>
                   </Label>
                   <Select
                     onValueChange={(value) => setValue('measurement_location.0.measurement_station_type_id', value as any)}
@@ -112,7 +112,7 @@ export function LocationStep() {
 
                 <div className="space-y-2">
                   <Label htmlFor="measurement_location.0.latitude_ddeg">
-                    Latitude (degrees)
+                    Latitude (degrees) <span className="required-asterisk">*</span>
                   </Label>
                   <Input
                     type="number"
@@ -126,7 +126,7 @@ export function LocationStep() {
 
                 <div className="space-y-2">
                   <Label htmlFor="measurement_location.0.longitude_ddeg">
-                    Longitude (degrees)
+                    Longitude (degrees) <span className="required-asterisk">*</span>
                   </Label>
                   <Input
                     type="number"

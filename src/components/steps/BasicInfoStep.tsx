@@ -17,7 +17,7 @@ export function BasicInfoStep() {
       <h2 className="text-xl font-semibold text-foreground">Basic Information</h2>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="author">Author</Label>
+          <Label htmlFor="author">Author <span className="required-asterisk">*</span></Label>
           <Input
             id="author"
             {...register('author')}
@@ -26,7 +26,7 @@ export function BasicInfoStep() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="organisation">Organisation</Label>
+          <Label htmlFor="organisation">Organisation <span className="required-asterisk">*</span></Label>
           <Input
             id="organisation"
             {...register('organisation')}
@@ -35,7 +35,7 @@ export function BasicInfoStep() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="plant_name">Plant Name</Label>
+          <Label htmlFor="plant_name">Plant Name <span className="required-asterisk">*</span></Label>
           <Input
             id="plant_name"
             {...register('plant_name')}
@@ -44,7 +44,7 @@ export function BasicInfoStep() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="plant_type">Plant Type</Label>
+          <Label htmlFor="plant_type">Plant Type <span className="required-asterisk">*</span></Label>
           <select
             id="plant_type"
             {...register('plant_type')}
@@ -61,7 +61,7 @@ export function BasicInfoStep() {
             (plantType && !['onshore_wind', 'offshore_wind', 'solar'].includes(plantType))
           ) && (
             <div className="mt-2">
-              <Label htmlFor="plant_type">Custom Plant Type</Label>
+              <Label htmlFor="plant_type">Custom Plant Type <span className="required-asterisk">*</span></Label>
               <Input
                 id="plant_type"
                 placeholder="Enter custom plant type"
@@ -74,7 +74,7 @@ export function BasicInfoStep() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="version">Version</Label>
+          <Label htmlFor="version">Version <span className="required-asterisk">*</span></Label>
           <Input
             id="version"
             {...register('version')}
@@ -83,7 +83,7 @@ export function BasicInfoStep() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="startDate">Start Date</Label>
+          <Label htmlFor="startDate">Start Date <span className="required-asterisk">*</span></Label>
           <Input
             type="date"
             id="startDate"
@@ -92,7 +92,7 @@ export function BasicInfoStep() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="campaignStatus">Campaign Status</Label>
+          <Label htmlFor="campaignStatus">Campaign Status <span className="required-asterisk">*</span></Label>
           <select
             id="campaignStatus"
             {...register('campaignStatus')}
@@ -105,7 +105,7 @@ export function BasicInfoStep() {
 
         {campaignStatus === 'historical' && (
           <div className="space-y-2">
-            <Label htmlFor="endDate">End Date</Label>
+            <Label htmlFor="endDate">End Date <span className="required-asterisk">*</span></Label>
             <Input
               type="date"
               id="endDate"

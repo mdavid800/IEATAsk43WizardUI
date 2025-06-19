@@ -135,8 +135,8 @@ export function LoggerStep() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 p-8 bg-white/80 rounded-b-xl">
                           <div className="space-y-2">
                             <Label htmlFor={`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.logger_oem_id`}>
-                              Logger Manufacturer
-                            </Label>
+                                Logger Manufacturer <span className="required-asterisk">*</span>
+                              </Label>
                             <Select
                               onValueChange={(value) => setValue(
                                 `measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.logger_oem_id`,
@@ -172,8 +172,8 @@ export function LoggerStep() {
 
                           <div className="space-y-2">
                             <Label htmlFor={`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.logger_model_name`}>
-                              Model Name
-                            </Label>
+                                Model Name <span className="required-asterisk">*</span>
+                              </Label>
                             <Input
                               {...register(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.logger_model_name`)}
                               placeholder="Enter model name"
@@ -182,8 +182,8 @@ export function LoggerStep() {
 
                           <div className="space-y-2">
                             <Label htmlFor={`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.logger_serial_number`}>
-                              Serial Number
-                            </Label>
+                                Serial Number <span className="required-asterisk">*</span>
+                              </Label>
                             <Input
                               {...register(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.logger_serial_number`)}
                               placeholder="Enter serial number"
@@ -222,8 +222,8 @@ export function LoggerStep() {
 
                           <div className="space-y-2">
                             <Label htmlFor={`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.date_from`}>
-                              Date From
-                            </Label>
+                                Date From <span className="required-asterisk">*</span>
+                              </Label>
                             <Input
                               type="datetime-local"
                               {...register(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.date_from`)}
@@ -232,8 +232,8 @@ export function LoggerStep() {
 
                           <div className="space-y-2">
                             <Label htmlFor={`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.date_to`}>
-                              Date To
-                            </Label>
+                                Date To <span className="required-asterisk">*</span>
+                              </Label>
                             <Input
                               type="datetime-local"
                               {...register(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.date_to`)}

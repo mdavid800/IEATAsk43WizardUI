@@ -298,77 +298,84 @@ function LocationSensorManager({
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.oem`}>
-                    OEM <span className="text-red-500">*</span>
-                  </Label>
-                  <Input 
-                    {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.oem`, {
-                      required: "OEM is required"
-                    })} 
-                    placeholder="Manufacturer" 
-                    className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.oem ? 'border-red-500' : ''}
-                  />
-                  {errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.oem && (
-                    <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensor[sensorIndex].oem.message}</p>
-                  )}
+  OEM <span className="text-red-500">*</span>
+</Label>
+<Input
+  {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.oem`, {
+    required: "OEM is required"
+  })}
+  placeholder="Manufacturer"
+  className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.oem ? 'border-red-500' : ''}
+/>
+{errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.oem && (
+  <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensor[sensorIndex].oem.message}</p>
+)}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.model`}>
-                    Model <span className="text-red-500">*</span>
-                  </Label>
-                  <Input 
-                    {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.model`, {
-                      required: "Model is required"
-                    })} 
-                    placeholder="Model name" 
-                    className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.model ? 'border-red-500' : ''}
-                  />
-                  {errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.model && (
-                    <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensor[sensorIndex].model.message}</p>
-                  )}
+  Model <span className="text-red-500">*</span>
+</Label>
+<Input
+  {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.model`, {
+    required: "Model is required"
+  })}
+  placeholder="Model name"
+  className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.model ? 'border-red-500' : ''}
+/>
+{errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.model && (
+  <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensor[sensorIndex].model.message}</p>
+)}
                 </div>
                 {/* ... other sensor fields with updated paths ... */}
                  <div className="space-y-2">
                   <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.serial_number`}>
-                    Serial Number <span className="text-red-500">*</span>
-                  </Label>
-                  <Input 
-                    {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.serial_number`, {
-                      required: "Serial number is required"
-                    })} 
-                    placeholder="Serial number"
-                    className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.serial_number ? 'border-red-500' : ''}
-                  />
-                  {errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.serial_number && (
-                    <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensor[sensorIndex].serial_number.message}</p>
-                  )}
+  Serial Number <span className="text-red-500">*</span>
+</Label>
+<Input
+  {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.serial_number`, {
+    required: "Serial number is required"
+  })}
+  placeholder="Serial number"
+  className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.serial_number ? 'border-red-500' : ''}
+/>
+{errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.serial_number && (
+  <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensor[sensorIndex].serial_number.message}</p>
+)}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.sensor_type_id`}>Sensor Type</Label>
-                  <Select
-                    onValueChange={(value) => setValue(`measurement_location.${locationIndex}.sensor.${sensorIndex}.sensor_type_id`, value as SensorType)}
-                    value={watch(`measurement_location.${locationIndex}.sensor.${sensorIndex}.sensor_type_id`)}
-                  >
-                    <SelectTrigger><SelectValue placeholder="Select sensor type" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="anemometer">Anemometer</SelectItem>
-                      <SelectItem value="wind_vane">Wind Vane</SelectItem>
-                      {/* ... other sensor types ... */}
-                       <SelectItem value="barometer">Barometer</SelectItem>
-                      <SelectItem value="hygrometer">Hygrometer</SelectItem>
-                      <SelectItem value="pyranometer">Pyranometer</SelectItem>
-                      <SelectItem value="2d_ultrasonic">2D Ultrasonic</SelectItem>
-                      <SelectItem value="3d_ultrasonic">3D Ultrasonic</SelectItem>
-                      <SelectItem value="rain_gauge">Rain Gauge</SelectItem>
-                      <SelectItem value="gps">GPS</SelectItem>
-                      <SelectItem value="compass">Compass</SelectItem>
-                      <SelectItem value="adcp">ADCP</SelectItem>
-                      <SelectItem value="altimeter">Altimeter</SelectItem>
-                      <SelectItem value="ctd">CTD</SelectItem>
-                      <SelectItem value="lidar">Lidar</SelectItem>
-                      <SelectItem value="sodar">Sodar</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.sensor_type_id`}>
+  Sensor Type <span className="text-red-500">*</span>
+</Label>
+<Select
+  onValueChange={(value) => setValue(`measurement_location.${locationIndex}.sensor.${sensorIndex}.sensor_type_id`, value as SensorType)}
+  value={watch(`measurement_location.${locationIndex}.sensor.${sensorIndex}.sensor_type_id`)}
+>
+  <SelectTrigger className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.sensor_type_id ? 'border-red-500' : ''}>
+    <SelectValue placeholder="Select sensor type" />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="anemometer">Anemometer</SelectItem>
+    <SelectItem value="wind_vane">Wind Vane</SelectItem>
+    {/* ... other sensor types ... */}
+    <SelectItem value="barometer">Barometer</SelectItem>
+    <SelectItem value="hygrometer">Hygrometer</SelectItem>
+    <SelectItem value="pyranometer">Pyranometer</SelectItem>
+    <SelectItem value="2d_ultrasonic">2D Ultrasonic</SelectItem>
+    <SelectItem value="3d_ultrasonic">3D Ultrasonic</SelectItem>
+    <SelectItem value="rain_gauge">Rain Gauge</SelectItem>
+    <SelectItem value="gps">GPS</SelectItem>
+    <SelectItem value="compass">Compass</SelectItem>
+    <SelectItem value="adcp">ADCP</SelectItem>
+    <SelectItem value="altimeter">Altimeter</SelectItem>
+    <SelectItem value="ctd">CTD</SelectItem>
+    <SelectItem value="lidar">Lidar</SelectItem>
+    <SelectItem value="sodar">Sodar</SelectItem>
+    <SelectItem value="other">Other</SelectItem>
+  </SelectContent>
+</Select>
+{errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.sensor_type_id && (
+  <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensor[sensorIndex].sensor_type_id.message || 'Sensor type is required'}</p>
+)}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.classification`}>Classification</Label>
@@ -396,13 +403,35 @@ function LocationSensorManager({
                   <Input type="number" {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.sensor_body_size_mm`, { valueAsNumber: true })} placeholder="Body size in mm"/>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.date_from`}>Date From</Label>
-                  <Input type="datetime-local" {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.date_from`)} />
-                </div>
+  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.date_from`}>
+    Date From <span className="text-red-500">*</span>
+  </Label>
+  <Input
+    type="datetime-local"
+    {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.date_from`, {
+      required: 'Date From is required'
+    })}
+    className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.date_from ? 'border-red-500' : ''}
+  />
+  {errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.date_from && (
+    <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensor[sensorIndex].date_from.message}</p>
+  )}
+</div>
                 <div className="space-y-2">
-                  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.date_to`}>Date To</Label>
-                  <Input type="datetime-local" {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.date_to`)} />
-                </div>
+  <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.date_to`}>
+    Date To <span className="text-red-500">*</span>
+  </Label>
+  <Input
+    type="datetime-local"
+    {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.date_to`, {
+      required: 'Date To is required'
+    })}
+    className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.date_to ? 'border-red-500' : ''}
+  />
+  {errors?.measurement_location?.[locationIndex]?.sensor?.[sensorIndex]?.date_to && (
+    <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensor[sensorIndex].date_to.message}</p>
+  )}
+</div>
                 <div className="sm:col-span-2 space-y-2">
                   <Label htmlFor={`measurement_location.${locationIndex}.sensor.${sensorIndex}.notes`}>Notes</Label>
                   <Textarea {...register(`measurement_location.${locationIndex}.sensor.${sensorIndex}.notes`)} placeholder="Additional notes" rows={3}/>
