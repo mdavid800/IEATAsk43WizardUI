@@ -151,31 +151,32 @@ export default function DynamicLoggerOptionalFields({ locationIndex, loggerIndex
         })}
       </div>
 
-      {/* Add Field Dropdown */}
+      {/* Add Field Dropdown - Using proper Select component */}
       {availableFields.length > 0 && (
         <div className="bg-muted/30 rounded-lg p-4 border border-border/50">
           <div className="flex items-center gap-3">
             <PlusCircle className="w-5 h-5 text-primary flex-shrink-0" />
-            <select
-              className="flex-1 bg-background border border-input rounded-lg px-4 py-2 text-foreground font-medium focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary transition-all duration-150 shadow-sm"
-              onChange={e => {
-                if (e.target.value) {
-                  addField(e.target.value);
-                  e.target.value = '';
-                }
-              }}
-              value=""
-              aria-label="Select field to add"
-            >
-              <option value="" disabled className="text-muted-foreground bg-background">
-                Add optional field...
-              </option>
-              {availableFields.map(f => (
-                <option key={f.key} value={f.key} className="text-foreground bg-background">
-                  {f.label}
-                </option>
-              ))}
-            </select>
+            <div className="flex-1">
+              <Select
+                value=""
+                onValueChange={(value) => {
+                  if (value) {
+                    addField(value);
+                  }
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Add optional field..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableFields.map(f => (
+                    <SelectItem key={f.key} value={f.key}>
+                      {f.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
       )}
