@@ -48,7 +48,7 @@ input[type="checkbox"]:focus {
     --border: 0 0% 80%;
     --input: 0 12.5000% 96.8627%;
     --ring: 123.0380 46.1988% 33.5294%;
-    --radius: 0.75rem;
+    --radius: 0.5rem;
     --shadow: 0 2px 12px 0 rgba(34, 197, 94, 0.06);
     --shadow-hover: 0 4px 16px 0 rgba(34, 197, 94, 0.10);
     --font-main: 'Montserrat', 'Inter', 'Segoe UI', 'Arial', sans-serif;
