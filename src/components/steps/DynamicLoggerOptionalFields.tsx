@@ -3,7 +3,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Button } from '../ui/button';
-import { PlusCircle, Trash2 } from 'lucide-react';
+import { PlusCircle, Trash2, Settings } from 'lucide-react';
 
 const OPTIONAL_FIELDS = [
   {
@@ -109,50 +109,86 @@ export default function DynamicLoggerOptionalFields({ locationIndex, loggerIndex
   const removeField = (key: string) => setShownFields(shownFields.filter(f => f !== key));
 
   return (
-    <div className="space-y-4 border-2 border-blue-400 bg-blue-50 rounded-md p-4 shadow-md">
-      <div className="font-semibold text-blue-700 text-lg mb-2">Optional Logger Fields</div>
-      {shownFields.map(key => {
-        const field = OPTIONAL_FIELDS.find(f => f.key === key);
-        if (!field) return null;
-        const name = `measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.${key}`;
-        return (
-          <div key={key} className="flex items-end gap-2">
-            <div className="flex-1 space-y-2">
-              <Label htmlFor={name}>{field.label}</Label>
-              {field.render({ register, setValue, watch }, name)}
-            </div>
-            <Button  type="button"
-                          variant="ghost"
-                          size="icon"
-                          aria-label="Remove"
-                          className="p-2 hover:bg-transparent" onClick={() => removeField(key)} title="Remove field">
-              <Trash2 className="w-6 h-6 text-[#FF0000] hover:text-[#CC0000]" />
-            </Button>
+    <div className="mt-6 pt-6 border-t border-border">
+      <div className="bg-secondary/30 rounded-lg p-6 shadow-sm border border-secondary/40">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+            <Settings className="w-4 h-4 text-primary" />
           </div>
-        );
-      })}
-      {availableFields.length > 0 && (
-        <div className="w-full flex justify-center">
-          <select
-            className="border rounded px-3 py-2 shadow bg-white text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-150"
-            onChange={e => {
-              if (e.target.value) addField(e.target.value);
-            }}
-            value=""
-            aria-label="Select field to add"
-            style={{ minWidth: 220 }}
-          >
-            <option value="" disabled>
-              Add optional field...
-            </option>
-            {availableFields.map(f => (
-              <option key={f.key} value={f.key}>
-                {f.label}
-              </option>
-            ))}
-          </select>
+          <h4 className="text-lg font-semibold text-foreground">Optional Logger Fields</h4>
         </div>
-      )}
+
+        {/* Shown Fields */}
+        <div className="space-y-4 mb-6">
+          {shownFields.map(key => {
+            const field = OPTIONAL_FIELDS.find(f => f.key === key);
+            if (!field) return null;
+            const name = `measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.${key}`;
+            return (
+              <div key={key} className="bg-background rounded-lg p-4 border border-border shadow-sm">
+                <div className="flex items-start gap-4">
+                  <div className="flex-1 space-y-2">
+                    <Label htmlFor={name} className="text-sm font-medium text-foreground">
+                      {field.label}
+                    </Label>
+                    <div className="w-full">
+                      {field.render({ register, setValue, watch }, name)}
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeField(key)}
+                    className="mt-6 p-2 hover:bg-destructive/10 hover:text-destructive transition-colors"
+                    title="Remove field"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Add Field Dropdown */}
+        {availableFields.length > 0 && (
+          <div className="flex justify-center">
+            <div className="bg-muted/50 rounded-lg p-4 border border-border">
+              <select
+                className="bg-background border border-border rounded-lg px-4 py-2 text-foreground font-medium focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-150 min-w-[280px]"
+                onChange={e => {
+                  if (e.target.value) {
+                    addField(e.target.value);
+                    e.target.value = '';
+                  }
+                }}
+                value=""
+                aria-label="Select field to add"
+              >
+                <option value="" disabled className="text-muted-foreground">
+                  Add optional field...
+                </option>
+                {availableFields.map(f => (
+                  <option key={f.key} value={f.key} className="text-foreground">
+                    {f.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {shownFields.length === 0 && (
+          <div className="text-center py-4">
+            <p className="text-muted-foreground text-sm">
+              No optional fields added. Use the dropdown above to add additional logger configuration fields.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
