@@ -88,8 +88,8 @@ export function LoggerStep() {
                                   <span className="font-semibold text-foreground tracking-tight text-base">Loggers</span>
                                 </div>         <Button
                   type="button"
-                  variant="secondary"
-                  className="bg-primary hover:bg-primary/90 shadow hover:shadow-lg focus:ring-2 focus:ring-primary/50"
+                  variant="default"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground shadow hover:shadow-lg focus:ring-2 focus:ring-primary/50"
                   onClick={() => addLogger(locationIndex)}
                 >
                   <PlusCircle className="w-4 h-4 mr-2" />
