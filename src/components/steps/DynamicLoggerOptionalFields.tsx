@@ -3,7 +3,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Button } from '../ui/button';
-import { PlusCircle, Trash2, Settings } from 'lucide-react';
+import { PlusCircle, Trash2, Settings, Info } from 'lucide-react';
 
 const OPTIONAL_FIELDS = [
   {
@@ -104,6 +104,17 @@ type Props = {
 export default function DynamicLoggerOptionalFields({ locationIndex, loggerIndex, register, setValue, watch }: Props) {
   const [shownFields, setShownFields] = useState<string[]>([]);
   const availableFields = OPTIONAL_FIELDS.filter(f => !shownFields.includes(f.key));
+  
+  // Check which fields have values
+  const getFieldValue = (key: string) => {
+    const name = `measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.${key}`;
+    return watch(name);
+  };
+  
+  const fieldsWithValues = shownFields.filter(key => {
+    const value = getFieldValue(key);
+    return value !== undefined && value !== null && value !== '' && !isNaN(value);
+  });
 
   const addField = (key: string) => setShownFields([...shownFields, key]);
   const removeField = (key: string) => setShownFields(shownFields.filter(f => f !== key));
@@ -113,7 +124,24 @@ export default function DynamicLoggerOptionalFields({ locationIndex, loggerIndex
       <div className="flex items-center gap-3 mb-4">
         <Settings className="w-5 h-5 text-primary" />
         <h6 className="text-base font-semibold text-foreground">Optional Logger Configuration</h6>
+        {fieldsWithValues.length > 0 && (
+          <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+            {fieldsWithValues.length} field{fieldsWithValues.length !== 1 ? 's' : ''} will be exported
+          </span>
+        )}
       </div>
+      
+      {shownFields.length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+          <div className="flex items-start gap-2">
+            <Info className="w-4 h-4 text-blue-600 mt-0.5" />
+            <div className="text-sm text-blue-700">
+              <p className="font-medium">Optional fields with values will be included in the JSON export.</p>
+              <p className="text-xs mt-1">Empty fields will be automatically excluded to keep the export clean.</p>
+            </div>
+          </div>
+        </div>
+      )}
       
       <div className="space-y-4">
         {shownFields.map(key => {
