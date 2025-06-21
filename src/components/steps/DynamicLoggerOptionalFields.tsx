@@ -3,7 +3,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Button } from '../ui/button';
-import { PlusCircle, Trash2 } from 'lucide-react';
+import { PlusCircle, Trash2, Settings } from 'lucide-react';
 
 const OPTIONAL_FIELDS = [
   {
@@ -109,50 +109,75 @@ export default function DynamicLoggerOptionalFields({ locationIndex, loggerIndex
   const removeField = (key: string) => setShownFields(shownFields.filter(f => f !== key));
 
   return (
-    <div className="space-y-4 border-2 border-blue-400 bg-blue-50 rounded-md p-4 shadow-md">
-      <div className="font-semibold text-blue-700 text-lg mb-2">Optional Logger Fields</div>
-      {shownFields.map(key => {
-        const field = OPTIONAL_FIELDS.find(f => f.key === key);
-        if (!field) return null;
-        const name = `measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.${key}`;
-        return (
-          <div key={key} className="flex items-end gap-2">
-            <div className="flex-1 space-y-2">
-              <Label htmlFor={name}>{field.label}</Label>
-              {field.render({ register, setValue, watch }, name)}
+    <div className="sm:col-span-2 space-y-6">
+      <div className="flex items-center gap-3 mb-4">
+        <Settings className="w-5 h-5 text-primary" />
+        <h6 className="text-base font-semibold text-foreground">Optional Logger Configuration</h6>
+      </div>
+      
+      <div className="space-y-4">
+        {shownFields.map(key => {
+          const field = OPTIONAL_FIELDS.find(f => f.key === key);
+          if (!field) return null;
+          const name = `measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.${key}`;
+          return (
+            <div key={key} className="grid grid-cols-1 sm:grid-cols-4 gap-4 p-4 bg-muted/20 rounded-lg border border-border/30">
+              <div className="sm:col-span-3 space-y-2">
+                <Label htmlFor={name} className="font-medium text-foreground">{field.label}</Label>
+                {field.render({ register, setValue, watch }, name)}
+              </div>
+              <div className="flex items-end">
+                <Button  
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Remove field"
+                  className="p-2 hover:bg-transparent" 
+                  onClick={() => removeField(key)}
+                >
+                  <Trash2 className="w-5 h-5 text-red-500 hover:text-red-700" />
+                </Button>
+              </div>
             </div>
-            <Button  type="button"
-                          variant="ghost"
-                          size="icon"
-                          aria-label="Remove"
-                          className="p-2 hover:bg-transparent" onClick={() => removeField(key)} title="Remove field">
-              <Trash2 className="w-6 h-6 text-[#FF0000] hover:text-[#CC0000]" />
-            </Button>
+          );
+        })}
+        
+        {availableFields.length > 0 && (
+          <div className="flex justify-center pt-4">
+            <div className="flex items-center gap-3">
+              <Label className="text-muted-foreground text-sm">Add optional field:</Label>
+              <select
+                className="flex h-10 w-60 rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:border-primary"
+                onChange={e => {
+                  if (e.target.value) {
+                    addField(e.target.value);
+                    e.target.value = '';
+                  }
+                }}
+                value=""
+              >
+                <option value="" disabled>
+                  Select a field to add...
+                </option>
+                {availableFields.map(f => (
+                  <option key={f.key} value={f.key}>
+                    {f.label}
+                  </option>
+                ))}
+              </select>
+              <PlusCircle className="w-5 h-5 text-primary" />
+            </div>
           </div>
-        );
-      })}
-      {availableFields.length > 0 && (
-        <div className="w-full flex justify-center">
-          <select
-            className="border rounded px-3 py-2 shadow bg-white text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-150"
-            onChange={e => {
-              if (e.target.value) addField(e.target.value);
-            }}
-            value=""
-            aria-label="Select field to add"
-            style={{ minWidth: 220 }}
-          >
-            <option value="" disabled>
-              Add optional field...
-            </option>
-            {availableFields.map(f => (
-              <option key={f.key} value={f.key}>
-                {f.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
+        )}
+        
+        {shownFields.length === 0 && availableFields.length > 0 && (
+          <div className="text-center text-muted-foreground py-8 border-2 border-dashed border-border/40 rounded-lg">
+            <Settings className="w-8 h-8 mx-auto mb-3 opacity-50" />
+            <p className="text-sm">No optional fields added yet</p>
+            <p className="text-xs mt-1">Use the dropdown above to add optional logger configuration fields</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
