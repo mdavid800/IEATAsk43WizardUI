@@ -13,24 +13,29 @@ export function BasicInfoStep() {
   }
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-xl font-semibold text-foreground">Basic Information</h2>
+    <div className="space-y-8">
+      <div className="border-b border-border/20 pb-4">
+        <h2 className="text-2xl font-bold text-primary mb-2">Basic Information</h2>
+        <p className="text-muted-foreground">Provide essential details about your measurement campaign and organization.</p>
+      </div>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <div className="space-y-2">
+        <div className="space-y-3">
           <Label htmlFor="author">Author <span className="required-asterisk">*</span></Label>
           <Input
             id="author"
             {...register('author')}
             placeholder="Enter author name"
+            className="professional-input"
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-3">
           <Label htmlFor="organisation">Organisation <span className="required-asterisk">*</span></Label>
           <Input
             id="organisation"
             {...register('organisation')}
             placeholder="Enter organisation name"
+            className="professional-input"
           />
         </div>
 
@@ -60,17 +65,17 @@ export function BasicInfoStep() {
             plantType === 'custom' ||
             (plantType && !['onshore_wind', 'offshore_wind', 'solar'].includes(plantType))
           ) && (
-            <div className="mt-2">
-              <Label htmlFor="plant_type">Custom Plant Type <span className="required-asterisk">*</span></Label>
-              <Input
-                id="plant_type"
-                placeholder="Enter custom plant type"
-                value={['onshore_wind', 'offshore_wind', 'solar', 'custom'].includes(plantType) ? '' : plantType}
-                onChange={handleCustomPlantTypeChange}
-                autoFocus
-              />
-            </div>
-          )}
+              <div className="mt-2">
+                <Label htmlFor="plant_type">Custom Plant Type <span className="required-asterisk">*</span></Label>
+                <Input
+                  id="plant_type"
+                  placeholder="Enter custom plant type"
+                  value={['onshore_wind', 'offshore_wind', 'solar', 'custom'].includes(plantType) ? '' : plantType}
+                  onChange={handleCustomPlantTypeChange}
+                  autoFocus
+                />
+              </div>
+            )}
         </div>
 
         <div className="space-y-2">
