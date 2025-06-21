@@ -38,31 +38,39 @@ input[type="checkbox"]:focus {
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 142 72% 45%;
-    /* Green: #22c55e */
-    --primary-foreground: 0 0% 20%;
-    /* Changed from white to dark gray */
+    /* Brunswick Green as primary */
+    --primary: 142 39% 26%;
+    /* Brunswick Green: #344E41 */
+    --primary-foreground: 0 0% 98%;
+    /* White text on dark green */
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222 47% 11%;
+    /* Hunter Green for secondary actions */
+    --secondary: 142 46% 31%;
+    /* Hunter Green: #3A5A40 */
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Sage for muted/disabled states */
+    --muted: 68 19% 66%;
+    /* Sage: #A3B18A */
+    --muted-foreground: 222 47% 11%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222 47% 11%;
+    /* Fern Green for accents */
+    --accent: 84 30% 44%;
+    /* Fern Green: #588157 */
+    --accent-foreground: 0 0% 98%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 142 72% 45%;
-    /* Green ring for focus */
+    /* Light tones for borders */
+    --border: 68 19% 85%;
+    --input: 68 19% 85%;
+    --ring: 142 39% 26%;
+    /* Brunswick Green ring for focus */
 
-    --radius: 0.75rem;
-    --shadow: 0 2px 12px 0 rgba(34, 197, 94, 0.06);
-    --shadow-hover: 0 4px 16px 0 rgba(34, 197, 94, 0.10);
+    --radius: 0.25rem;
+    --shadow: 0 2px 12px 0 rgba(52, 78, 65, 0.08);
+    --shadow-hover: 0 4px 16px 0 rgba(52, 78, 65, 0.12);
     --font-main: 'Inter', 'Segoe UI', 'Arial', sans-serif;
   }
 }
@@ -137,24 +145,23 @@ input[type="checkbox"]:focus {
     pointer-events: none;
     width: 100vw;
     height: 100vh;
-    background: linear-gradient(120deg, hsla(var(--secondary), 0.4) 0%, hsla(var(--background), 0.95) 100%);
+    background: linear-gradient(120deg, hsla(68, 19%, 96%, 0.4) 0%, hsla(var(--background), 0.95) 100%);
   }
 
   /* BUTTONS */
   .btn,
   .button,
   .shadcn-btn {
-    @apply rounded-full font-semibold px-5 py-2 transition-colors duration-200;
+    @apply rounded-full font-semibold px-6 py-3 transition-all duration-200;
     background: hsl(var(--primary));
     color: hsl(var(--primary-foreground));
-    /* Updated to use primary-foreground */
-    box-shadow: 0 2px 8px 0 rgba(34, 197, 94, 0.08);
+    box-shadow: var(--shadow);
     border: none;
   }
 
   button {
-    @apply rounded-full font-semibold px-5 py-2 transition-colors duration-200;
-    box-shadow: 0 2px 8px 0 rgba(34, 197, 94, 0.08);
+    @apply rounded-full font-semibold px-6 py-3 transition-all duration-200;
+    box-shadow: var(--shadow);
     border: none;
   }
 
@@ -163,7 +170,20 @@ input[type="checkbox"]:focus {
   button:hover,
   .shadcn-btn:hover {
     background: hsl(var(--primary) / 0.9);
-    box-shadow: 0 4px 16px 0 rgba(34, 197, 94, 0.12);
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-1px);
+  }
+
+  /* Secondary button styling */
+  .btn-secondary,
+  .button-secondary {
+    background: hsl(var(--secondary));
+    color: hsl(var(--secondary-foreground));
+  }
+
+  .btn-secondary:hover,
+  .button-secondary:hover {
+    background: hsl(var(--secondary) / 0.9);
   }
 
   /* INPUTS & SELECTS */
@@ -173,9 +193,9 @@ input[type="checkbox"]:focus {
   .shadcn-input,
   .shadcn-select,
   .shadcn-textarea {
-    @apply rounded-lg border border-border px-4 py-2 text-base transition-all duration-150 outline-none;
+    @apply rounded-lg border border-border px-4 py-3 text-base transition-all duration-150 outline-none;
     background: #fff;
-    box-shadow: 0 1px 2px 0 rgba(34, 197, 94, 0.03);
+    box-shadow: 0 1px 3px 0 rgba(52, 78, 65, 0.05);
     border-radius: 0.75rem;
     border: 1px solid hsl(var(--border));
   }
@@ -187,7 +207,7 @@ input[type="checkbox"]:focus {
   .shadcn-select:focus,
   .shadcn-textarea:focus {
     border-color: hsl(var(--primary));
-    box-shadow: 0 0 0 2px hsl(var(--ring) / 0.25);
+    box-shadow: 0 0 0 3px hsl(var(--ring) / 0.15);
   }
 
   label,
@@ -195,97 +215,81 @@ input[type="checkbox"]:focus {
   .shadcn-label {
     font-weight: 600;
     color: hsl(var(--foreground));
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.5rem;
     letter-spacing: -0.01em;
+    font-size: 0.875rem;
   }
 
+  /* Professional card styling */
   .card-title,
-  .logger-card h3,
-  .card-header h2 {
-    font-size: 1.25rem;
+  .shadcn-card-title {
     font-weight: 700;
     color: hsl(var(--primary));
-    margin-bottom: 0.25rem;
-    letter-spacing: -0.01em;
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.02em;
   }
 
   .muted {
     color: hsl(var(--muted-foreground));
-    font-size: 0.95rem;
+    font-size: 0.875rem;
   }
 
   .avatar,
-  .user-avatar {
-    border-radius: 9999px;
-    width: 2.5rem;
-    height: 2.5rem;
-    object-fit: cover;
-    background: hsl(var(--accent));
-    border: 1px solid hsl(var(--border));
+  .shadcn-avatar {
+    @apply w-10 h-10 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center;
+    color: hsl(var(--primary));
+    font-weight: 600;
   }
 
   .card-section {
-    padding: 2rem;
-    background: #fff;
-    border-radius: 1rem;
-    margin-bottom: 1.5rem;
-    box-shadow: var(--shadow);
+    @apply p-6 border-b border-border/50 last:border-b-0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.95) 100%);
   }
 
   .gradient-border {
-    @apply relative p-[1px] rounded-lg bg-gradient-to-r from-primary/50 via-primary to-primary/50 shadow-sm;
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
   }
 
   .gradient-border>* {
-    @apply bg-white rounded-lg;
+    background: hsl(var(--background));
   }
 
-  .step-indicator {
-    @apply relative flex items-center justify-center;
+  /* Modern stepper styles - simplified */
+  .step-card {
+    @apply bg-white/95 border border-border/30 rounded-xl shadow-sm transition-all duration-200;
   }
 
-  .step-indicator::before {
-    content: '';
-    @apply absolute inset-0 bg-primary rounded-full opacity-0 transition-opacity duration-300;
+  .step-card:hover {
+    @apply border-primary/30 shadow-md;
+    transform: translateY(-1px);
   }
 
-  .step-indicator.active::before {
-    @apply opacity-10;
+  .step-card.active {
+    @apply border-primary/50 bg-primary/5;
   }
 
-  .step-indicator:hover::before {
-    @apply opacity-20;
-  }
-
-  .step-number {
-    @apply relative w-10 h-10 flex items-center justify-center rounded-full bg-white text-sm font-medium border border-border transition-all duration-300;
-  }
-
-  .step-number.active {
-    @apply border-primary text-primary;
-  }
-
-  .step-line {
-    @apply relative h-[1px] bg-border transition-all duration-300;
-  }
-
-  .step-line.active {
-    @apply bg-primary/30;
-  }
-
-  .step-text {
-    @apply ml-3 text-sm font-medium transition-colors duration-300;
-  }
-
-  /* Landing Page Specific Animations */
   @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-20px); }
+
+    0%,
+    100% {
+      transform: translateY(0px);
+    }
+
+    50% {
+      transform: translateY(-10px);
+    }
   }
 
   @keyframes glow {
-    0%, 100% { opacity: 0.7; }
-    50% { opacity: 1; }
+
+    0%,
+    100% {
+      box-shadow: 0 0 20px hsl(var(--primary) / 0.1);
+    }
+
+    50% {
+      box-shadow: 0 0 30px hsl(var(--primary) / 0.2);
+    }
   }
 
   .float-animation {
@@ -293,82 +297,73 @@ input[type="checkbox"]:focus {
   }
 
   .glow-animation {
-    animation: glow 3s ease-in-out infinite;
+    animation: glow 4s ease-in-out infinite;
   }
+}
 
-  /* Smooth scrolling */
-  html {
-    scroll-behavior: smooth;
-  }
+html {
+  scroll-behavior: smooth;
+}
 
-  /* Custom scrollbar */
-  ::-webkit-scrollbar {
-    width: 8px;
-  }
+::-webkit-scrollbar {
+  width: 8px;
+}
 
-  ::-webkit-scrollbar-track {
-    background: #f1f1f1;
-  }
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted) / 0.1);
+}
 
-  ::-webkit-scrollbar-thumb {
-    background: hsl(var(--primary));
-    border-radius: 4px;
-  }
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary) / 0.3);
+  border-radius: 4px;
+}
 
-  ::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--primary) / 0.8);
-  }
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.5);
+}
+
+/* Professional enhancements */
+.professional-card {
+  @apply backdrop-blur-sm border rounded-2xl shadow-lg transition-all duration-300;
+  background: rgba(255, 255, 255, 0.98);
+  border-color: hsl(var(--border) / 0.3);
+  box-shadow: 0 4px 24px -4px hsl(var(--primary) / 0.08);
+}
+
+.professional-card:hover {
+  box-shadow: 0 8px 32px -8px hsl(var(--primary) / 0.12);
+  transform: translateY(-2px);
+}
+
+.professional-input {
+  @apply border focus:border-primary transition-all duration-200;
+  background: rgba(255, 255, 255, 0.95);
+  border-color: hsl(var(--border) / 0.6);
+  box-shadow: 0 2px 8px -2px hsl(var(--primary) / 0.05);
+}
+
+.professional-input:focus {
+  background: #fff;
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.12), 0 2px 8px -2px hsl(var(--primary) / 0.1);
 }
 
 .gradient-border {
-  @apply relative p-[1px] rounded-lg bg-gradient-to-r from-primary/50 via-primary to-primary/50 shadow-sm;
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+  padding: 2px;
+  border-radius: 1rem;
 }
 
 .gradient-border>* {
-  @apply bg-white rounded-lg;
+  background: hsl(var(--background));
+  border-radius: calc(1rem - 2px);
 }
 
-.step-indicator {
-  @apply relative flex items-center justify-center;
-}
-
-.step-indicator::before {
-  content: '';
-  @apply absolute inset-0 bg-primary rounded-full opacity-0 transition-opacity duration-300;
-}
-
-.step-indicator.active::before {
-  @apply opacity-10;
-}
-
-.step-indicator:hover::before {
-  @apply opacity-20;
-}
-
-.step-number {
-  @apply relative w-10 h-10 flex items-center justify-center rounded-full bg-white text-sm font-medium border border-border transition-all duration-300;
-}
-
-.step-number.active {
-  @apply border-primary text-primary;
-}
-
-.step-line {
-  @apply relative h-[1px] bg-border transition-all duration-300;
-}
-
-.step-line.active {
-  @apply bg-primary/30;
-}
-
-.step-text {
-  @apply ml-3 text-sm font-medium transition-colors duration-300;
-}
+/* Cleaned up - styles now consolidated above */
 
 @keyframes slideIn {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(20px);
   }
 
   to {
@@ -388,11 +383,11 @@ input[type="checkbox"]:focus {
 }
 
 .noise-bg {
-  display: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23344E41' fill-opacity='0.02'%3E%3Ccircle cx='2' cy='2' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }
 
 .maplibregl-canvas {
-  outline: none;
+  border-radius: 0.75rem;
 }
 
 .maplibregl-marker {
