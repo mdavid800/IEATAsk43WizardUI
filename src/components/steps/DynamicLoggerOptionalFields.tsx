@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -103,7 +103,31 @@ type Props = {
 
 export default function DynamicLoggerOptionalFields({ locationIndex, loggerIndex, register, setValue, watch }: Props) {
   const [shownFields, setShownFields] = useState<string[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
   const availableFields = OPTIONAL_FIELDS.filter(f => !shownFields.includes(f.key));
+  
+  // Initialize shown fields based on existing form values
+  useEffect(() => {
+    if (!isInitialized) {
+      const fieldsWithExistingValues: string[] = [];
+      
+      OPTIONAL_FIELDS.forEach(field => {
+        const name = `measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.${field.key}`;
+        const value = watch(name);
+        
+        // If the field has a meaningful value, show it
+        if (value !== undefined && value !== null && value !== '' && 
+            !(typeof value === 'number' && isNaN(value))) {
+          fieldsWithExistingValues.push(field.key);
+        }
+      });
+      
+      if (fieldsWithExistingValues.length > 0) {
+        setShownFields(fieldsWithExistingValues);
+      }
+      setIsInitialized(true);
+    }
+  }, [locationIndex, loggerIndex, watch, isInitialized]);
   
   // Check which fields have values
   const getFieldValue = (key: string) => {
@@ -117,7 +141,12 @@ export default function DynamicLoggerOptionalFields({ locationIndex, loggerIndex
   });
 
   const addField = (key: string) => setShownFields([...shownFields, key]);
-  const removeField = (key: string) => setShownFields(shownFields.filter(f => f !== key));
+  const removeField = (key: string) => {
+    // Clear the field value when removing
+    const name = `measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.${key}`;
+    setValue(name, undefined);
+    setShownFields(shownFields.filter(f => f !== key));
+  };
 
   return (
     <div className="sm:col-span-2 space-y-6">
