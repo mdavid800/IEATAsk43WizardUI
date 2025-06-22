@@ -166,7 +166,7 @@ export function ReviewStep() {
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-foreground">Review & Export</h2>
+        <h2 className="text-2xl font-bold text-primary mb-2">Review & Export</h2>
         <Button 
           type="submit"
           className="bg-primary hover:bg-primary/90"
