@@ -7,6 +7,7 @@ import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Textarea } from '../ui/textarea';
 import type { IEATask43Schema, SensorType, MeasurementType } from '../../types/schema';
+import DynamicSensorOptionalFields from './DynamicSensorOptionalFields';
 
 // Define types for managing expanded states locally per location
 interface LocationExpandedState {
@@ -379,31 +380,6 @@ function LocationSensorsManager({
 )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.classification`}>Classification</Label>
-                  <Input {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.classification`)} placeholder="e.g., 1.2A" pattern="^([0-9]{1,2})[.]([0-9]{1,2})[ABCDS]$"/>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.instrument_poi_height_mm`}>POI Height (mm)</Label>
-                  <Input type="number" {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.instrument_poi_height_mm`, { valueAsNumber: true })} placeholder="Height in mm"/>
-                </div>
-                 <div className="space-y-2">
-                  <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.is_heated`}>Heated</Label>
-                  <Select
-                    onValueChange={(value) => setValue(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.is_heated`, value === 'true')}
-                    value={watch(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.is_heated`)?.toString()}
-                  >
-                    <SelectTrigger><SelectValue placeholder="Is sensor heated?" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="true">Yes</SelectItem>
-                      <SelectItem value="false">No</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.sensor_body_size_mm`}>Body Size (mm)</Label>
-                  <Input type="number" {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.sensor_body_size_mm`, { valueAsNumber: true })} placeholder="Body size in mm"/>
-                </div>
-                <div className="space-y-2">
   <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.date_from`}>
     Date From <span className="required-asterisk">*</span>
   </Label>
@@ -433,6 +409,18 @@ function LocationSensorsManager({
     <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensors[sensorsIndex].date_to.message}</p>
   )}
 </div>
+                
+                {/* Dynamic Optional Fields UI */}
+                {typeof window !== 'undefined' && (
+                  <DynamicSensorOptionalFields
+                    locationIndex={locationIndex}
+                    sensorIndex={sensorsIndex}
+                    register={register}
+                    setValue={setValue}
+                    watch={watch}
+                  />
+                )}
+
                 <div className="sm:col-span-2 space-y-2">
                   <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.notes`}>Notes</Label>
                   <Textarea {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.notes`)} placeholder="Additional notes" rows={3}/>
