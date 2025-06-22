@@ -52,7 +52,7 @@ export function LocationStep() {
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-foreground">Measurement Location</h2>
+        <h2 className="text-2xl font-bold text-primary mb-2">Measurement Location</h2>
       </div>
 
       <div className="border border-border rounded-lg overflow-hidden">
