@@ -108,6 +108,7 @@ export function SensorsStep() {
 
   return (
     <div className="space-y-8">
+      <h2 className="text-2xl font-bold text-primary mb-2">Sensors</h2>
       <div className="text-muted-foreground mb-6">
         Provide details for each sensor which produces data included in the logger file. It may be necessary to input multiple sensors for some parameters to reflect sensor swap outs throughout the measurement campaign e.g. in response to sensor failures or planned maintenance swap outs. A sensor entry should also be made for periods where no sensor was installed but the logger reports null data; in these cases, the OEM and model should be stated but the serial number stated as N/A and a note entered to indicate why this sensor is unavailable
       </div>
