@@ -413,15 +413,14 @@ export function DatePicker({
               <>
                 {/* Calendar Header */}
                 <div className="flex items-center justify-between mb-4">
-                  <Button
+                  <button
                     type="button"
-                    variant="ghost"
-                    size="icon"
                     onClick={() => navigateMonth('prev')}
-                    className="h-8 w-8 hover:bg-primary/10"
+                    className="h-8 w-8 hover:bg-primary/10 border border-border/30 flex items-center justify-center rounded-lg transition-colors bg-background text-foreground hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
                   >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
+                    <ChevronLeft className="h-5 w-5" />
+                    <span className="sr-only">Previous month</span>
+                  </button>
                   
                   <Button
                     type="button"
@@ -433,15 +432,14 @@ export function DatePicker({
                     <ChevronDown className="h-4 w-4" />
                   </Button>
                   
-                  <Button
+                  <button
                     type="button"
-                    variant="ghost"
-                    size="icon"
                     onClick={() => navigateMonth('next')}
-                    className="h-8 w-8 hover:bg-primary/10"
+                    className="h-8 w-8 hover:bg-primary/10 border border-border/30 flex items-center justify-center rounded-lg transition-colors bg-background text-foreground hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
                   >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
+                    <ChevronRight className="h-5 w-5" />
+                    <span className="sr-only">Next month</span>
+                  </button>
                 </div>
 
                 {/* Week Days Header */}
