@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Calendar, Clock, X, ChevronDown } from 'lucide-react';
+import { Calendar, Clock, X, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { Button } from './button';
 import { Input } from './input';
@@ -420,9 +420,7 @@ export function DatePicker({
                     onClick={() => navigateMonth('prev')}
                     className="h-8 w-8 hover:bg-primary/10"
                   >
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
+                    <ChevronLeft className="h-4 w-4" />
                   </Button>
                   
                   <Button
@@ -442,9 +440,7 @@ export function DatePicker({
                     onClick={() => navigateMonth('next')}
                     className="h-8 w-8 hover:bg-primary/10"
                   >
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
+                    <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
 
