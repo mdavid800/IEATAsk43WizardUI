@@ -126,7 +126,7 @@ export function DatePicker({
               type="button"
               variant="ghost"
               size="icon"
-              className="absolute top-1/2 right-2 size-6 -translate-y-1/2 p-0"
+              className="absolute top-1/2 right-2 size-6 -translate-y-1/2 p-0 hover:!translate-y-[-50%]"
               disabled={disabled}
             >
               <CalendarIcon className="size-3.5" />
