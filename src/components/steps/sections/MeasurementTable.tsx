@@ -250,7 +250,7 @@ export function MeasurementTable({
     const [isMobileView, setIsMobileView] = useState(false);
 
     // Get available sensors for this location
-    const availableSensors = (watch(`measurement_location.${locationIndex}.sensor` as any) as Sensor[]) || [];
+    const availableSensors = (watch(`measurement_location.${locationIndex}.sensors` as any) as Sensor[]) || [];
 
     // Memoize and prepare sensor options grouped by OEM (not MODEL) with proper formatting
     const sensorOptions = useMemo(() => {
