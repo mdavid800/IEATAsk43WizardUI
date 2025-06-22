@@ -4,6 +4,7 @@ import { PlusCircle, Trash2, ChevronDown, Plus, Copy } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
+import { DatePicker } from '../ui/date-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Textarea } from '../ui/textarea';
 import type { IEATask43Schema, SensorType, MeasurementType } from '../../types/schema';
@@ -383,11 +384,12 @@ function LocationSensorsManager({
   <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.date_from`}>
     Date From <span className="required-asterisk">*</span>
   </Label>
-  <Input
-    type="datetime-local"
-    {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.date_from`, {
-      required: 'Date From is required'
-    })}
+  <DatePicker
+    value={watch(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.date_from`) || ''}
+    onChange={(value) => setValue(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.date_from`, value)}
+    placeholder="Select start date and time"
+    includeTime
+    required
     className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.date_from ? 'border-red-500' : ''}
   />
   {errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.date_from && (
@@ -398,11 +400,12 @@ function LocationSensorsManager({
   <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.date_to`}>
     Date To <span className="required-asterisk">*</span>
   </Label>
-  <Input
-    type="datetime-local"
-    {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.date_to`, {
-      required: 'Date To is required'
-    })}
+  <DatePicker
+    value={watch(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.date_to`) || ''}
+    onChange={(value) => setValue(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.date_to`, value)}
+    placeholder="Select end date and time"
+    includeTime
+    required
     className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.date_to ? 'border-red-500' : ''}
   />
   {errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.date_to && (
@@ -632,9 +635,10 @@ function CalibrationArray({
                   <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.date_of_calibration`}>
                     Calibration Date
                   </Label>
-                  <Input
-                    type="date"
-                    {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.date_of_calibration`)}
+                  <DatePicker
+                    value={watch(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.date_of_calibration`) || ''}
+                    onChange={(value) => setValue(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.date_of_calibration`, value)}
+                    placeholder="Select calibration date"
                   />
                 </div>
 

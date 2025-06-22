@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Calendar, Clock, X } from 'lucide-react';
+import { Calendar, Clock, X, ChevronDown } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { Button } from './button';
 import { Input } from './input';
@@ -32,9 +32,11 @@ export function DatePicker({
   const [selectedDate, setSelectedDate] = React.useState<Date | null>(null);
   const [currentMonth, setCurrentMonth] = React.useState(new Date());
   const [timeValue, setTimeValue] = React.useState('00:00');
+  const [showYearMonthPicker, setShowYearMonthPicker] = React.useState(false);
   
   const containerRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const popupRef = React.useRef<HTMLDivElement>(null);
 
   // Initialize from value prop
   React.useEffect(() => {
@@ -59,17 +61,75 @@ export function DatePicker({
     }
   }, [value, includeTime]);
 
+  // Position popup properly
+  React.useEffect(() => {
+    if (isOpen && popupRef.current && containerRef.current) {
+      const container = containerRef.current;
+      const popup = popupRef.current;
+      const rect = container.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
+      
+      // Reset position
+      popup.style.top = '';
+      popup.style.bottom = '';
+      popup.style.left = '';
+      popup.style.right = '';
+      
+      // Determine if popup should appear above or below
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const popupHeight = 400; // Approximate popup height
+      
+      if (spaceBelow >= popupHeight || spaceBelow >= spaceAbove) {
+        // Position below
+        popup.style.top = '100%';
+        popup.style.marginTop = '8px';
+      } else {
+        // Position above
+        popup.style.bottom = '100%';
+        popup.style.marginBottom = '8px';
+      }
+      
+      // Determine horizontal position
+      const spaceRight = viewportWidth - rect.left;
+      const popupWidth = 320; // Approximate popup width
+      
+      if (spaceRight >= popupWidth) {
+        popup.style.left = '0';
+      } else {
+        popup.style.right = '0';
+      }
+    }
+  }, [isOpen]);
+
   // Close on outside click
   React.useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
+        setShowYearMonthPicker(false);
       }
     }
 
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isOpen]);
+
+  // Close on escape key
+  React.useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+        setShowYearMonthPicker(false);
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
     }
   }, [isOpen]);
 
@@ -164,6 +224,12 @@ export function DatePicker({
     });
   };
 
+  const handleMonthYearChange = (month: number, year: number) => {
+    const newDate = new Date(year, month, 1);
+    setCurrentMonth(newDate);
+    setShowYearMonthPicker(false);
+  };
+
   const isToday = (date: Date) => {
     const today = new Date();
     return date.toDateString() === today.toDateString();
@@ -208,6 +274,69 @@ export function DatePicker({
     }
 
     return days;
+  };
+
+  const renderYearMonthPicker = () => {
+    const currentYear = currentMonth.getFullYear();
+    const currentMonthIndex = currentMonth.getMonth();
+    
+    // Generate years from 1900 to 2100
+    const years = [];
+    for (let year = 1900; year <= 2100; year++) {
+      years.push(year);
+    }
+
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h4 className="text-sm font-semibold text-foreground">Select Month and Year</h4>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowYearMonthPicker(false)}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-4">
+          {/* Year Selector */}
+          <div>
+            <label className="block text-xs font-medium text-muted-foreground mb-2">Year</label>
+            <select
+              value={currentYear}
+              onChange={(e) => handleMonthYearChange(currentMonthIndex, parseInt(e.target.value))}
+              className="w-full h-10 px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary text-sm"
+            >
+              {years.map(year => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+          </div>
+          
+          {/* Month Selector */}
+          <div>
+            <label className="block text-xs font-medium text-muted-foreground mb-2">Month</label>
+            <select
+              value={currentMonthIndex}
+              onChange={(e) => handleMonthYearChange(parseInt(e.target.value), currentYear)}
+              className="w-full h-10 px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary text-sm"
+            >
+              {monthNames.map((month, index) => (
+                <option key={index} value={index}>{month}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const monthNames = [
@@ -266,95 +395,119 @@ export function DatePicker({
       </div>
 
       {isOpen && !disabled && (
-        <div className="absolute top-full left-0 mt-2 z-50 bg-background border border-border rounded-xl shadow-xl p-6 min-w-[320px]">
-          {/* Calendar Header */}
-          <div className="flex items-center justify-between mb-4">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => navigateMonth('prev')}
-              className="h-8 w-8 hover:bg-primary/10"
-            >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </Button>
-            
-            <h3 className="text-base font-semibold text-foreground">
-              {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
-            </h3>
-            
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => navigateMonth('next')}
-              className="h-8 w-8 hover:bg-primary/10"
-            >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </Button>
-          </div>
+        <>
+          {/* Backdrop */}
+          <div className="fixed inset-0 z-[9999]" />
+          
+          {/* Popup */}
+          <div 
+            ref={popupRef}
+            className="absolute z-[10000] bg-background border border-border rounded-xl shadow-2xl p-6 min-w-[320px] max-w-[350px]"
+            style={{
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)'
+            }}
+          >
+            {showYearMonthPicker ? (
+              renderYearMonthPicker()
+            ) : (
+              <>
+                {/* Calendar Header */}
+                <div className="flex items-center justify-between mb-4">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => navigateMonth('prev')}
+                    className="h-8 w-8 hover:bg-primary/10"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </Button>
+                  
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setShowYearMonthPicker(true)}
+                    className="text-base font-semibold text-foreground hover:bg-primary/10 flex items-center gap-1 px-3 py-1 rounded-lg"
+                  >
+                    {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                  
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => navigateMonth('next')}
+                    className="h-8 w-8 hover:bg-primary/10"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Button>
+                </div>
 
-          {/* Week Days Header */}
-          <div className="grid grid-cols-7 gap-1 mb-2">
-            {weekDays.map(day => (
-              <div key={day} className="h-8 flex items-center justify-center text-xs font-medium text-muted-foreground">
-                {day}
-              </div>
-            ))}
-          </div>
+                {/* Week Days Header */}
+                <div className="grid grid-cols-7 gap-1 mb-2">
+                  {weekDays.map(day => (
+                    <div key={day} className="h-8 flex items-center justify-center text-xs font-medium text-muted-foreground">
+                      {day}
+                    </div>
+                  ))}
+                </div>
 
-          {/* Calendar Grid */}
-          <div className="grid grid-cols-7 gap-1 mb-4">
-            {renderCalendarGrid()}
-          </div>
+                {/* Calendar Grid */}
+                <div className="grid grid-cols-7 gap-1 mb-4">
+                  {renderCalendarGrid()}
+                </div>
 
-          {/* Time Picker */}
-          {includeTime && (
-            <div className="border-t border-border pt-4">
-              <label className="block text-sm font-medium text-foreground mb-2">Time</label>
-              <input
-                type="time"
-                value={timeValue}
-                onChange={(e) => handleTimeChange(e.target.value)}
-                className="w-full h-10 px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-              />
-            </div>
-          )}
+                {/* Time Picker */}
+                {includeTime && (
+                  <div className="border-t border-border pt-4 mb-4">
+                    <label className="block text-sm font-medium text-foreground mb-2">Time</label>
+                    <input
+                      type="time"
+                      value={timeValue}
+                      onChange={(e) => handleTimeChange(e.target.value)}
+                      className="w-full h-10 px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                    />
+                  </div>
+                )}
 
-          {/* Quick Actions */}
-          <div className="flex gap-2 mt-4 pt-4 border-t border-border">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const today = new Date();
-                handleDateSelect(today);
-                if (!includeTime) {
-                  setIsOpen(false);
-                }
-              }}
-              className="flex-1"
-            >
-              Today
-            </Button>
-            {includeTime && (
-              <Button
-                type="button"
-                variant="default"
-                size="sm"
-                onClick={() => setIsOpen(false)}
-                className="flex-1"
-              >
-                Done
-              </Button>
+                {/* Quick Actions */}
+                <div className="flex gap-2 pt-4 border-t border-border">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const today = new Date();
+                      handleDateSelect(today);
+                      if (!includeTime) {
+                        setIsOpen(false);
+                      }
+                    }}
+                    className="flex-1"
+                  >
+                    Today
+                  </Button>
+                  {includeTime && (
+                    <Button
+                      type="button"
+                      variant="default"
+                      size="sm"
+                      onClick={() => setIsOpen(false)}
+                      className="flex-1"
+                    >
+                      Done
+                    </Button>
+                  )}
+                </div>
+              </>
             )}
           </div>
-        </div>
+        </>
       )}
     </div>
   );

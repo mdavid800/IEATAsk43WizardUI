@@ -393,3 +393,65 @@ html {
 .maplibregl-marker {
   cursor: pointer;
 }
+
+/* Ensure date picker appears above all other components */
+.date-picker-portal {
+  z-index: 10000 !important;
+}
+
+/* Override any conflicting z-index values */
+[data-radix-portal] {
+  z-index: 9999 !important;
+}
+
+/* Ensure dropdowns don't interfere with date picker */
+.date-picker-active {
+  position: relative;
+  z-index: 10001 !important;
+}
+
+/* Custom DatePicker animations */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.date-picker-popup {
+  animation: slideDown 0.2s ease-out;
+}
+
+/* Date picker calendar hover effects */
+.date-picker-day {
+  position: relative;
+  overflow: hidden;
+}
+
+.date-picker-day::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: hsl(var(--primary) / 0.1);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.3s ease;
+}
+
+.date-picker-day:hover::before {
+  width: 100%;
+  height: 100%;
+}
+
+/* Enhanced input focus for date picker */
+.date-picker-input:focus {
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.12), 0 2px 8px -2px hsl(var(--primary) / 0.1);
+  border-color: hsl(var(--primary));
+}
