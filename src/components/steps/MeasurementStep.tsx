@@ -620,7 +620,7 @@ export function MeasurementStep() {
 
   return (
     <div className="space-y-8">
-      <h2 className="text-xl font-semibold text-foreground">Measurement Points</h2>
+      <h2 className="text-2xl font-bold text-primary mb-2">Measurement Points</h2>
 
       {locations.map((location, locationIndex) => (
         <div key={location.uuid} className="border border-border rounded-lg overflow-hidden">
