@@ -13,7 +13,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
-interface DatePickerProps {
+interface DateTimePickerProps {
   id?: string
   value?: string
   onChange: (value: string) => void
@@ -43,7 +43,7 @@ function isValidDate(date: Date | undefined) {
   return !isNaN(date.getTime())
 }
 
-export function DatePicker({
+export function DateTimePicker({
   id,
   value,
   onChange,
@@ -52,11 +52,12 @@ export function DatePicker({
   label,
   disabled = false,
   className,
-}: DatePickerProps) {
+}: DateTimePickerProps) {
   const [open, setOpen] = React.useState(false)
   const [date, setDate] = React.useState<Date | undefined>()
   const [month, setMonth] = React.useState<Date | undefined>()
   const [inputValue, setInputValue] = React.useState("")
+  const [time, setTime] = React.useState("")
 
   // Initialize from value prop
   React.useEffect(() => {
@@ -66,11 +67,13 @@ export function DatePicker({
         setDate(parsedDate)
         setMonth(parsedDate)
         setInputValue(formatDate(parsedDate))
+        setTime(parsedDate.toISOString().substring(11, 16))
       }
     } else {
       setDate(undefined)
       setMonth(undefined)
       setInputValue("")
+      setTime("")
     }
   }, [value])
 
@@ -78,7 +81,10 @@ export function DatePicker({
     setDate(selectedDate)
     setInputValue(formatDate(selectedDate))
     if (selectedDate) {
-      onChange(selectedDate.toISOString().split('T')[0])
+      const [h, m] = time.split(":")
+      const finalDate = new Date(selectedDate)
+      finalDate.setHours(Number(h) || 0, Number(m) || 0, 0, 0)
+      onChange(finalDate.toISOString())
     } else {
       onChange("")
     }
@@ -93,7 +99,20 @@ export function DatePicker({
     if (isValidDate(parsedDate)) {
       setDate(parsedDate)
       setMonth(parsedDate)
-      onChange(parsedDate.toISOString().split('T')[0])
+      const [h, m] = time.split(":")
+      parsedDate.setHours(Number(h) || 0, Number(m) || 0, 0, 0)
+      onChange(parsedDate.toISOString())
+    }
+  }
+
+  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTime = e.target.value
+    setTime(newTime)
+    if (date) {
+      const [h, m] = newTime.split(":")
+      const finalDate = new Date(date)
+      finalDate.setHours(Number(h) || 0, Number(m) || 0, 0, 0)
+      onChange(finalDate.toISOString())
     }
   }
 
@@ -119,6 +138,14 @@ export function DatePicker({
               setOpen(true)
             }
           }}
+        />
+        <Input
+          type="time"
+          value={time}
+          onChange={handleTimeChange}
+          required={required}
+          disabled={disabled}
+          className="bg-background w-28"
         />
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
