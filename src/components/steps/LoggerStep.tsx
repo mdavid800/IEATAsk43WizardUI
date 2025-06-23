@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Textarea } from '../ui/textarea';
 import type { IEATask43Schema, LoggerOEM } from '../../types/schema';
 import DynamicLoggerOptionalFields from './DynamicLoggerOptionalFields';
+import { validateLoggers } from '../../utils/validation';
 
 export function LoggerStep() {
   const { register, setValue, watch } = useFormContext<IEATask43Schema>();
@@ -17,6 +18,8 @@ export function LoggerStep() {
     locations.reduce((acc, loc) => ({ ...acc, [loc.uuid]: true }), {})
   );
   const [expandedLoggers, setExpandedLoggers] = useState<{ [key: number]: boolean }>({});
+  const formData = watch();
+  const validation = validateLoggers(formData);
 
   const addLogger = (locationIndex: number) => {
     const currentLoggers = watch(`measurement_location.${locationIndex}.logger_main_config`) || [];
@@ -58,6 +61,15 @@ export function LoggerStep() {
   return (
     <div className="space-y-8">
       <h2 className="text-2xl font-bold text-primary mb-2">Logger Configuration</h2>
+      {!validation.valid && (
+        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-md">
+          <ul className="list-disc pl-5 text-sm">
+            {validation.issues.map((issue, idx) => (
+              <li key={idx}>{issue}</li>
+            ))}
+          </ul>
+        </div>
+      )}
       <div className="text-muted-foreground mb-6">
         <p>A separate logger file is required for each data file which will be uploaded to the system. Data files should ensure consistency in timestamp conventions, averaging periods, etc. for all parameters contained within those files – care should be taken that this is the case when data files contain outputs from multiple sensors.</p>
       </div>

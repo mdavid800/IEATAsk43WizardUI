@@ -3,11 +3,14 @@ import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { DatePicker } from '../ui/date-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { validateBasicInfo } from '../../utils/validation';
 
 export function BasicInfoStep() {
   const { register, watch, setValue } = useFormContext();
   const campaignStatus = watch('campaignStatus');
   const plantType = watch('plant_type');
+  const formData = watch();
+  const validation = validateBasicInfo(formData);
 
   // Handler for custom input
   const handleCustomPlantTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -20,6 +23,15 @@ export function BasicInfoStep() {
         <h2 className="text-2xl font-bold text-primary mb-2">Basic Information</h2>
         <p className="text-muted-foreground">Provide essential details about your measurement campaign and organization.</p>
       </div>
+      {!validation.valid && (
+        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-md">
+          <ul className="list-disc pl-5 text-sm">
+            {validation.issues.map((issue, idx) => (
+              <li key={idx}>{issue}</li>
+            ))}
+          </ul>
+        </div>
+      )}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div className="space-y-3">
           <Label htmlFor="author">Author <span className="required-asterisk">*</span></Label>

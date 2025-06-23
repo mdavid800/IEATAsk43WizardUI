@@ -11,6 +11,7 @@ import type {
   StatisticType
 } from '@/types/schema';
 import { MeasurementTable, type BulkEditValues } from './sections/MeasurementTable';
+import { validateMeasurements } from '../../utils/validation';
 
 interface CSVValidationError {
   type: 'error' | 'warning';
@@ -49,6 +50,8 @@ export function MeasurementStep() {
     unit: '',
     sensors: []
   });
+  const formData = watch();
+  const validation = validateMeasurements(formData);
 
   const addMeasurementPoint = (locationIndex: number, loggerIndex: number) => {
     const logger = watch(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}`);
@@ -621,6 +624,15 @@ export function MeasurementStep() {
   return (
     <div className="space-y-8">
       <h2 className="text-2xl font-bold text-primary mb-2">Measurement Points</h2>
+      {!validation.valid && (
+        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-md">
+          <ul className="list-disc pl-5 text-sm">
+            {validation.issues.map((issue, idx) => (
+              <li key={idx}>{issue}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {locations.map((location, locationIndex) => (
         <div key={location.uuid} className="border border-border rounded-lg overflow-hidden">

@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Textarea } from '../ui/textarea';
 import type { IEATask43Schema, SensorType, MeasurementType } from '../../types/schema';
 import DynamicSensorOptionalFields from './DynamicSensorOptionalFields';
+import { validateSensors } from '../../utils/validation';
 
 // Define types for managing expanded states locally per location
 interface LocationExpandedState {
@@ -53,6 +54,8 @@ export function SensorsStep() {
   // States are now objects keyed by location index
   const [expandedSensors, setExpandedSensors] = useState<LocationExpandedState>({});
   const [expandedCalibrations, setExpandedCalibrations] = useState<LocationNestedExpandedState>({});
+  const formData = watch();
+  const validation = validateSensors(formData);
 
   // Adjust handlers to take locationIndex
   const toggleExpandSensor = (locationIndex: number, sensorsFieldId: string) => {
@@ -111,6 +114,15 @@ export function SensorsStep() {
   return (
     <div className="space-y-8">
       <h2 className="text-2xl font-bold text-primary mb-2">Sensors</h2>
+      {!validation.valid && (
+        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-md">
+          <ul className="list-disc pl-5 text-sm">
+            {validation.issues.map((issue, idx) => (
+              <li key={idx}>{issue}</li>
+            ))}
+          </ul>
+        </div>
+      )}
       <div className="text-muted-foreground mb-6">
         Provide details for each sensor which produces data included in the logger file. It may be necessary to input multiple sensors for some parameters to reflect sensor swap outs throughout the measurement campaign e.g. in response to sensor failures or planned maintenance swap outs. A sensor entry should also be made for periods where no sensor was installed but the logger reports null data; in these cases, the OEM and model should be stated but the serial number stated as N/A and a note entered to indicate why this sensor is unavailable
       </div>
