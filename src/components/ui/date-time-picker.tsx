@@ -13,7 +13,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
-interface DatePickerProps {
+interface DateTimePickerProps {
   id?: string
   value?: string
   onChange: (value: string) => void
@@ -43,7 +43,19 @@ function isValidDate(date: Date | undefined) {
   return !isNaN(date.getTime())
 }
 
-export function DatePicker({
+function combineDateTime(selectedDate: Date, timeStr: string) {
+  const result = new Date(selectedDate)
+  if (timeStr) {
+    const [hours, minutes] = timeStr.split(":" ).map(Number)
+    result.setHours(hours || 0)
+    result.setMinutes(minutes || 0)
+    result.setSeconds(0)
+    result.setMilliseconds(0)
+  }
+  return result.toISOString()
+}
+
+export function DateTimePicker({
   id,
   value,
   onChange,
@@ -52,11 +64,12 @@ export function DatePicker({
   label,
   disabled = false,
   className,
-}: DatePickerProps) {
+}: DateTimePickerProps) {
   const [open, setOpen] = React.useState(false)
   const [date, setDate] = React.useState<Date | undefined>()
   const [month, setMonth] = React.useState<Date | undefined>()
   const [inputValue, setInputValue] = React.useState("")
+  const [time, setTime] = React.useState("")
 
   // Initialize from value prop
   React.useEffect(() => {
@@ -66,11 +79,13 @@ export function DatePicker({
         setDate(parsedDate)
         setMonth(parsedDate)
         setInputValue(formatDate(parsedDate))
+        setTime(parsedDate.toISOString().substring(11, 16))
       }
     } else {
       setDate(undefined)
       setMonth(undefined)
       setInputValue("")
+      setTime("")
     }
   }, [value])
 
@@ -78,7 +93,8 @@ export function DatePicker({
     setDate(selectedDate)
     setInputValue(formatDate(selectedDate))
     if (selectedDate) {
-      onChange(selectedDate.toISOString().split('T')[0])
+      const combined = combineDateTime(selectedDate, time)
+      onChange(combined)
     } else {
       onChange("")
     }
@@ -93,7 +109,17 @@ export function DatePicker({
     if (isValidDate(parsedDate)) {
       setDate(parsedDate)
       setMonth(parsedDate)
-      onChange(parsedDate.toISOString().split('T')[0])
+      const combined = combineDateTime(parsedDate, time)
+      onChange(combined)
+    }
+  }
+
+  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTime = e.target.value
+    setTime(newTime)
+    if (date && newTime) {
+      const combined = combineDateTime(date, newTime)
+      onChange(combined)
     }
   }
 
@@ -150,6 +176,14 @@ export function DatePicker({
           </PopoverContent>
         </Popover>
       </div>
+      <Input
+        type="time"
+        value={time}
+        className="bg-background"
+        required={required}
+        disabled={disabled}
+        onChange={handleTimeChange}
+      />
     </div>
   )
 }
