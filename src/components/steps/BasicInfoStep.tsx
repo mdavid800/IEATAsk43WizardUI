@@ -3,11 +3,15 @@ import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { DatePicker } from '../ui/date-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { ValidationAlert } from '../ValidationAlert';
+import { validateBasicInfo } from '@/utils/validation';
 
 export function BasicInfoStep() {
   const { register, watch, setValue } = useFormContext();
   const campaignStatus = watch('campaignStatus');
   const plantType = watch('plant_type');
+  const formData = watch();
+  const validation = validateBasicInfo(formData);
 
   // Handler for custom input
   const handleCustomPlantTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -16,6 +20,7 @@ export function BasicInfoStep() {
 
   return (
     <div className="space-y-8">
+      <ValidationAlert issues={validation.issues} />
       <div className="border-b border-border/20 pb-4">
         <h2 className="text-2xl font-bold text-primary mb-2">Basic Information</h2>
         <p className="text-muted-foreground">Provide essential details about your measurement campaign and organization.</p>

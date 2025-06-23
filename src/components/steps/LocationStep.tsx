@@ -9,11 +9,15 @@ import { Textarea } from '../ui/textarea';
 import { Map } from '../ui/map';
 import { Button } from '../ui/button';
 import type { IEATask43Schema } from '../../types/schema';
+import { ValidationAlert } from '../ValidationAlert';
+import { validateLocations } from '@/utils/validation';
 
 export function LocationStep() {
   const { register, setValue, watch } = useFormContext<IEATask43Schema>();
   const [isExpanded, setIsExpanded] = useState(true);
   const [expandedProfilerProps, setExpandedProfilerProps] = useState<Record<string, boolean>>({});
+  const formData = watch();
+  const validation = validateLocations(formData);
 
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);
@@ -52,6 +56,7 @@ export function LocationStep() {
 
   return (
     <div className="space-y-8">
+      <ValidationAlert issues={validation.issues} />
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-primary mb-2">Measurement Location</h2>
       </div>
