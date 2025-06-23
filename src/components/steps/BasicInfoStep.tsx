@@ -98,8 +98,9 @@ export function BasicInfoStep() {
             id="startDate"
             value={watch('startDate')}
             onChange={(value) => setValue('startDate', value)}
-            placeholder="Select start date"
+            placeholder="Select start date and time"
             required
+            includeTime={true}
           />
         </div>
 
@@ -126,8 +127,9 @@ export function BasicInfoStep() {
               id="endDate"
               value={watch('endDate') || ''}
               onChange={(value) => setValue('endDate', value)}
-              placeholder="Select end date"
+              placeholder="Select end date and time"
               required
+              includeTime={true}
             />
           </div>
         )}

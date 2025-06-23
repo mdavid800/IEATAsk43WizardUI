@@ -234,7 +234,7 @@ export function LocationStep() {
                         value={watch('measurement_location.0.mast_properties.date_from') || ''}
                         onChange={(value) => setValue('measurement_location.0.mast_properties.date_from', value)}
                         placeholder="Select start date and time"
-                        includeTime
+                        includeTime={true}
                       />
                     </div>
 
@@ -246,7 +246,7 @@ export function LocationStep() {
                         value={watch('measurement_location.0.mast_properties.date_to') || ''}
                         onChange={(value) => setValue('measurement_location.0.mast_properties.date_to', value)}
                         placeholder="Select end date and time"
-                        includeTime
+                        includeTime={true}
                       />
                     </div>
 
@@ -403,7 +403,7 @@ export function LocationStep() {
                                 value={watch(`measurement_location.0.vertical_profiler_properties.${index}.date_from`) || ''}
                                 onChange={(value) => setValue(`measurement_location.0.vertical_profiler_properties.${index}.date_from`, value)}
                                 placeholder="Select start date and time"
-                                includeTime
+                                includeTime={true}
                               />
                             </div>
 
@@ -415,7 +415,7 @@ export function LocationStep() {
                                 value={watch(`measurement_location.0.vertical_profiler_properties.${index}.date_to`) || ''}
                                 onChange={(value) => setValue(`measurement_location.0.vertical_profiler_properties.${index}.date_to`, value)}
                                 placeholder="Select end date and time"
-                                includeTime
+                                includeTime={true}
                               />
                             </div>
 

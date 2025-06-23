@@ -64,30 +64,30 @@ export function LoggerStep() {
 
       {locations.map((location, locationIndex) => (
         <div key={location.uuid} className="logger-card mb-8 shadow-lg transition-transform hover:scale-[1.01]">
-          <div 
+          <div
             className="flex items-center justify-between bg-gradient-to-r from-primary/5 to-primary/0 p-5 cursor-pointer hover:bg-primary/10 transition-colors border-b border-border/60 backdrop-blur-md"
             onClick={() => toggleLocationExpand(location.uuid)}
           >
             <div className="flex items-center gap-4">
-                <ChevronDown 
-                  className={`w-5 h-5 transition-transform ${expandedLocations[location.uuid] ? 'rotate-0' : '-rotate-90'}`} 
-                />
-                <h3 className="text-xl font-semibold text-primary drop-shadow-sm tracking-tight">
-                  {location.name || `Location ${locationIndex + 1}`}
-                </h3>
-                <span className="ml-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium border border-primary/20">
-                  {location.measurement_station_type_id}
-                </span>
-              </div>              
+              <ChevronDown
+                className={`w-5 h-5 transition-transform ${expandedLocations[location.uuid] ? 'rotate-0' : '-rotate-90'}`}
+              />
+              <h3 className="text-xl font-semibold text-primary drop-shadow-sm tracking-tight">
+                {location.name || `Location ${locationIndex + 1}`}
+              </h3>
+              <span className="ml-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium border border-primary/20">
+                {location.measurement_station_type_id}
+              </span>
+            </div>
           </div>
 
           {expandedLocations[location.uuid] && (
             <div className="p-8 bg-white/70 backdrop-blur-md border-t border-border/60 space-y-8 transition-all animate-fadeIn">
               <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-3">
-                                  <Settings className="w-5 h-5 text-primary" />
-                                  <span className="font-semibold text-foreground tracking-tight text-base">Loggers</span>
-                                </div>         <Button
+                  <Settings className="w-5 h-5 text-primary" />
+                  <span className="font-semibold text-foreground tracking-tight text-base">Loggers</span>
+                </div>         <Button
                   type="button"
                   variant="secondary"
                   className="bg-primary hover:bg-primary/90 shadow hover:shadow-lg focus:ring-2 focus:ring-primary/50"
@@ -102,14 +102,13 @@ export function LoggerStep() {
                 {(watch(`measurement_location.${locationIndex}.logger_main_config`) || []).map((logger, loggerIndex) => (
                   <div className="glass-card border border-primary/20 rounded-xl overflow-hidden mb-6 shadow transition-transform hover:scale-[1.01]" key={loggerIndex}>
                     <div
-                              className="flex items-center gap-3 cursor-pointer select-none px-6 py-3 bg-gradient-to-r from-primary/10 to-primary/0 hover:bg-primary/20 transition-colors border-b border-border/40"
-                              onClick={() => toggleLoggerExpand(loggerIndex)}
-                            >                <div className="flex items-center w-full justify-between">
+                      className="flex items-center gap-3 cursor-pointer select-none px-6 py-3 bg-gradient-to-r from-primary/10 to-primary/0 hover:bg-primary/20 transition-colors border-b border-border/40"
+                      onClick={() => toggleLoggerExpand(loggerIndex)}
+                    >                <div className="flex items-center w-full justify-between">
                         <div className="flex items-center gap-3">
-                          <ChevronDown 
-                            className={`w-5 h-5 transition-transform ${
-                              expandedLoggers[loggerIndex] ? 'transform rotate-0' : 'transform -rotate-90'
-                            }`}
+                          <ChevronDown
+                            className={`w-5 h-5 transition-transform ${expandedLoggers[loggerIndex] ? 'transform rotate-0' : 'transform -rotate-90'
+                              }`}
                           />
                           <h5 className="text-base font-medium">Logger {loggerIndex + 1}</h5>
                           <div className="text-sm text-muted-foreground">
@@ -137,8 +136,8 @@ export function LoggerStep() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 p-8 bg-white/80 rounded-b-xl">
                           <div className="space-y-2">
                             <Label htmlFor={`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.logger_oem_id`}>
-                                Logger Manufacturer <span className="required-asterisk">*</span>
-                              </Label>
+                              Logger Manufacturer <span className="required-asterisk">*</span>
+                            </Label>
                             <Select
                               onValueChange={(value) => setValue(
                                 `measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.logger_oem_id`,
@@ -174,8 +173,8 @@ export function LoggerStep() {
 
                           <div className="space-y-2">
                             <Label htmlFor={`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.logger_model_name`}>
-                                Model Name <span className="required-asterisk">*</span>
-                              </Label>
+                              Model Name <span className="required-asterisk">*</span>
+                            </Label>
                             <Input
                               {...register(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.logger_model_name`)}
                               placeholder="Enter model name"
@@ -184,8 +183,8 @@ export function LoggerStep() {
 
                           <div className="space-y-2">
                             <Label htmlFor={`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.logger_serial_number`}>
-                                Serial Number <span className="required-asterisk">*</span>
-                              </Label>
+                              Serial Number <span className="required-asterisk">*</span>
+                            </Label>
                             <Input
                               {...register(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.logger_serial_number`)}
                               placeholder="Enter serial number"
@@ -224,26 +223,26 @@ export function LoggerStep() {
 
                           <div className="space-y-2">
                             <Label htmlFor={`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.date_from`}>
-                                Date From <span className="required-asterisk">*</span>
-                              </Label>
+                              Date From <span className="required-asterisk">*</span>
+                            </Label>
                             <DatePicker
                               value={watch(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.date_from`) || ''}
                               onChange={(value) => setValue(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.date_from`, value)}
                               placeholder="Select start date and time"
-                              includeTime
+                              includeTime={true}
                               required
                             />
                           </div>
 
                           <div className="space-y-2">
                             <Label htmlFor={`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.date_to`}>
-                                Date To <span className="required-asterisk">*</span>
-                              </Label>
+                              Date To <span className="required-asterisk">*</span>
+                            </Label>
                             <DatePicker
                               value={watch(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.date_to`) || ''}
                               onChange={(value) => setValue(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.date_to`, value)}
                               placeholder="Select end date and time"
-                              includeTime
+                              includeTime={true}
                               required
                             />
                           </div>

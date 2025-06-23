@@ -234,20 +234,20 @@ function LocationSensorsManager({
 
   return (
     <div className="space-y-6">
-        <div className="flex justify-end">
-            <Button
-            type="button"
-            onClick={addSensorsForLocation}
-            className="bg-primary hover:bg-primary/90"
-            >
-            <PlusCircle className="w-4 h-4 mr-2" />
-            Add Sensor to this Location
-            </Button>
-        </div>
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          onClick={addSensorsForLocation}
+          className="bg-primary hover:bg-primary/90"
+        >
+          <PlusCircle className="w-4 h-4 mr-2" />
+          Add Sensor to this Location
+        </Button>
+      </div>
 
       {sensorsFields.map((sensorField, sensorsIndex) => (
         <div key={sensorField.id} className="bg-background/50 border rounded-lg overflow-visible"> {/* Slightly different bg for nested items */}
-          <div 
+          <div
             className="bg-primary/10 p-4 cursor-pointer hover:bg-primary/20 transition-colors"
             onClick={() => toggleExpandSensor(sensorField.id)}
           >
@@ -301,118 +301,118 @@ function LocationSensorsManager({
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.oem`}>
-  OEM <span className="required-asterisk">*</span>
-</Label>
-<Input
-  {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.oem`, {
-    required: "OEM is required"
-  })}
-  placeholder="Manufacturer"
-  className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.oem ? 'border-red-500' : ''}
-/>
-{errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.oem && (
-  <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensors[sensorsIndex].oem.message}</p>
-)}
+                    OEM <span className="required-asterisk">*</span>
+                  </Label>
+                  <Input
+                    {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.oem`, {
+                      required: "OEM is required"
+                    })}
+                    placeholder="Manufacturer"
+                    className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.oem ? 'border-red-500' : ''}
+                  />
+                  {errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.oem && (
+                    <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensors[sensorsIndex].oem.message}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.model`}>
-  Model <span className="required-asterisk">*</span>
-</Label>
-<Input
-  {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.model`, {
-    required: "Model is required"
-  })}
-  placeholder="Model name"
-  className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.model ? 'border-red-500' : ''}
-/>
-{errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.model && (
-  <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensors[sensorsIndex].model.message}</p>
-)}
+                    Model <span className="required-asterisk">*</span>
+                  </Label>
+                  <Input
+                    {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.model`, {
+                      required: "Model is required"
+                    })}
+                    placeholder="Model name"
+                    className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.model ? 'border-red-500' : ''}
+                  />
+                  {errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.model && (
+                    <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensors[sensorsIndex].model.message}</p>
+                  )}
                 </div>
                 {/* ... other sensor fields with updated paths ... */}
-                 <div className="space-y-2">
+                <div className="space-y-2">
                   <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.serial_number`}>
-  Serial Number <span className="required-asterisk">*</span>
-</Label>
-<Input
-  {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.serial_number`, {
-    required: "Serial number is required"
-  })}
-  placeholder="Serial number"
-  className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.serial_number ? 'border-red-500' : ''}
-/>
-{errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.serial_number && (
-  <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensors[sensorsIndex].serial_number.message}</p>
-)}
+                    Serial Number <span className="required-asterisk">*</span>
+                  </Label>
+                  <Input
+                    {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.serial_number`, {
+                      required: "Serial number is required"
+                    })}
+                    placeholder="Serial number"
+                    className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.serial_number ? 'border-red-500' : ''}
+                  />
+                  {errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.serial_number && (
+                    <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensors[sensorsIndex].serial_number.message}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.sensor_type_id`}>
-  Sensor Type <span className="required-asterisk">*</span>
-</Label>
-<Select
-  onValueChange={(value) => setValue(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.sensor_type_id`, value as SensorType)}
-  value={watch(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.sensor_type_id`)}
->
-  <SelectTrigger className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.sensor_type_id ? 'border-red-500' : ''}>
-    <SelectValue placeholder="Select sensor type" />
-  </SelectTrigger>
-  <SelectContent>
-    <SelectItem value="anemometer">Anemometer</SelectItem>
-    <SelectItem value="wind_vane">Wind Vane</SelectItem>
-    {/* ... other sensor types ... */}
-    <SelectItem value="barometer">Barometer</SelectItem>
-    <SelectItem value="hygrometer">Hygrometer</SelectItem>
-    <SelectItem value="pyranometer">Pyranometer</SelectItem>
-    <SelectItem value="2d_ultrasonic">2D Ultrasonic</SelectItem>
-    <SelectItem value="3d_ultrasonic">3D Ultrasonic</SelectItem>
-    <SelectItem value="rain_gauge">Rain Gauge</SelectItem>
-    <SelectItem value="gps">GPS</SelectItem>
-    <SelectItem value="compass">Compass</SelectItem>
-    <SelectItem value="adcp">ADCP</SelectItem>
-    <SelectItem value="altimeter">Altimeter</SelectItem>
-    <SelectItem value="ctd">CTD</SelectItem>
-    <SelectItem value="lidar">Lidar</SelectItem>
-    <SelectItem value="sodar">Sodar</SelectItem>
-    <SelectItem value="other">Other</SelectItem>
-  </SelectContent>
-</Select>
-{errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.sensor_type_id && (
-  <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensors[sensorsIndex].sensor_type_id.message || 'Sensor type is required'}</p>
-)}
+                    Sensor Type <span className="required-asterisk">*</span>
+                  </Label>
+                  <Select
+                    onValueChange={(value) => setValue(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.sensor_type_id`, value as SensorType)}
+                    value={watch(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.sensor_type_id`)}
+                  >
+                    <SelectTrigger className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.sensor_type_id ? 'border-red-500' : ''}>
+                      <SelectValue placeholder="Select sensor type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="anemometer">Anemometer</SelectItem>
+                      <SelectItem value="wind_vane">Wind Vane</SelectItem>
+                      {/* ... other sensor types ... */}
+                      <SelectItem value="barometer">Barometer</SelectItem>
+                      <SelectItem value="hygrometer">Hygrometer</SelectItem>
+                      <SelectItem value="pyranometer">Pyranometer</SelectItem>
+                      <SelectItem value="2d_ultrasonic">2D Ultrasonic</SelectItem>
+                      <SelectItem value="3d_ultrasonic">3D Ultrasonic</SelectItem>
+                      <SelectItem value="rain_gauge">Rain Gauge</SelectItem>
+                      <SelectItem value="gps">GPS</SelectItem>
+                      <SelectItem value="compass">Compass</SelectItem>
+                      <SelectItem value="adcp">ADCP</SelectItem>
+                      <SelectItem value="altimeter">Altimeter</SelectItem>
+                      <SelectItem value="ctd">CTD</SelectItem>
+                      <SelectItem value="lidar">Lidar</SelectItem>
+                      <SelectItem value="sodar">Sodar</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.sensor_type_id && (
+                    <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensors[sensorsIndex].sensor_type_id.message || 'Sensor type is required'}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
-  <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.date_from`}>
-    Date From <span className="required-asterisk">*</span>
-  </Label>
-  <DatePicker
-    value={watch(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.date_from`) || ''}
-    onChange={(value) => setValue(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.date_from`, value)}
-    placeholder="Select start date and time"
-    includeTime
-    required
-    className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.date_from ? 'border-red-500' : ''}
-  />
-  {errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.date_from && (
-    <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensors[sensorsIndex].date_from.message}</p>
-  )}
-</div>
+                  <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.date_from`}>
+                    Date From <span className="required-asterisk">*</span>
+                  </Label>
+                  <DatePicker
+                    value={watch(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.date_from`) || ''}
+                    onChange={(value) => setValue(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.date_from`, value)}
+                    placeholder="Select start date and time"
+                    includeTime={true}
+                    required
+                    className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.date_from ? 'border-red-500' : ''}
+                  />
+                  {errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.date_from && (
+                    <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensors[sensorsIndex].date_from.message}</p>
+                  )}
+                </div>
                 <div className="space-y-2">
-  <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.date_to`}>
-    Date To <span className="required-asterisk">*</span>
-  </Label>
-  <DatePicker
-    value={watch(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.date_to`) || ''}
-    onChange={(value) => setValue(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.date_to`, value)}
-    placeholder="Select end date and time"
-    includeTime
-    required
-    className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.date_to ? 'border-red-500' : ''}
-  />
-  {errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.date_to && (
-    <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensors[sensorsIndex].date_to.message}</p>
-  )}
-</div>
-                
+                  <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.date_to`}>
+                    Date To <span className="required-asterisk">*</span>
+                  </Label>
+                  <DatePicker
+                    value={watch(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.date_to`) || ''}
+                    onChange={(value) => setValue(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.date_to`, value)}
+                    placeholder="Select end date and time"
+                    includeTime={true}
+                    required
+                    className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.date_to ? 'border-red-500' : ''}
+                  />
+                  {errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.date_to && (
+                    <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensors[sensorsIndex].date_to.message}</p>
+                  )}
+                </div>
+
                 {/* Dynamic Optional Fields UI */}
                 {typeof window !== 'undefined' && (
                   <DynamicSensorOptionalFields
@@ -426,7 +426,7 @@ function LocationSensorsManager({
 
                 <div className="sm:col-span-2 space-y-2">
                   <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.notes`}>Notes</Label>
-                  <Textarea {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.notes`)} placeholder="Additional notes" rows={3}/>
+                  <Textarea {...register(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.notes`)} placeholder="Additional notes" rows={3} />
                 </div>
               </div>
 
@@ -638,7 +638,8 @@ function CalibrationArray({
                   <DatePicker
                     value={watch(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.date_of_calibration`) || ''}
                     onChange={(value) => setValue(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.date_of_calibration`, value)}
-                    placeholder="Select calibration date"
+                    placeholder="Select calibration date and time"
+                    includeTime={true}
                   />
                 </div>
 
@@ -724,7 +725,7 @@ function CalibrationArray({
                 calIndex={calIndex}
                 control={control}
                 register={register}
-                // setValue and watch might not be needed if uncertainties are simple
+              // setValue and watch might not be needed if uncertainties are simple
               />
             </div>
           )}
@@ -830,7 +831,7 @@ function UncertaintyArray({
           </div>
         ))}
         {uncertaintyFields.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-2">No uncertainty data provided.</p>
+          <p className="text-sm text-muted-foreground text-center py-2">No uncertainty data provided.</p>
         )}
       </div>
     </div>
