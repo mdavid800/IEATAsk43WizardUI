@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Textarea } from '../ui/textarea';
 import type { IEATask43Schema, SensorType, MeasurementType } from '../../types/schema';
 import DynamicSensorOptionalFields from './DynamicSensorOptionalFields';
+import { StepValidation } from '../StepValidation';
+import { validateSensors } from '../../utils/validations';
 
 // Define types for managing expanded states locally per location
 interface LocationExpandedState {
@@ -49,6 +51,8 @@ const TooltipWrapper = ({ children, text, className = "" }: { children: React.Re
 export function SensorsStep() {
   const { control, register, setValue, watch, formState: { errors } } = useFormContext<IEATask43Schema>();
   const allLocations = watch('measurement_location') || [];
+  const formData = watch();
+  const { issues } = validateSensors(formData);
 
   // States are now objects keyed by location index
   const [expandedSensors, setExpandedSensors] = useState<LocationExpandedState>({});
@@ -110,6 +114,7 @@ export function SensorsStep() {
 
   return (
     <div className="space-y-8">
+      <StepValidation issues={issues} />
       <h2 className="text-2xl font-bold text-primary mb-2">Sensors</h2>
       <div className="text-muted-foreground mb-6">
         Provide details for each sensor which produces data included in the logger file. It may be necessary to input multiple sensors for some parameters to reflect sensor swap outs throughout the measurement campaign e.g. in response to sensor failures or planned maintenance swap outs. A sensor entry should also be made for periods where no sensor was installed but the logger reports null data; in these cases, the OEM and model should be stated but the serial number stated as N/A and a note entered to indicate why this sensor is unavailable
