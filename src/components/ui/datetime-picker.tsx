@@ -13,7 +13,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
-interface DatePickerProps {
+interface DateTimePickerProps {
   id?: string
   value?: string
   onChange: (value: string) => void
@@ -43,7 +43,7 @@ function isValidDate(date: Date | undefined) {
   return !isNaN(date.getTime())
 }
 
-export function DatePicker({
+export function DateTimePicker({
   id,
   value,
   onChange,
@@ -52,11 +52,12 @@ export function DatePicker({
   label,
   disabled = false,
   className,
-}: DatePickerProps) {
+}: DateTimePickerProps) {
   const [open, setOpen] = React.useState(false)
   const [date, setDate] = React.useState<Date | undefined>()
   const [month, setMonth] = React.useState<Date | undefined>()
   const [inputValue, setInputValue] = React.useState("")
+  const [timeValue, setTimeValue] = React.useState("00:00")
 
   // Initialize from value prop
   React.useEffect(() => {
@@ -66,11 +67,13 @@ export function DatePicker({
         setDate(parsedDate)
         setMonth(parsedDate)
         setInputValue(formatDate(parsedDate))
+        setTimeValue(parsedDate.toISOString().substring(11, 16))
       }
     } else {
       setDate(undefined)
       setMonth(undefined)
       setInputValue("")
+      setTimeValue("00:00")
     }
   }, [value])
 
@@ -78,7 +81,10 @@ export function DatePicker({
     setDate(selectedDate)
     setInputValue(formatDate(selectedDate))
     if (selectedDate) {
-      onChange(selectedDate.toISOString().split('T')[0])
+      const [hours, minutes] = timeValue.split(":").map(Number)
+      selectedDate.setHours(hours || 0)
+      selectedDate.setMinutes(minutes || 0)
+      onChange(selectedDate.toISOString())
     } else {
       onChange("")
     }
@@ -93,7 +99,10 @@ export function DatePicker({
     if (isValidDate(parsedDate)) {
       setDate(parsedDate)
       setMonth(parsedDate)
-      onChange(parsedDate.toISOString().split('T')[0])
+      const [hours, minutes] = timeValue.split(":").map(Number)
+      parsedDate.setHours(hours || 0)
+      parsedDate.setMinutes(minutes || 0)
+      onChange(parsedDate.toISOString())
     }
   }
 
@@ -149,6 +158,24 @@ export function DatePicker({
             />
           </PopoverContent>
         </Popover>
+        <Input
+          type="time"
+          value={timeValue}
+          className="w-28"
+          disabled={disabled}
+          required={required}
+          onChange={(e) => {
+            const newTime = e.target.value
+            setTimeValue(newTime)
+            if (date) {
+              const updated = new Date(date)
+              const [h, m] = newTime.split(":").map(Number)
+              updated.setHours(h || 0)
+              updated.setMinutes(m || 0)
+              onChange(updated.toISOString())
+            }
+          }}
+        />
       </div>
     </div>
   )

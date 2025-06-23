@@ -1,7 +1,7 @@
 import { useFormContext } from 'react-hook-form';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
-import { DatePicker } from '../ui/date-picker';
+import { DateTimePicker } from '../ui/datetime-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 export function BasicInfoStep() {
@@ -94,7 +94,7 @@ export function BasicInfoStep() {
 
         <div className="space-y-2">
           <Label htmlFor="startDate">Start Date <span className="required-asterisk">*</span></Label>
-          <DatePicker
+          <DateTimePicker
             id="startDate"
             value={watch('startDate')}
             onChange={(value) => setValue('startDate', value)}
@@ -122,7 +122,7 @@ export function BasicInfoStep() {
         {campaignStatus === 'historical' && (
           <div className="space-y-2">
             <Label htmlFor="endDate">End Date <span className="required-asterisk">*</span></Label>
-            <DatePicker
+            <DateTimePicker
               id="endDate"
               value={watch('endDate') || ''}
               onChange={(value) => setValue('endDate', value)}

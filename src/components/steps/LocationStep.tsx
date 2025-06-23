@@ -4,7 +4,7 @@ import { ChevronDown, PlusCircle, Trash2 } from 'lucide-react';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { DatePicker } from '../ui/date-picker';
+import { DateTimePicker } from '../ui/datetime-picker';
 import { Textarea } from '../ui/textarea';
 import { Map } from '../ui/map';
 import { Button } from '../ui/button';
@@ -230,11 +230,10 @@ export function LocationStep() {
                       <Label htmlFor="measurement_location.0.mast_properties.date_from">
                         Date From
                       </Label>
-                      <DatePicker
+                      <DateTimePicker
                         value={watch('measurement_location.0.mast_properties.date_from') || ''}
                         onChange={(value) => setValue('measurement_location.0.mast_properties.date_from', value)}
                         placeholder="Select start date and time"
-                        includeTime
                       />
                     </div>
 
@@ -242,11 +241,10 @@ export function LocationStep() {
                       <Label htmlFor="measurement_location.0.mast_properties.date_to">
                         Date To
                       </Label>
-                      <DatePicker
+                      <DateTimePicker
                         value={watch('measurement_location.0.mast_properties.date_to') || ''}
                         onChange={(value) => setValue('measurement_location.0.mast_properties.date_to', value)}
                         placeholder="Select end date and time"
-                        includeTime
                       />
                     </div>
 
@@ -399,11 +397,10 @@ export function LocationStep() {
                               <Label htmlFor={`measurement_location.0.vertical_profiler_properties.${index}.date_from`}>
                                 Date From
                               </Label>
-                              <DatePicker
+                              <DateTimePicker
                                 value={watch(`measurement_location.0.vertical_profiler_properties.${index}.date_from`) || ''}
                                 onChange={(value) => setValue(`measurement_location.0.vertical_profiler_properties.${index}.date_from`, value)}
                                 placeholder="Select start date and time"
-                                includeTime
                               />
                             </div>
 
@@ -411,11 +408,10 @@ export function LocationStep() {
                               <Label htmlFor={`measurement_location.0.vertical_profiler_properties.${index}.date_to`}>
                                 Date To
                               </Label>
-                              <DatePicker
+                              <DateTimePicker
                                 value={watch(`measurement_location.0.vertical_profiler_properties.${index}.date_to`) || ''}
                                 onChange={(value) => setValue(`measurement_location.0.vertical_profiler_properties.${index}.date_to`, value)}
                                 placeholder="Select end date and time"
-                                includeTime
                               />
                             </div>
 

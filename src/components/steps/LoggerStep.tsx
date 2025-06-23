@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { DatePicker } from '../ui/date-picker';
+import { DateTimePicker } from '../ui/datetime-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Textarea } from '../ui/textarea';
 import type { IEATask43Schema, LoggerOEM } from '../../types/schema';
@@ -226,11 +226,10 @@ export function LoggerStep() {
                             <Label htmlFor={`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.date_from`}>
                                 Date From <span className="required-asterisk">*</span>
                               </Label>
-                            <DatePicker
+                            <DateTimePicker
                               value={watch(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.date_from`) || ''}
                               onChange={(value) => setValue(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.date_from`, value)}
                               placeholder="Select start date and time"
-                              includeTime
                               required
                             />
                           </div>
@@ -239,11 +238,10 @@ export function LoggerStep() {
                             <Label htmlFor={`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.date_to`}>
                                 Date To <span className="required-asterisk">*</span>
                               </Label>
-                            <DatePicker
+                            <DateTimePicker
                               value={watch(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.date_to`) || ''}
                               onChange={(value) => setValue(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.date_to`, value)}
                               placeholder="Select end date and time"
-                              includeTime
                               required
                             />
                           </div>
