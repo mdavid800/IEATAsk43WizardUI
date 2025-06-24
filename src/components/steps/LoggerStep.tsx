@@ -1,5 +1,5 @@
 import { useFormContext } from 'react-hook-form';
-import { PlusCircle, Trash2, ChevronDown, Settings } from 'lucide-react';
+import { PlusCircle, Trash2, ChevronDown, Settings, AlertCircle, Check } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -7,6 +7,7 @@ import { Label } from '../ui/label';
 import { DatePicker } from '../ui/date-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Textarea } from '../ui/textarea';
+import { cn } from '../../utils/cn';
 import type { IEATask43Schema, LoggerOEM } from '../../types/schema';
 import DynamicLoggerOptionalFields from './DynamicLoggerOptionalFields';
 
@@ -17,6 +18,44 @@ export function LoggerStep() {
     locations.reduce((acc, loc) => ({ ...acc, [loc.uuid]: true }), {})
   );
   const [expandedLoggers, setExpandedLoggers] = useState<{ [key: number]: boolean }>({});
+
+  // Validation logic moved from ReviewStep
+  const validateLoggers = () => {
+    const formData = watch();
+    const issues: string[] = [];
+
+    formData.measurement_location?.forEach((location, locIndex) => {
+      if (!location.logger_main_config?.length) {
+        issues.push(`Location ${locIndex + 1}: At least one logger is required`);
+        return;
+      }
+
+      location.logger_main_config.forEach((logger, logIndex) => {
+        if (!logger.logger_oem_id) {
+          issues.push(`Location ${locIndex + 1}, Logger ${logIndex + 1}: Logger Manufacturer is required`);
+        }
+        if (!logger.logger_model_name) {
+          issues.push(`Location ${locIndex + 1}, Logger ${logIndex + 1}: Model Name is required`);
+        }
+        if (!logger.logger_serial_number) {
+          issues.push(`Location ${locIndex + 1}, Logger ${logIndex + 1}: Serial number is required`);
+        }
+        if (!logger.date_from) {
+          issues.push(`Location ${locIndex + 1}, Logger ${logIndex + 1}: Date From is required`);
+        }
+        if (!logger.date_to) {
+          issues.push(`Location ${locIndex + 1}, Logger ${logIndex + 1}: Date To is required`);
+        }
+      });
+    });
+
+    return {
+      valid: issues.length === 0,
+      issues
+    };
+  };
+
+  const validationResult = validateLoggers();
 
   const addLogger = (locationIndex: number) => {
     const currentLoggers = watch(`measurement_location.${locationIndex}.logger_main_config`) || [];
@@ -57,9 +96,50 @@ export function LoggerStep() {
 
   return (
     <div className="space-y-8">
-      <h2 className="text-2xl font-bold text-primary mb-2">Logger Configuration</h2>
-      <div className="text-muted-foreground mb-6">
-        <p>A separate logger file is required for each data file which will be uploaded to the system. Data files should ensure consistency in timestamp conventions, averaging periods, etc. for all parameters contained within those files – care should be taken that this is the case when data files contain outputs from multiple sensors.</p>
+      <div className="border-b border-border/20 pb-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-primary mb-2">Logger Configuration</h2>
+            <p className="text-muted-foreground">A separate logger file is required for each data file which will be uploaded to the system. Data files should ensure consistency in timestamp conventions, averaging periods, etc. for all parameters contained within those files – care should be taken that this is the case when data files contain outputs from multiple sensors.</p>
+          </div>
+          <div className={cn(
+            "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium",
+            validationResult.valid
+              ? "bg-green-50 text-green-700 border border-green-200"
+              : "bg-red-50 text-red-700 border border-red-200"
+          )}>
+            {validationResult.valid ? (
+              <>
+                <Check className="w-4 h-4" />
+                <span>Complete</span>
+              </>
+            ) : (
+              <>
+                <AlertCircle className="w-4 h-4" />
+                <span>{validationResult.issues.length} issue{validationResult.issues.length !== 1 ? 's' : ''}</span>
+              </>
+            )}
+          </div>
+        </div>
+
+        {!validationResult.valid && (
+          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <h4 className="text-sm font-medium text-red-800 mb-2">Please complete the following:</h4>
+                <ul className="text-sm text-red-700 space-y-1">
+                  {validationResult.issues.map((issue, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <span className="select-none">•</span>
+                      <span>{issue}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {locations.map((location, locationIndex) => (

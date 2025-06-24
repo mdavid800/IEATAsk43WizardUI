@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { ChevronDown, PlusCircle, Trash2 } from 'lucide-react';
+import { ChevronDown, PlusCircle, Trash2, AlertCircle, Check } from 'lucide-react';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -8,12 +8,38 @@ import { DatePicker } from '../ui/date-picker';
 import { Textarea } from '../ui/textarea';
 import { Map } from '../ui/map';
 import { Button } from '../ui/button';
+import { cn } from '../../utils/cn';
 import type { IEATask43Schema } from '../../types/schema';
 
 export function LocationStep() {
   const { register, setValue, watch } = useFormContext<IEATask43Schema>();
   const [isExpanded, setIsExpanded] = useState(true);
   const [expandedProfilerProps, setExpandedProfilerProps] = useState<Record<string, boolean>>({});
+
+  // Validation logic moved from ReviewStep
+  const validateLocations = () => {
+    const formData = watch();
+    const issues: string[] = [];
+
+    if (!formData.measurement_location?.length) {
+      issues.push('At least one measurement location is required');
+      return { valid: false, issues };
+    }
+
+    formData.measurement_location.forEach((location, index) => {
+      if (!location.name) issues.push(`Location ${index + 1}: Name is required`);
+      if (!location.latitude_ddeg) issues.push(`Location ${index + 1}: Latitude is required`);
+      if (!location.longitude_ddeg) issues.push(`Location ${index + 1}: Longitude is required`);
+      if (!location.measurement_station_type_id) issues.push(`Location ${index + 1}: Station Type is required`);
+    });
+
+    return {
+      valid: issues.length === 0,
+      issues
+    };
+  };
+
+  const validationResult = validateLocations();
 
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);
@@ -52,8 +78,50 @@ export function LocationStep() {
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-primary mb-2">Measurement Location</h2>
+      <div className="border-b border-border/20 pb-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-primary mb-2">Measurement Location</h2>
+            <p className="text-muted-foreground">Define the geographical location and properties of your measurement station.</p>
+          </div>
+          <div className={cn(
+            "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium",
+            validationResult.valid
+              ? "bg-green-50 text-green-700 border border-green-200"
+              : "bg-red-50 text-red-700 border border-red-200"
+          )}>
+            {validationResult.valid ? (
+              <>
+                <Check className="w-4 h-4" />
+                <span>Complete</span>
+              </>
+            ) : (
+              <>
+                <AlertCircle className="w-4 h-4" />
+                <span>{validationResult.issues.length} issue{validationResult.issues.length !== 1 ? 's' : ''}</span>
+              </>
+            )}
+          </div>
+        </div>
+
+        {!validationResult.valid && (
+          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <h4 className="text-sm font-medium text-red-800 mb-2">Please complete the following:</h4>
+                <ul className="text-sm text-red-700 space-y-1">
+                  {validationResult.issues.map((issue, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <span className="select-none">•</span>
+                      <span>{issue}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="border border-border rounded-lg overflow-hidden">

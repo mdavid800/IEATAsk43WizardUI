@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
-import { PlusCircle, Trash2, ChevronDown, Plus, Copy } from 'lucide-react';
+import { PlusCircle, Trash2, ChevronDown, Plus, Copy, AlertCircle, Check } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { DatePicker } from '../ui/date-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Textarea } from '../ui/textarea';
-import type { IEATask43Schema, SensorType, MeasurementType } from '../../types/schema';
+import { cn } from '../../utils/cn';
+import type { IEATask43Schema, SensorType, MeasurementType, Sensor } from '../../types/schema';
 import DynamicSensorOptionalFields from './DynamicSensorOptionalFields';
 
 // Define types for managing expanded states locally per location
@@ -53,6 +54,50 @@ export function SensorsStep() {
   // States are now objects keyed by location index
   const [expandedSensors, setExpandedSensors] = useState<LocationExpandedState>({});
   const [expandedCalibrations, setExpandedCalibrations] = useState<LocationNestedExpandedState>({});
+
+  // Validation logic moved from ReviewStep
+  const validateSensors = () => {
+    const formData = watch();
+    const issues: string[] = [];
+
+    formData.measurement_location?.forEach((location, locIndex) => {
+      // Require at least one sensor per location (skip undefined/null entries)
+      const validSensors = Array.isArray(location.sensors)
+        ? location.sensors.filter(Boolean)
+        : [];
+      if (validSensors.length === 0) {
+        issues.push(`Location ${locIndex + 1}: At least one sensor is required`);
+        return;
+      }
+      validSensors.forEach((sensor: Sensor, sensorIndex: number) => {
+        if (!sensor.oem) {
+          issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: OEM is required`);
+        }
+        if (!sensor.model) {
+          issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Model is required`);
+        }
+        if (!sensor.serial_number) {
+          issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Serial Number is required`);
+        }
+        if (!sensor.sensor_type_id) {
+          issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Sensor Type is required`);
+        }
+        if (!sensor.date_from) {
+          issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Date From is required`);
+        }
+        if (!sensor.date_to) {
+          issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Date To is required`);
+        }
+      });
+    });
+
+    return {
+      valid: issues.length === 0,
+      issues
+    };
+  };
+
+  const validationResult = validateSensors();
 
   // Adjust handlers to take locationIndex
   const toggleExpandSensor = (locationIndex: number, sensorsFieldId: string) => {
@@ -110,9 +155,50 @@ export function SensorsStep() {
 
   return (
     <div className="space-y-8">
-      <h2 className="text-2xl font-bold text-primary mb-2">Sensors</h2>
-      <div className="text-muted-foreground mb-6">
-        Provide details for each sensor which produces data included in the logger file. It may be necessary to input multiple sensors for some parameters to reflect sensor swap outs throughout the measurement campaign e.g. in response to sensor failures or planned maintenance swap outs. A sensor entry should also be made for periods where no sensor was installed but the logger reports null data; in these cases, the OEM and model should be stated but the serial number stated as N/A and a note entered to indicate why this sensor is unavailable
+      <div className="border-b border-border/20 pb-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-primary mb-2">Sensors</h2>
+            <p className="text-muted-foreground">Provide details for each sensor which produces data included in the logger file. It may be necessary to input multiple sensors for some parameters to reflect sensor swap outs throughout the measurement campaign e.g. in response to sensor failures or planned maintenance swap outs. A sensor entry should also be made for periods where no sensor was installed but the logger reports null data; in these cases, the OEM and model should be stated but the serial number stated as N/A and a note entered to indicate why this sensor is unavailable</p>
+          </div>
+          <div className={cn(
+            "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium",
+            validationResult.valid
+              ? "bg-green-50 text-green-700 border border-green-200"
+              : "bg-red-50 text-red-700 border border-red-200"
+          )}>
+            {validationResult.valid ? (
+              <>
+                <Check className="w-4 h-4" />
+                <span>Complete</span>
+              </>
+            ) : (
+              <>
+                <AlertCircle className="w-4 h-4" />
+                <span>{validationResult.issues.length} issue{validationResult.issues.length !== 1 ? 's' : ''}</span>
+              </>
+            )}
+          </div>
+        </div>
+
+        {!validationResult.valid && (
+          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <h4 className="text-sm font-medium text-red-800 mb-2">Please complete the following:</h4>
+                <ul className="text-sm text-red-700 space-y-1">
+                  {validationResult.issues.map((issue, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <span className="select-none">•</span>
+                      <span>{issue}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       {allLocations.map((location, locationIndex) => (
         <div key={location.uuid || `location-${locationIndex}`} className="space-y-6 p-6 border rounded-lg bg-card">
