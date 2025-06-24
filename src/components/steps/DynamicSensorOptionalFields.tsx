@@ -59,36 +59,36 @@ export default function DynamicSensorOptionalFields({ locationIndex, sensorIndex
   const [shownFields, setShownFields] = useState<string[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
   const availableFields = OPTIONAL_FIELDS.filter(f => !shownFields.includes(f.key));
-  
+
   // Initialize shown fields based on existing form values
   useEffect(() => {
     if (!isInitialized) {
       const fieldsWithExistingValues: string[] = [];
-      
+
       OPTIONAL_FIELDS.forEach(field => {
         const name = `measurement_location.${locationIndex}.sensors.${sensorIndex}.${field.key}`;
         const value = watch(name);
-        
+
         // If the field has a meaningful value, show it
-        if (value !== undefined && value !== null && value !== '' && 
-            !(typeof value === 'number' && isNaN(value))) {
+        if (value !== undefined && value !== null && value !== '' &&
+          !(typeof value === 'number' && isNaN(value))) {
           fieldsWithExistingValues.push(field.key);
         }
       });
-      
+
       if (fieldsWithExistingValues.length > 0) {
         setShownFields(fieldsWithExistingValues);
       }
       setIsInitialized(true);
     }
   }, [locationIndex, sensorIndex, watch, isInitialized]);
-  
+
   // Check which fields have values
   const getFieldValue = (key: string) => {
     const name = `measurement_location.${locationIndex}.sensors.${sensorIndex}.${key}`;
     return watch(name);
   };
-  
+
   const fieldsWithValues = shownFields.filter(key => {
     const value = getFieldValue(key);
     return value !== undefined && value !== null && value !== '' && !isNaN(value);
@@ -113,7 +113,7 @@ export default function DynamicSensorOptionalFields({ locationIndex, sensorIndex
           </span>
         )}
       </div>
-      
+
       {shownFields.length > 0 && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
           <div className="flex items-start gap-2">
@@ -125,7 +125,7 @@ export default function DynamicSensorOptionalFields({ locationIndex, sensorIndex
           </div>
         </div>
       )}
-      
+
       <div className="space-y-4">
         {shownFields.map(key => {
           const field = OPTIONAL_FIELDS.find(f => f.key === key);
@@ -138,12 +138,12 @@ export default function DynamicSensorOptionalFields({ locationIndex, sensorIndex
                 {field.render({ register, setValue, watch }, name)}
               </div>
               <div className="flex items-end">
-                <Button  
+                <Button
                   type="button"
                   variant="ghost"
                   size="icon"
                   aria-label="Remove field"
-                  className="p-2 hover:bg-transparent" 
+                  className="p-2 hover:bg-transparent"
                   onClick={() => removeField(key)}
                 >
                   <Trash2 className="w-5 h-5 text-red-500 hover:text-red-700" />
@@ -152,12 +152,13 @@ export default function DynamicSensorOptionalFields({ locationIndex, sensorIndex
             </div>
           );
         })}
-        
+
         {availableFields.length > 0 && (
           <div className="flex justify-center pt-4">
             <div className="flex items-center gap-3">
               <Label className="text-muted-foreground text-sm">Add optional field:</Label>
               <select
+                aria-label="Add optional field"
                 className="flex h-10 w-60 rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:border-primary"
                 onChange={e => {
                   if (e.target.value) {
@@ -180,7 +181,7 @@ export default function DynamicSensorOptionalFields({ locationIndex, sensorIndex
             </div>
           </div>
         )}
-        
+
         {shownFields.length === 0 && availableFields.length > 0 && (
           <div className="text-center text-muted-foreground py-8 border-2 border-dashed border-border/40 rounded-lg">
             <Settings className="w-8 h-8 mx-auto mb-3 opacity-50" />
