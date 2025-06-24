@@ -81,7 +81,7 @@ export function LandingPage({ onStartForm }: LandingPageProps) {
                 </h2>
 
                 <p className="text-xl text-gray-600 leading-relaxed max-w-2xl">
-                  A proof of concept form wizard implementation of the IEA Task 43 digital Wind Resource Assessment data model.
+                  A proof of concept tool for creating the  IEA Task 43 digital Wind Resource Assessment data model.
                   Standardize the digital representation of your measurement station configurations including met masts,
                   lidars, sodars, floating lidars, and solar installations.
                 </p>
