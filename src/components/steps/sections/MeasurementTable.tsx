@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { Trash2, Filter, X, ChevronDown, ChevronRight, Info } from 'lucide-react';
+import { Trash2, Filter, X, ChevronDown, ChevronRight, Info, ArrowUpDown, MoreHorizontal, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,15 +9,39 @@ import { ClearableSelect } from '@/components/ui/clearable-select';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { MultiSelect } from '@/components/ui/multi-select';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import {
+    DropdownMenu,
+    DropdownMenuCheckboxItem,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@/components/ui/popover';
 import type {
     IEATask43Schema,
     MeasurementType,
     HeightReference,
+    StatisticType,
     Sensor
 } from '@/types/schema';
 
 export interface BulkEditValues {
     measurement_type_id: MeasurementType | '';
+    statistic_type_id: StatisticType | '';
     height_m: string;
     height_reference_id: HeightReference | '';
     unit: string;
@@ -27,10 +51,22 @@ export interface BulkEditValues {
 interface FilterValues {
     name: string;
     measurement_type_id: MeasurementType | 'all';
+    statistic_type_id: StatisticType | 'all';
     height_m: string;
     height_reference_id: HeightReference | 'all';
     unit: string;
     notes: string;
+}
+
+interface ColumnVisibility {
+    name: boolean;
+    measurement_type_id: boolean;
+    statistic_type_id: boolean;
+    height_m: boolean;
+    height_reference_id: boolean;
+    unit: boolean;
+    sensors: boolean;
+    notes: boolean;
 }
 
 interface MeasurementTableProps {
@@ -169,6 +205,36 @@ const ExpandableRow = ({
                             </ClearableSelect>
                         </div>
 
+                        <div>
+                            <Label className="text-xs text-muted-foreground">Statistic Type</Label>
+                            <ClearableSelect
+                                value={watch(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.statistic_type_id`) || undefined}
+                                onValueChange={(value: string | undefined) => {
+                                    setValue(
+                                        `measurement_location.${locationIndex}.measurement_point.${actualIndex}.statistic_type_id`,
+                                        value as StatisticType
+                                    );
+                                }}
+                                placeholder="Select statistic type"
+                            >
+                                <SelectItem value="avg">Average</SelectItem>
+                                <SelectItem value="sd">Standard Deviation</SelectItem>
+                                <SelectItem value="max">Maximum</SelectItem>
+                                <SelectItem value="min">Minimum</SelectItem>
+                                <SelectItem value="ti">Turbulence Intensity</SelectItem>
+                                <SelectItem value="ti30sec">TI 30sec</SelectItem>
+                                <SelectItem value="gust">Gust</SelectItem>
+                                <SelectItem value="count">Count</SelectItem>
+                                <SelectItem value="availability">Availability</SelectItem>
+                                <SelectItem value="quality">Quality</SelectItem>
+                                <SelectItem value="sum">Sum</SelectItem>
+                                <SelectItem value="median">Median</SelectItem>
+                                <SelectItem value="mode">Mode</SelectItem>
+                                <SelectItem value="range">Range</SelectItem>
+                                <SelectItem value="text">Text</SelectItem>
+                            </ClearableSelect>
+                        </div>
+
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <Label className="text-xs text-muted-foreground">Height (m)</Label>
@@ -248,6 +314,19 @@ export function MeasurementTable({
 }: MeasurementTableProps) {
     const { register, setValue, watch } = useFormContext<IEATask43Schema>();
     const [isMobileView, setIsMobileView] = useState(false);
+    const [isCompactView, setIsCompactView] = useState(false);
+
+    // Column visibility state with smart defaults for different screen sizes
+    const [columnVisibility, setColumnVisibility] = useState<ColumnVisibility>({
+        name: true,
+        measurement_type_id: true,
+        statistic_type_id: true,
+        height_m: true,
+        height_reference_id: false, // Hidden by default on smaller screens
+        unit: true,
+        sensors: true,
+        notes: false // Hidden by default to save space
+    });
 
     // Get available sensors for this location
     const availableSensors = (watch(`measurement_location.${locationIndex}.sensors` as any) as Sensor[]) || [];
@@ -279,6 +358,7 @@ export function MeasurementTable({
     const [filters, setFilters] = useState<FilterValues>({
         name: '',
         measurement_type_id: 'all',
+        statistic_type_id: 'all',
         height_m: '',
         height_reference_id: 'all',
         unit: 'all',
@@ -289,6 +369,7 @@ export function MeasurementTable({
         setFilters({
             name: '',
             measurement_type_id: 'all',
+            statistic_type_id: 'all',
             height_m: '',
             height_reference_id: 'all',
             unit: 'all',
@@ -296,7 +377,7 @@ export function MeasurementTable({
         });
     };
 
-    const hasActiveFilters = filters.name !== '' || filters.measurement_type_id !== 'all' || filters.height_m !== '' || filters.height_reference_id !== 'all' || filters.unit !== 'all' || filters.notes !== '';
+    const hasActiveFilters = filters.name !== '' || filters.measurement_type_id !== 'all' || filters.statistic_type_id !== 'all' || filters.height_m !== '' || filters.height_reference_id !== 'all' || filters.unit !== 'all' || filters.notes !== '';
 
     // First filter by logger identifier, then apply user filters
     const allPoints = watch(`measurement_location.${locationIndex}.measurement_point`) || [];
@@ -318,6 +399,9 @@ export function MeasurementTable({
             return false;
         }
         if (filters.measurement_type_id !== 'all' && pointData.measurement_type_id !== filters.measurement_type_id) {
+            return false;
+        }
+        if (filters.statistic_type_id !== 'all' && pointData.statistic_type_id !== filters.statistic_type_id) {
             return false;
         }
         if (filters.height_m && !pointData.height_m?.toString().includes(filters.height_m)) {
@@ -357,6 +441,12 @@ export function MeasurementTable({
                         bulkEditValues.measurement_type_id as MeasurementType
                     );
                 }
+                if (bulkEditValues.statistic_type_id) {
+                    setValue(
+                        `measurement_location.${locationIndex}.measurement_point.${actualIndex}.statistic_type_id`,
+                        bulkEditValues.statistic_type_id as StatisticType
+                    );
+                }
                 if (bulkEditValues.height_m) {
                     setValue(
                         `measurement_location.${locationIndex}.measurement_point.${actualIndex}.height_m`,
@@ -388,6 +478,7 @@ export function MeasurementTable({
         // Reset bulk edit values and selections
         setBulkEditValues(() => ({
             measurement_type_id: '',
+            statistic_type_id: '',
             height_m: '',
             height_reference_id: '',
             unit: '',
@@ -419,10 +510,27 @@ export function MeasurementTable({
     // Get unique units for the unit filter dropdown
     const allUnits = [...new Set(loggerFilteredPoints.map(point => point.unit).filter((u): u is string => !!u))].sort();
 
-    // Check if we should show mobile view
+    // Check screen size and adjust view accordingly
     React.useEffect(() => {
         const checkScreenSize = () => {
-            setIsMobileView(window.innerWidth < 1024); // lg breakpoint
+            const width = window.innerWidth;
+            setIsMobileView(width < 768); // md breakpoint for mobile cards
+            setIsCompactView(width >= 768 && width < 1400); // Compact table for laptops
+
+            // Auto-adjust column visibility based on screen size
+            if (width < 1200) {
+                setColumnVisibility(prev => ({
+                    ...prev,
+                    height_reference_id: false,
+                    notes: false
+                }));
+            } else if (width >= 1400) {
+                setColumnVisibility(prev => ({
+                    ...prev,
+                    height_reference_id: true,
+                    notes: true
+                }));
+            }
         };
 
         checkScreenSize();
@@ -432,94 +540,7 @@ export function MeasurementTable({
 
     return (
         <div className="w-full">
-            {/* Results Summary */}
-            <div className="mb-2 text-sm text-muted-foreground">
-                Showing {filteredPoints.length} of {loggerFilteredPoints.length} points
-                {hasActiveFilters && ' (filtered)'}
-            </div>
 
-            {/* Bulk Edit Controls */}
-            <div className="mb-4 p-4 bg-muted/30 rounded-lg">
-                <h5 className="text-sm font-medium mb-3">Bulk Edit Selected Points</h5>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                    <div>
-                        <Label>Measurement Type</Label>
-                        <ClearableSelect
-                            value={bulkEditValues.measurement_type_id || undefined}
-                            onValueChange={(value: string | undefined) =>
-                                setBulkEditValues(prev => ({ ...prev, measurement_type_id: (value as MeasurementType) || '' }))
-                            }
-                            placeholder="Select measurement type"
-                        >
-                            <SelectItem value="wind_speed">Wind Speed</SelectItem>
-                            <SelectItem value="wind_direction">Wind Direction</SelectItem>
-                            <SelectItem value="temperature">Temperature</SelectItem>
-                            <SelectItem value="pressure">Pressure</SelectItem>
-                            <SelectItem value="humidity">Humidity</SelectItem>
-                            <SelectItem value="wave_height">Wave Height</SelectItem>
-                            <SelectItem value="wave_period">Wave Period</SelectItem>
-                            <SelectItem value="wave_direction">Wave Direction</SelectItem>
-                            <SelectItem value="position">Position</SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
-                        </ClearableSelect>
-                    </div>
-                    <div>
-                        <Label>Height (m)</Label>
-                        <Input
-                            type="number"
-                            step="0.1"
-                            value={bulkEditValues.height_m}
-                            onChange={(e) => setBulkEditValues(prev => ({ ...prev, height_m: e.target.value }))}
-                            placeholder="Enter height"
-                        />
-                    </div>
-                    <div>
-                        <Label>Height Reference</Label>
-                        <ClearableSelect
-                            value={bulkEditValues.height_reference_id || undefined}
-                            onValueChange={(value: string | undefined) =>
-                                setBulkEditValues(prev => ({ ...prev, height_reference_id: (value as HeightReference) || '' }))
-                            }
-                            placeholder="Select height reference"
-                        >
-                            <SelectItem value="ground_level">Ground Level</SelectItem>
-                            <SelectItem value="sea_level">Sea Level</SelectItem>
-                            <SelectItem value="sea_floor">Sea Floor</SelectItem>
-                        </ClearableSelect>
-                    </div>
-                    <div>
-                        <Label>Unit</Label>
-                        <Input
-                            value={bulkEditValues.unit}
-                            onChange={(e) => setBulkEditValues(prev => ({ ...prev, unit: e.target.value }))}
-                            placeholder="Enter unit (e.g., m/s, deg)"
-                        />
-                    </div>
-                    <div>
-                        <Label>Sensors</Label>
-                        <MultiSelect
-                            options={sensorOptions}
-                            selected={bulkEditValues.sensors || []}
-                            onChange={(selectedSensorValues: Sensor[]) => {
-                                setBulkEditValues(prev => ({ ...prev, sensors: selectedSensorValues }));
-                            }}
-                            placeholder="Select sensors"
-                            className="w-full"
-                        />
-                    </div>
-                </div>
-                <div className="mt-3 flex justify-end">
-                    <Button
-                        type="button"
-                        onClick={handleBulkEdit}
-                        disabled={!hasSelectedFilteredPoints}
-                    >
-                        Apply to Selected ({filteredPointsWithIndices.filter(({ actualIndex }) => {
-                            return selectedPoints[`${locationIndex}-${actualIndex}`];
-                        }).length})
-                    </Button>
-                </div>
-            </div>
 
             {/* Responsive Table/Cards */}
             {isMobileView ? (
@@ -561,119 +582,99 @@ export function MeasurementTable({
                     ))}
                 </div>
             ) : (
-                // Desktop: Enhanced table with horizontal scroll and sticky column
-                <div className="relative">
-                    <div className="overflow-x-auto border border-border rounded-lg bg-background">
-                        <div className="min-w-[1200px]"> {/* Ensure minimum width for proper layout */}
-                            <table className="w-full">
-                                <thead className="bg-muted/50 sticky top-0 z-10">
-                                    <tr>
-                                        <th className="sticky left-0 z-20 bg-muted/50 px-4 py-3 text-left text-xs font-medium text-muted-foreground min-w-[60px]">
-                                            <Checkbox
-                                                checked={filteredPointsWithIndices.length > 0 && filteredPointsWithIndices.every(({ actualIndex }) => {
-                                                    return selectedPoints[`${locationIndex}-${actualIndex}`];
-                                                })}
-                                                onCheckedChange={toggleSelectAll}
-                                                aria-label="Select all visible points"
-                                            />
-                                        </th>
-                                        <th className="sticky left-[60px] z-20 bg-muted/50 px-4 py-3 text-left text-xs font-medium text-muted-foreground min-w-[200px] max-w-[250px]">
-                                            <TooltipWrapper text="Measurement point name">
-                                                <div className="flex items-center gap-1">
-                                                    Name
-                                                    <Info className="w-3 h-3" />
-                                                </div>
-                                            </TooltipWrapper>
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground min-w-[160px]">Measurement Type</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground min-w-[100px]">Height (m)</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground min-w-[140px]">Height Reference</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground min-w-[80px]">Unit</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground min-w-[200px]">Sensors</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground min-w-[200px]">Notes</th>
-                                        <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground min-w-[80px]">Remove</th>
-                                    </tr>
-                                    {/* Filter Row */}
-                                    <tr>
-                                        {/* Select (empty) */}
-                                        <td></td>
-                                        {/* Name */}
-                                        <td>
-                                            <Input
-                                                value={filters.name}
-                                                onChange={(e) => setFilters(prev => ({ ...prev, name: e.target.value }))}
-                                                placeholder="Filter by name..."
-                                                className="w-full"
-                                            />
-                                        </td>
-                                        {/* Measurement Type */}
-                                        <td>
-                                            <ClearableSelect
-                                                value={filters.measurement_type_id === 'all' ? undefined : filters.measurement_type_id}
-                                                onValueChange={(value: string | undefined) =>
-                                                    setFilters(prev => ({ ...prev, measurement_type_id: (value as MeasurementType) || 'all' }))
-                                                }
-                                                placeholder="All types"
-                                            >
-                                                <SelectItem value="wind_speed">Wind Speed</SelectItem>
-                                                <SelectItem value="wind_direction">Wind Direction</SelectItem>
-                                                <SelectItem value="temperature">Temperature</SelectItem>
-                                                <SelectItem value="pressure">Pressure</SelectItem>
-                                                <SelectItem value="humidity">Humidity</SelectItem>
-                                                <SelectItem value="wave_height">Wave Height</SelectItem>
-                                                <SelectItem value="wave_period">Wave Period</SelectItem>
-                                                <SelectItem value="wave_direction">Wave Direction</SelectItem>
-                                                <SelectItem value="position">Position</SelectItem>
-                                                <SelectItem value="other">Other</SelectItem>
-                                            </ClearableSelect>
-                                        </td>
-                                        {/* Height (m) */}
-                                        <td>
-                                            <Input
-                                                value={filters.height_m}
-                                                onChange={(e) => setFilters(prev => ({ ...prev, height_m: e.target.value }))}
-                                                placeholder="Filter by height..."
-                                                className="w-full"
-                                            />
-                                        </td>
-                                        {/* Height Reference */}
-                                        <td>
-                                            <ClearableSelect
-                                                value={filters.height_reference_id === 'all' ? undefined : filters.height_reference_id}
-                                                onValueChange={(value: string | undefined) =>
-                                                    setFilters(prev => ({ ...prev, height_reference_id: (value as HeightReference) || 'all' }))
-                                                }
-                                                placeholder="All references"
-                                            >
-                                                <SelectItem value="ground_level">Ground Level</SelectItem>
-                                                <SelectItem value="sea_level">Sea Level</SelectItem>
-                                                <SelectItem value="sea_floor">Sea Floor</SelectItem>
-                                            </ClearableSelect>
-                                        </td>
-                                        {/* Unit */}
-                                        <td>
-                                            <TooltipWrapper text="Enter a unit, e.g. m/s, deg">
-                                                <Select
-                                                    value={filters.unit}
-                                                    onValueChange={(value) =>
-                                                        setFilters(prev => ({ ...prev, unit: value }))
+                // Desktop: Modern shadcn table with improved UX
+                <div className="space-y-4">
+                    {/* Filters Toolbar */}
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant="outline" size="sm" className="h-8">
+                                        <Filter className="mr-2 h-4 w-4" />
+                                        Filters
+                                        {hasActiveFilters && (
+                                            <span className="ml-1 rounded-full bg-primary px-1.5 py-0.5 text-xs text-primary-foreground">
+                                                {Object.values(filters).filter(v => v && v !== 'all').length + (sensorsFilter.length > 0 ? 1 : 0)}
+                                            </span>
+                                        )}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-80 p-4" align="start">
+                                    <div className="space-y-4">
+                                        <div className="space-y-2">
+                                            <h4 className="font-medium leading-none">Filter Points</h4>
+                                            <p className="text-sm text-muted-foreground">
+                                                Refine the measurement points shown in the table.
+                                            </p>
+                                        </div>
+                                        <div className="grid gap-4">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="name-filter">Name</Label>
+                                                <Input
+                                                    id="name-filter"
+                                                    placeholder="Filter by name..."
+                                                    value={filters.name}
+                                                    onChange={(e) => setFilters(prev => ({ ...prev, name: e.target.value }))}
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="type-filter">Measurement Type</Label>
+                                                <ClearableSelect
+                                                    value={filters.measurement_type_id === 'all' ? undefined : filters.measurement_type_id}
+                                                    onValueChange={(value: string | undefined) =>
+                                                        setFilters(prev => ({ ...prev, measurement_type_id: (value as MeasurementType) || 'all' }))
                                                     }
+                                                    placeholder="All types"
                                                 >
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="All units" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="all">All units</SelectItem>
-                                                        {allUnits.map(unit => (
-                                                            <SelectItem key={unit} value={unit}>{unit}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </TooltipWrapper>
-                                        </td>
-                                        {/* Sensors */}
-                                        <td>
-                                            <TooltipWrapper text="Filter by one or more sensors">
+                                                    <SelectItem value="wind_speed">Wind Speed</SelectItem>
+                                                    <SelectItem value="wind_direction">Wind Direction</SelectItem>
+                                                    <SelectItem value="temperature">Temperature</SelectItem>
+                                                    <SelectItem value="pressure">Pressure</SelectItem>
+                                                    <SelectItem value="humidity">Humidity</SelectItem>
+                                                    <SelectItem value="wave_height">Wave Height</SelectItem>
+                                                    <SelectItem value="wave_period">Wave Period</SelectItem>
+                                                    <SelectItem value="wave_direction">Wave Direction</SelectItem>
+                                                    <SelectItem value="position">Position</SelectItem>
+                                                    <SelectItem value="other">Other</SelectItem>
+                                                </ClearableSelect>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="statistic-type-filter">Statistic Type</Label>
+                                                <ClearableSelect
+                                                    value={filters.statistic_type_id === 'all' ? undefined : filters.statistic_type_id}
+                                                    onValueChange={(value: string | undefined) =>
+                                                        setFilters(prev => ({ ...prev, statistic_type_id: (value as StatisticType) || 'all' }))
+                                                    }
+                                                    placeholder="All statistics"
+                                                >
+                                                    <SelectItem value="avg">Average</SelectItem>
+                                                    <SelectItem value="sd">Standard Deviation</SelectItem>
+                                                    <SelectItem value="max">Maximum</SelectItem>
+                                                    <SelectItem value="min">Minimum</SelectItem>
+                                                    <SelectItem value="ti">Turbulence Intensity</SelectItem>
+                                                    <SelectItem value="ti30sec">TI 30sec</SelectItem>
+                                                    <SelectItem value="gust">Gust</SelectItem>
+                                                    <SelectItem value="count">Count</SelectItem>
+                                                    <SelectItem value="availability">Availability</SelectItem>
+                                                    <SelectItem value="quality">Quality</SelectItem>
+                                                    <SelectItem value="sum">Sum</SelectItem>
+                                                    <SelectItem value="median">Median</SelectItem>
+                                                    <SelectItem value="mode">Mode</SelectItem>
+                                                    <SelectItem value="range">Range</SelectItem>
+                                                    <SelectItem value="text">Text</SelectItem>
+                                                </ClearableSelect>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="height-filter">Height (m)</Label>
+                                                <Input
+                                                    id="height-filter"
+                                                    placeholder="Filter by height..."
+                                                    value={filters.height_m}
+                                                    onChange={(e) => setFilters(prev => ({ ...prev, height_m: e.target.value }))}
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="sensors-filter">Sensors</Label>
                                                 <MultiSelect
                                                     options={sensorOptions}
                                                     selected={sensorsFilter}
@@ -681,65 +682,313 @@ export function MeasurementTable({
                                                     placeholder="Filter by sensors"
                                                     className="w-full"
                                                 />
-                                            </TooltipWrapper>
-                                        </td>
-                                        {/* Notes */}
-                                        <td>
-                                            <TooltipWrapper text="Filter by notes or keywords">
-                                                <Input
-                                                    value={filters.notes}
-                                                    onChange={(e) => setFilters(prev => ({ ...prev, notes: e.target.value }))}
-                                                    placeholder="Filter by notes..."
-                                                    className="w-full"
-                                                />
-                                            </TooltipWrapper>
-                                        </td>
-                                        {/* Remove (clear button) */}
-                                        <td className="text-center">
-                                            {(hasActiveFilters || sensorsFilter.length > 0) && (
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => { clearFilters(); setSensorsFilter([]); }}
-                                                    className="flex items-center gap-2"
-                                                >
-                                                    <X className="w-4 h-4" />
-                                                    Clear
-                                                </Button>
-                                            )}
-                                        </td>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-border">
-                                    {filteredPointsWithIndices.map(({ point, actualIndex }, displayIndex) => {
-                                        const pointSensors = watch(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.sensor`) || [];
-                                        const pointName = watch(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.name`) || '';
+                                            </div>
+                                        </div>
+                                        {(hasActiveFilters || sensorsFilter.length > 0) && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => { clearFilters(); setSensorsFilter([]); }}
+                                                className="w-full"
+                                            >
+                                                Clear all filters
+                                            </Button>
+                                        )}
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
 
-                                        return (
-                                            <tr key={`${loggerIdentifier}-${actualIndex}`} className="hover:bg-muted/30 transition-colors">
-                                                <td className="sticky left-0 z-10 bg-background px-4 py-3 border-r border-border">
-                                                    <Checkbox
-                                                        checked={selectedPoints[`${locationIndex}-${actualIndex}`] || false}
-                                                        onCheckedChange={(checked: boolean) =>
-                                                            setSelectedPoints(prev => ({
-                                                                ...prev,
-                                                                [`${locationIndex}-${actualIndex}`]: checked
-                                                            }))
-                                                        }
-                                                        aria-label={`Select point ${displayIndex + 1}`}
-                                                    />
-                                                </td>
-                                                <td className="sticky left-[60px] z-10 bg-background px-4 py-3 border-r border-border min-w-[200px] max-w-[250px]">
+                            {hasSelectedFilteredPoints && (
+                                <Button size="sm" onClick={handleBulkEdit} className="h-8">
+                                    Edit Selected ({filteredPointsWithIndices.filter(({ actualIndex }) => {
+                                        return selectedPoints[`${locationIndex}-${actualIndex}`];
+                                    }).length})
+                                </Button>
+                            )}
+
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="sm" className="h-8">
+                                        <Eye className="mr-2 h-4 w-4" />
+                                        Columns
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48">
+                                    <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuCheckboxItem
+                                        checked={columnVisibility.measurement_type_id}
+                                        onCheckedChange={(checked) =>
+                                            setColumnVisibility(prev => ({ ...prev, measurement_type_id: checked || false }))
+                                        }
+                                    >
+                                        Measurement Type
+                                    </DropdownMenuCheckboxItem>
+                                    <DropdownMenuCheckboxItem
+                                        checked={columnVisibility.statistic_type_id}
+                                        onCheckedChange={(checked) =>
+                                            setColumnVisibility(prev => ({ ...prev, statistic_type_id: checked || false }))
+                                        }
+                                    >
+                                        Statistic Type
+                                    </DropdownMenuCheckboxItem>
+                                    <DropdownMenuCheckboxItem
+                                        checked={columnVisibility.height_m}
+                                        onCheckedChange={(checked) =>
+                                            setColumnVisibility(prev => ({ ...prev, height_m: checked || false }))
+                                        }
+                                    >
+                                        Height (m)
+                                    </DropdownMenuCheckboxItem>
+                                    <DropdownMenuCheckboxItem
+                                        checked={columnVisibility.height_reference_id}
+                                        onCheckedChange={(checked) =>
+                                            setColumnVisibility(prev => ({ ...prev, height_reference_id: checked || false }))
+                                        }
+                                    >
+                                        Height Reference
+                                    </DropdownMenuCheckboxItem>
+                                    <DropdownMenuCheckboxItem
+                                        checked={columnVisibility.unit}
+                                        onCheckedChange={(checked) =>
+                                            setColumnVisibility(prev => ({ ...prev, unit: checked || false }))
+                                        }
+                                    >
+                                        Unit
+                                    </DropdownMenuCheckboxItem>
+                                    <DropdownMenuCheckboxItem
+                                        checked={columnVisibility.sensors}
+                                        onCheckedChange={(checked) =>
+                                            setColumnVisibility(prev => ({ ...prev, sensors: checked || false }))
+                                        }
+                                    >
+                                        Sensors
+                                    </DropdownMenuCheckboxItem>
+                                    <DropdownMenuCheckboxItem
+                                        checked={columnVisibility.notes}
+                                        onCheckedChange={(checked) =>
+                                            setColumnVisibility(prev => ({ ...prev, notes: checked || false }))
+                                        }
+                                    >
+                                        Notes
+                                    </DropdownMenuCheckboxItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+
+                        <div className="text-sm text-muted-foreground">
+                            {filteredPoints.length} of {loggerFilteredPoints.length} points
+                        </div>
+                    </div>
+
+                    {/* Bulk Edit Panel */}
+                    {hasSelectedFilteredPoints && (
+                        <div className="rounded-lg border bg-muted/30 p-4">
+                            <h5 className="mb-3 font-medium">Bulk Edit Selected Points</h5>
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                                {columnVisibility.measurement_type_id && (
+                                    <div className="space-y-2">
+                                        <Label className="text-sm">Measurement Type</Label>
+                                        <ClearableSelect
+                                            value={bulkEditValues.measurement_type_id || undefined}
+                                            onValueChange={(value: string | undefined) =>
+                                                setBulkEditValues(prev => ({ ...prev, measurement_type_id: (value as MeasurementType) || '' }))
+                                            }
+                                            placeholder="Select type"
+                                        >
+                                            <SelectItem value="wind_speed">Wind Speed</SelectItem>
+                                            <SelectItem value="wind_direction">Wind Direction</SelectItem>
+                                            <SelectItem value="temperature">Temperature</SelectItem>
+                                            <SelectItem value="pressure">Pressure</SelectItem>
+                                            <SelectItem value="humidity">Humidity</SelectItem>
+                                            <SelectItem value="wave_height">Wave Height</SelectItem>
+                                            <SelectItem value="wave_period">Wave Period</SelectItem>
+                                            <SelectItem value="wave_direction">Wave Direction</SelectItem>
+                                            <SelectItem value="position">Position</SelectItem>
+                                            <SelectItem value="other">Other</SelectItem>
+                                        </ClearableSelect>
+                                    </div>
+                                )}
+                                {columnVisibility.statistic_type_id && (
+                                    <div className="space-y-2">
+                                        <Label className="text-sm">Statistic Type</Label>
+                                        <ClearableSelect
+                                            value={bulkEditValues.statistic_type_id || undefined}
+                                            onValueChange={(value: string | undefined) =>
+                                                setBulkEditValues(prev => ({ ...prev, statistic_type_id: (value as StatisticType) || '' }))
+                                            }
+                                            placeholder="Select statistic"
+                                        >
+                                            <SelectItem value="avg">Average</SelectItem>
+                                            <SelectItem value="sd">Standard Deviation</SelectItem>
+                                            <SelectItem value="max">Maximum</SelectItem>
+                                            <SelectItem value="min">Minimum</SelectItem>
+                                            <SelectItem value="ti">Turbulence Intensity</SelectItem>
+                                            <SelectItem value="ti30sec">TI 30sec</SelectItem>
+                                            <SelectItem value="gust">Gust</SelectItem>
+                                            <SelectItem value="count">Count</SelectItem>
+                                            <SelectItem value="availability">Availability</SelectItem>
+                                            <SelectItem value="quality">Quality</SelectItem>
+                                            <SelectItem value="sum">Sum</SelectItem>
+                                            <SelectItem value="median">Median</SelectItem>
+                                            <SelectItem value="mode">Mode</SelectItem>
+                                            <SelectItem value="range">Range</SelectItem>
+                                            <SelectItem value="text">Text</SelectItem>
+                                        </ClearableSelect>
+                                    </div>
+                                )}
+                                {columnVisibility.height_m && (
+                                    <div className="space-y-2">
+                                        <Label className="text-sm">Height (m)</Label>
+                                        <Input
+                                            type="number"
+                                            step="0.1"
+                                            value={bulkEditValues.height_m}
+                                            onChange={(e) => setBulkEditValues(prev => ({ ...prev, height_m: e.target.value }))}
+                                            placeholder="Enter height"
+                                            className="h-9"
+                                        />
+                                    </div>
+                                )}
+                                {columnVisibility.height_reference_id && (
+                                    <div className="space-y-2">
+                                        <Label className="text-sm">Height Reference</Label>
+                                        <ClearableSelect
+                                            value={bulkEditValues.height_reference_id || undefined}
+                                            onValueChange={(value: string | undefined) =>
+                                                setBulkEditValues(prev => ({ ...prev, height_reference_id: (value as HeightReference) || '' }))
+                                            }
+                                            placeholder="Select reference"
+                                        >
+                                            <SelectItem value="ground_level">Ground Level</SelectItem>
+                                            <SelectItem value="sea_level">Sea Level</SelectItem>
+                                            <SelectItem value="sea_floor">Sea Floor</SelectItem>
+                                        </ClearableSelect>
+                                    </div>
+                                )}
+                                {columnVisibility.unit && (
+                                    <div className="space-y-2">
+                                        <Label className="text-sm">Unit</Label>
+                                        <Input
+                                            value={bulkEditValues.unit}
+                                            onChange={(e) => setBulkEditValues(prev => ({ ...prev, unit: e.target.value }))}
+                                            placeholder="e.g., m/s, deg"
+                                            className="h-9"
+                                        />
+                                    </div>
+                                )}
+                                {columnVisibility.sensors && (
+                                    <div className="space-y-2">
+                                        <Label className="text-sm">Sensors</Label>
+                                        <MultiSelect
+                                            options={sensorOptions}
+                                            selected={bulkEditValues.sensors || []}
+                                            onChange={(selectedSensorValues: Sensor[]) => {
+                                                setBulkEditValues(prev => ({ ...prev, sensors: selectedSensorValues }));
+                                            }}
+                                            placeholder="Select sensors"
+                                            className="w-full"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="rounded-md border">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-10">
+                                        <Checkbox
+                                            checked={filteredPointsWithIndices.length > 0 && filteredPointsWithIndices.every(({ actualIndex }) =>
+                                                selectedPoints[`${locationIndex}-${actualIndex}`]
+                                            )}
+                                            onCheckedChange={toggleSelectAll}
+                                            aria-label="Select all visible points"
+                                        />
+                                    </TableHead>
+                                    {columnVisibility.name && (
+                                        <TableHead className={isCompactView ? "min-w-[140px] max-w-[180px]" : "min-w-[180px] max-w-[220px]"}>
+                                            <Button variant="ghost" className="h-auto p-0 font-medium text-xs">
+                                                Name
+                                                <Info className="ml-1 h-3 w-3" />
+                                            </Button>
+                                        </TableHead>
+                                    )}
+                                    {columnVisibility.measurement_type_id && (
+                                        <TableHead className={isCompactView ? "min-w-[120px] max-w-[140px]" : "min-w-[140px] max-w-[160px]"}>
+                                            <span className="text-xs">Measurement Type</span>
+                                        </TableHead>
+                                    )}
+                                    {columnVisibility.statistic_type_id && (
+                                        <TableHead className={isCompactView ? "min-w-[100px] max-w-[120px]" : "min-w-[120px] max-w-[140px]"}>
+                                            <span className="text-xs">Statistic</span>
+                                        </TableHead>
+                                    )}
+                                    {columnVisibility.height_m && (
+                                        <TableHead className={isCompactView ? "w-[80px]" : "w-[90px]"}>
+                                            <span className="text-xs">Height</span>
+                                        </TableHead>
+                                    )}
+                                    {columnVisibility.height_reference_id && (
+                                        <TableHead className={isCompactView ? "min-w-[100px] max-w-[120px]" : "min-w-[120px] max-w-[140px]"}>
+                                            <span className="text-xs">Height Ref</span>
+                                        </TableHead>
+                                    )}
+                                    {columnVisibility.unit && (
+                                        <TableHead className={isCompactView ? "w-[60px]" : "w-[70px]"}>
+                                            <span className="text-xs">Unit</span>
+                                        </TableHead>
+                                    )}
+                                    {columnVisibility.sensors && (
+                                        <TableHead className={isCompactView ? "min-w-[140px] max-w-[180px]" : "min-w-[160px] max-w-[200px]"}>
+                                            <span className="text-xs">Sensors</span>
+                                        </TableHead>
+                                    )}
+                                    {columnVisibility.notes && (
+                                        <TableHead className={isCompactView ? "min-w-[120px] max-w-[160px]" : "min-w-[160px] max-w-[200px]"}>
+                                            <span className="text-xs">Notes</span>
+                                        </TableHead>
+                                    )}
+                                    <TableHead className="w-10"></TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {filteredPointsWithIndices.map(({ point, actualIndex }, displayIndex) => {
+                                    const pointSensors = watch(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.sensor`) || [];
+                                    const pointName = watch(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.name`) || '';
+
+                                    return (
+                                        <TableRow
+                                            key={`${loggerIdentifier}-${actualIndex}`}
+                                            data-state={selectedPoints[`${locationIndex}-${actualIndex}`] ? "selected" : undefined}
+                                        >
+                                            <TableCell className="p-2">
+                                                <Checkbox
+                                                    checked={selectedPoints[`${locationIndex}-${actualIndex}`] || false}
+                                                    onCheckedChange={(checked: boolean) =>
+                                                        setSelectedPoints(prev => ({
+                                                            ...prev,
+                                                            [`${locationIndex}-${actualIndex}`]: checked
+                                                        }))
+                                                    }
+                                                    aria-label={`Select point ${displayIndex + 1}`}
+                                                />
+                                            </TableCell>
+                                            {columnVisibility.name && (
+                                                <TableCell className={`p-2 ${isCompactView ? "min-w-[140px] max-w-[180px]" : "min-w-[180px] max-w-[220px]"}`}>
                                                     <TooltipWrapper text={pointName} className="w-full">
                                                         <Input
                                                             {...register(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.name`)}
-                                                            placeholder="Enter measurement name"
-                                                            className="truncate"
+                                                            placeholder="Enter name"
+                                                            className={`truncate ${isCompactView ? "text-xs h-8" : "h-9"}`}
                                                         />
                                                     </TooltipWrapper>
-                                                </td>
-                                                <td className="px-4 py-3 min-w-[160px]">
+                                                </TableCell>
+                                            )}
+                                            {columnVisibility.measurement_type_id && (
+                                                <TableCell className={`p-2 ${isCompactView ? "min-w-[120px] max-w-[140px]" : "min-w-[140px] max-w-[160px]"}`}>
                                                     <ClearableSelect
                                                         value={watch(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.measurement_type_id`) || undefined}
                                                         onValueChange={(value: string | undefined) => {
@@ -748,7 +997,7 @@ export function MeasurementTable({
                                                                 value as MeasurementType
                                                             );
                                                         }}
-                                                        placeholder="Select type"
+                                                        placeholder="Type"
                                                     >
                                                         <SelectItem value="wind_speed">Wind Speed</SelectItem>
                                                         <SelectItem value="wind_direction">Wind Direction</SelectItem>
@@ -761,16 +1010,51 @@ export function MeasurementTable({
                                                         <SelectItem value="position">Position</SelectItem>
                                                         <SelectItem value="other">Other</SelectItem>
                                                     </ClearableSelect>
-                                                </td>
-                                                <td className="px-4 py-3 min-w-[100px]">
+                                                </TableCell>
+                                            )}
+                                            {columnVisibility.statistic_type_id && (
+                                                <TableCell className={`p-2 ${isCompactView ? "min-w-[100px] max-w-[120px]" : "min-w-[120px] max-w-[140px]"}`}>
+                                                    <ClearableSelect
+                                                        value={watch(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.statistic_type_id`) || undefined}
+                                                        onValueChange={(value: string | undefined) => {
+                                                            setValue(
+                                                                `measurement_location.${locationIndex}.measurement_point.${actualIndex}.statistic_type_id`,
+                                                                value as StatisticType
+                                                            );
+                                                        }}
+                                                        placeholder="Stat"
+                                                    >
+                                                        <SelectItem value="avg">Avg</SelectItem>
+                                                        <SelectItem value="sd">SD</SelectItem>
+                                                        <SelectItem value="max">Max</SelectItem>
+                                                        <SelectItem value="min">Min</SelectItem>
+                                                        <SelectItem value="ti">TI</SelectItem>
+                                                        <SelectItem value="ti30sec">TI30s</SelectItem>
+                                                        <SelectItem value="gust">Gust</SelectItem>
+                                                        <SelectItem value="count">Count</SelectItem>
+                                                        <SelectItem value="availability">Avail</SelectItem>
+                                                        <SelectItem value="quality">Quality</SelectItem>
+                                                        <SelectItem value="sum">Sum</SelectItem>
+                                                        <SelectItem value="median">Median</SelectItem>
+                                                        <SelectItem value="mode">Mode</SelectItem>
+                                                        <SelectItem value="range">Range</SelectItem>
+                                                        <SelectItem value="text">Text</SelectItem>
+                                                    </ClearableSelect>
+                                                </TableCell>
+                                            )}
+                                            {columnVisibility.height_m && (
+                                                <TableCell className={`p-2 ${isCompactView ? "w-[80px]" : "w-[90px]"}`}>
                                                     <Input
                                                         type="number"
                                                         step="0.1"
                                                         {...register(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.height_m`, { valueAsNumber: true })}
-                                                        placeholder="Height"
+                                                        placeholder="0"
+                                                        className={`${isCompactView ? "text-xs h-8" : "h-9"}`}
                                                     />
-                                                </td>
-                                                <td className="px-4 py-3 min-w-[140px]">
+                                                </TableCell>
+                                            )}
+                                            {columnVisibility.height_reference_id && (
+                                                <TableCell className={`p-2 ${isCompactView ? "min-w-[100px] max-w-[120px]" : "min-w-[120px] max-w-[140px]"}`}>
                                                     <ClearableSelect
                                                         value={watch(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.height_reference_id`) || undefined}
                                                         onValueChange={(value: string | undefined) =>
@@ -779,23 +1063,27 @@ export function MeasurementTable({
                                                                 value as HeightReference
                                                             )
                                                         }
-                                                        placeholder="Select reference"
+                                                        placeholder="Ref"
                                                     >
-                                                        <SelectItem value="ground_level">Ground Level</SelectItem>
-                                                        <SelectItem value="sea_level">Sea Level</SelectItem>
-                                                        <SelectItem value="sea_floor">Sea Floor</SelectItem>
+                                                        <SelectItem value="ground_level">Ground</SelectItem>
+                                                        <SelectItem value="sea_level">Sea</SelectItem>
+                                                        <SelectItem value="sea_floor">Floor</SelectItem>
                                                     </ClearableSelect>
-                                                </td>
-                                                <td className="px-4 py-3 min-w-[80px]">
+                                                </TableCell>
+                                            )}
+                                            {columnVisibility.unit && (
+                                                <TableCell className={`p-2 ${isCompactView ? "w-[60px]" : "w-[70px]"}`}>
                                                     <TooltipWrapper text={watch(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.unit`) || ''}>
                                                         <Input
                                                             {...register(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.unit`)}
                                                             placeholder="Unit"
-                                                            className="truncate"
+                                                            className={`truncate ${isCompactView ? "text-xs h-8" : "h-9"}`}
                                                         />
                                                     </TooltipWrapper>
-                                                </td>
-                                                <td className="px-4 py-3 min-w-[200px]">
+                                                </TableCell>
+                                            )}
+                                            {columnVisibility.sensors && (
+                                                <TableCell className={`p-2 ${isCompactView ? "min-w-[140px] max-w-[180px]" : "min-w-[160px] max-w-[200px]"}`}>
                                                     <MultiSelect
                                                         options={sensorOptions}
                                                         selected={pointSensors}
@@ -805,33 +1093,47 @@ export function MeasurementTable({
                                                                 selectedSensors
                                                             );
                                                         }}
-                                                        placeholder="Select sensors"
+                                                        placeholder="Sensors"
                                                         className="w-full"
                                                     />
-                                                </td>
-                                                <td className="px-4 py-3 min-w-[200px]">
+                                                </TableCell>
+                                            )}
+                                            {columnVisibility.notes && (
+                                                <TableCell className={`p-2 ${isCompactView ? "min-w-[120px] max-w-[160px]" : "min-w-[160px] max-w-[200px]"}`}>
                                                     <Textarea
                                                         {...register(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.notes`)}
-                                                        placeholder="Add any additional notes"
-                                                        rows={2}
+                                                        placeholder="Notes"
+                                                        rows={isCompactView ? 1 : 2}
+                                                        className={`resize-none ${isCompactView ? "text-xs" : ""}`}
                                                     />
-                                                </td>
-                                                <td className="px-4 py-3 text-center text-xs font-medium text-muted-foreground min-w-[80px]">
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => onRemovePoint(locationIndex, actualIndex)}
-                                                    >
-                                                        Remove
-                                                    </Button>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
+                                                </TableCell>
+                                            )}
+                                            <TableCell className="p-1">
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" className={`${isCompactView ? "h-6 w-6 p-0" : "h-8 w-8 p-0"}`}>
+                                                            <span className="sr-only">Open menu</span>
+                                                            <MoreHorizontal className={`${isCompactView ? "h-3 w-3" : "h-4 w-4"}`} />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                        <DropdownMenuSeparator />
+                                                        <DropdownMenuItem
+                                                            onClick={() => onRemovePoint(locationIndex, actualIndex)}
+                                                            className="text-red-600"
+                                                        >
+                                                            <Trash2 className="mr-2 h-4 w-4" />
+                                                            Remove Point
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })}
+                            </TableBody>
+                        </Table>
                     </div>
                 </div>
             )}
