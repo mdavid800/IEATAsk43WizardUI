@@ -65,6 +65,7 @@ export function MeasurementSection({ locationIndex }: MeasurementSectionProps) {
         const newMeasurements = measurementNames.map((name, index) => {
           const cleanName = name.trim();
           const type = determineMeasurementType(cleanName);
+          const statisticType = determineStatisticType(cleanName);
           const height = extractHeight(cleanName);
 
           return {
@@ -72,6 +73,7 @@ export function MeasurementSection({ locationIndex }: MeasurementSectionProps) {
             isExpanded: true,
             name: cleanName,
             measurement_type_id: type,
+            statistic_type_id: statisticType,
             height_m: height || 0,
             height_reference_id: type.includes('wave') ? 'sea_level' : 'ground_level'
           };
@@ -84,6 +86,7 @@ export function MeasurementSection({ locationIndex }: MeasurementSectionProps) {
         newMeasurements.forEach((measurement, index) => {
           setValue(`measurement_location.${locationIndex}.measurement_point.${index}.name`, measurement.name);
           setValue(`measurement_location.${locationIndex}.measurement_point.${index}.measurement_type_id`, measurement.measurement_type_id);
+          setValue(`measurement_location.${locationIndex}.measurement_point.${index}.statistic_type_id`, measurement.statistic_type_id);
           setValue(`measurement_location.${locationIndex}.measurement_point.${index}.height_m`, measurement.height_m);
           setValue(`measurement_location.${locationIndex}.measurement_point.${index}.height_reference_id`, measurement.height_reference_id);
         });
@@ -126,6 +129,26 @@ export function MeasurementSection({ locationIndex }: MeasurementSectionProps) {
       return parseInt(match[1]);
     }
     return null;
+  };
+
+  const determineStatisticType = (name: string): string => {
+    const lowerName = name.toLowerCase();
+
+    // Enhanced statistic type detection
+    if (/\bavg\b|\baverage\b|\bmean\b/i.test(lowerName)) return 'avg';
+    if (/\bstd\b|\bstdev\b|\bstandarddeviation\b|\bsd\b|\bsigma\b/i.test(lowerName)) return 'sd';
+    if (/\bmax\b|\bmaximum\b|\bpeak\b|\bhighest\b/i.test(lowerName)) return 'max';
+    if (/\bmin\b|\bminimum\b|\blowest\b/i.test(lowerName)) return 'min';
+    if (/\bti\b|\bturbulence\b|\bintensity\b|\bti\d+|\bti_\d+/i.test(lowerName)) return 'ti';
+    if (/\bgust\b|\bgusting\b|\bwindgust\b/i.test(lowerName)) return 'gust';
+    if (/\bcount\b|\bnumber\b|\bn\b|\bnum\b/i.test(lowerName)) return 'count';
+    if (/\bsum\b|\btotal\b|\bcumulative\b/i.test(lowerName)) return 'sum';
+    if (/\bmedian\b|\bmid\b|\bmiddle\b/i.test(lowerName)) return 'median';
+    if (/\brange\b|\bspan\b|\bdifference\b/i.test(lowerName)) return 'range';
+    if (/\bquality\b|\bvalid\b|\bavailability\b|\bavail\b/i.test(lowerName)) return 'quality';
+    if (/\btext\b|\bstring\b|\blabel\b|\bstatus\b/i.test(lowerName)) return 'text';
+
+    return 'avg'; // Default to average
   };
 
   return (

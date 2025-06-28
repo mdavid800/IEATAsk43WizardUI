@@ -342,6 +342,56 @@ export function MeasurementStep() {
     // Process the header to extract metadata without changing the original name
     const lowerHeader = header.toLowerCase();
 
+    // Enhanced statistic type detection - check these patterns first before measurement types
+    // Average patterns
+    if (/\bavg\b|\baverage\b|\bmean\b/i.test(lowerHeader)) {
+      result.statisticType = 'avg';
+    }
+    // Standard deviation patterns
+    else if (/\bstd\b|\bstdev\b|\bstandarddeviation\b|\bsd\b|\bsigma\b/i.test(lowerHeader)) {
+      result.statisticType = 'sd';
+    }
+    // Maximum patterns
+    else if (/\bmax\b|\bmaximum\b|\bpeak\b|\bhighest\b/i.test(lowerHeader)) {
+      result.statisticType = 'max';
+    }
+    // Minimum patterns
+    else if (/\bmin\b|\bminimum\b|\blowest\b/i.test(lowerHeader)) {
+      result.statisticType = 'min';
+    }
+    // Turbulence intensity patterns
+    else if (/\bti\b|\bturbulence\b|\bintensity\b|\bti\d+|\bti_\d+/i.test(lowerHeader)) {
+      result.statisticType = 'ti';
+    }
+    // Gust patterns  
+    else if (/\bgust\b|\bgusting\b|\bwindgust\b/i.test(lowerHeader)) {
+      result.statisticType = 'gust';
+    }
+    // Count patterns
+    else if (/\bcount\b|\bnumber\b|\bn\b|\bnum\b/i.test(lowerHeader)) {
+      result.statisticType = 'count';
+    }
+    // Sum patterns
+    else if (/\bsum\b|\btotal\b|\bcumulative\b/i.test(lowerHeader)) {
+      result.statisticType = 'sum';
+    }
+    // Median patterns
+    else if (/\bmedian\b|\bmid\b|\bmiddle\b/i.test(lowerHeader)) {
+      result.statisticType = 'median';
+    }
+    // Range patterns
+    else if (/\brange\b|\bspan\b|\bdifference\b/i.test(lowerHeader)) {
+      result.statisticType = 'range';
+    }
+    // Quality/Availability patterns
+    else if (/\bquality\b|\bvalid\b|\bavailability\b|\bavail\b/i.test(lowerHeader)) {
+      result.statisticType = result.unit ? 'availability' : 'quality';
+    }
+    // Text patterns
+    else if (/\btext\b|\bstring\b|\blabel\b|\bstatus\b/i.test(lowerHeader)) {
+      result.statisticType = 'text';
+    }
+
     // Extract units
     if (lowerHeader.includes('m/s')) {
       result.unit = 'm/s';
@@ -570,6 +620,7 @@ export function MeasurementStep() {
               const measurementPoint: MeasurementPoint = {
                 name: column.name, // Use exact original column name
                 measurement_type_id: column.measurementType,
+                statistic_type_id: column.statisticType, // Add the detected statistic type
                 height_m: column.height || 0,
                 unit: column.unit, // Assign the unit from ColumnInfo
                 height_reference_id: 'ground_level',
