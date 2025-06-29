@@ -1,7 +1,7 @@
 import React from 'react';
 import { useState } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
-import { ChevronRight, ChevronLeft, Save } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Save, X, AlertTriangle } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { BasicInfoStep } from './steps/BasicInfoStep';
 import { LocationStep } from './steps/LocationStep';
@@ -10,7 +10,7 @@ import { MeasurementStep } from './steps/MeasurementStep';
 import { SensorsStep } from './steps/SensorStep';
 import { ReviewStep } from './steps/ReviewStep';
 import { Button } from './ui/button';
-import type { IEATask43Schema } from '../types/schema';
+import type { IEATask43Schema, Sensor } from '../types/schema';
 
 const steps = [
   { id: 'basic-info', name: 'Basic Information', component: BasicInfoStep },
@@ -23,6 +23,7 @@ const steps = [
 
 export function FormWizard() {
   const [currentStep, setCurrentStep] = useState(0);
+  const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set([0])); // Track visited steps
   const methods = useForm<IEATask43Schema>({
     defaultValues: {
       author: '',
@@ -46,23 +47,204 @@ export function FormWizard() {
     }
   });
 
+  // Validation functions for each step
+  const validateBasicInfo = () => {
+    const formData = methods.watch();
+    const { author, organisation, plant_name, plant_type, version, startDate, campaignStatus, endDate } = formData;
+    const issues: string[] = [];
+
+    if (!author) issues.push('Author is required');
+    if (!organisation) issues.push('Organisation is required');
+    if (!plant_name) issues.push('Plant name is required');
+    if (!plant_type) issues.push('Plant type is required');
+    if (!version) issues.push('Version is required');
+    if (!startDate) issues.push('Start date is required');
+    if (campaignStatus === 'historical' && !endDate) issues.push('End date is required');
+
+    return {
+      valid: issues.length === 0,
+      issues
+    };
+  };
+
+  const validateLocations = () => {
+    const formData = methods.watch();
+    const issues: string[] = [];
+
+    if (!formData.measurement_location?.length) {
+      issues.push('At least one measurement location is required');
+      return { valid: false, issues };
+    }
+
+    formData.measurement_location.forEach((location, index) => {
+      if (!location.name) issues.push(`Location ${index + 1}: Name is required`);
+      if (!location.latitude_ddeg) issues.push(`Location ${index + 1}: Latitude is required`);
+      if (!location.longitude_ddeg) issues.push(`Location ${index + 1}: Longitude is required`);
+      if (!location.measurement_station_type_id) issues.push(`Location ${index + 1}: Station Type is required`);
+    });
+
+    return {
+      valid: issues.length === 0,
+      issues
+    };
+  };
+
+  const validateLoggers = () => {
+    const formData = methods.watch();
+    const issues: string[] = [];
+
+    if (!formData.measurement_location?.length) {
+      issues.push('At least one measurement location is required');
+      return { valid: false, issues };
+    }
+
+    let hasLoggers = false;
+    formData.measurement_location.forEach((location, locIndex) => {
+      if (location.logger_main_config?.length > 0) {
+        hasLoggers = true;
+        location.logger_main_config.forEach((logger, loggerIndex) => {
+          if (!logger.logger_model_name) {
+            issues.push(`Location ${locIndex + 1}, Logger ${loggerIndex + 1}: Model Name is required`);
+          }
+          if (!logger.logger_serial_number) {
+            issues.push(`Location ${locIndex + 1}, Logger ${loggerIndex + 1}: Serial Number is required`);
+          }
+          if (!logger.date_from) {
+            issues.push(`Location ${locIndex + 1}, Logger ${loggerIndex + 1}: Date From is required`);
+          }
+        });
+      }
+    });
+
+    if (!hasLoggers) {
+      issues.push('At least one logger is required');
+    }
+
+    return {
+      valid: issues.length === 0,
+      issues
+    };
+  };
+
+  const validateSensors = () => {
+    const formData = methods.watch();
+    const issues: string[] = [];
+
+    formData.measurement_location?.forEach((location, locIndex) => {
+      // Require at least one sensor per location (skip undefined/null entries)
+      const validSensors = Array.isArray(location.sensors)
+        ? location.sensors.filter(Boolean)
+        : [];
+      if (validSensors.length === 0) {
+        issues.push(`Location ${locIndex + 1}: At least one sensor is required`);
+        return;
+      }
+      validSensors.forEach((sensor: Sensor, sensorIndex: number) => {
+        if (!sensor.oem) {
+          issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: OEM is required`);
+        }
+        if (!sensor.model) {
+          issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Model is required`);
+        }
+        if (!sensor.serial_number) {
+          issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Serial Number is required`);
+        }
+        if (!sensor.sensor_type_id) {
+          issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Sensor Type is required`);
+        }
+        if (!sensor.date_from) {
+          issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Date From is required`);
+        }
+        if (!sensor.date_to) {
+          issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Date To is required`);
+        }
+      });
+    });
+
+    return {
+      valid: issues.length === 0,
+      issues
+    };
+  };
+
+  const validateMeasurements = () => {
+    const formData = methods.watch();
+    const issues: string[] = [];
+
+    formData.measurement_location?.forEach((location, locIndex) => {
+      if (!location.measurement_point?.length) {
+        issues.push(`Location ${locIndex + 1}: At least one measurement point is required`);
+        return;
+      }
+
+      location.measurement_point.forEach((point, pointIndex) => {
+        if (!point.name) {
+          issues.push(`Location ${locIndex + 1}, Measurement Point ${pointIndex + 1}: Name is required`);
+        }
+        if (typeof point.height_m !== 'number' || point.height_m < 0) {
+          issues.push(`Location ${locIndex + 1}, Measurement Point ${pointIndex + 1}: Valid height is required`);
+        }
+      });
+    });
+
+    return {
+      valid: issues.length === 0,
+      issues
+    };
+  };
+
+  // Get validation status for each step
+  const getStepValidation = (stepIndex: number) => {
+    switch (stepIndex) {
+      case 0: return validateBasicInfo();
+      case 1: return validateLocations();
+      case 2: return validateLoggers();
+      case 3: return validateSensors();
+      case 4: return validateMeasurements();
+      case 5: return { valid: true, issues: [] }; // Review step doesn't need validation
+      default: return { valid: false, issues: [] };
+    }
+  };
+
+  // Get step status for display
+  const getStepStatus = (stepIndex: number) => {
+    const isVisited = visitedSteps.has(stepIndex);
+    const isCurrent = stepIndex === currentStep;
+
+    if (isCurrent) {
+      return 'current';
+    }
+
+    if (!isVisited) {
+      return 'unvisited';
+    }
+
+    const validation = getStepValidation(stepIndex);
+    return validation.valid ? 'complete' : 'incomplete';
+  };
+
   const CurrentStepComponent = steps[currentStep].component;
 
   const next = () => {
     if (currentStep < steps.length - 1) {
-      setCurrentStep(curr => curr + 1);
+      const nextStep = currentStep + 1;
+      setCurrentStep(nextStep);
+      setVisitedSteps(prev => new Set([...prev, nextStep]));
     }
   };
 
   const prev = () => {
     if (currentStep > 0) {
-      setCurrentStep(curr => curr - 1);
+      const prevStep = currentStep - 1;
+      setCurrentStep(prevStep);
+      setVisitedSteps(prev => new Set([...prev, prevStep]));
     }
   };
 
   const goToStep = (stepIndex: number) => {
     if (stepIndex >= 0 && stepIndex < steps.length) {
       setCurrentStep(stepIndex);
+      setVisitedSteps(prev => new Set([...prev, stepIndex]));
     }
   };
 
@@ -71,12 +253,12 @@ export function FormWizard() {
       // Use custom plant type if selected
       // If plant_type is 'custom', use the value from the input field (which will be set to plant_type).
       // No need to reference plant_type_custom anymore.
-      
+
       // Helper function to clean optional logger fields
       const cleanOptionalLoggerFields = (logger: any) => {
         const optionalFields = [
           'encryption_pin_or_key',
-          'enclosure_lock_details', 
+          'enclosure_lock_details',
           'offset_from_utc_hrs',
           'sampling_rate_sec',
           'averaging_period_minutes',
@@ -85,21 +267,21 @@ export function FormWizard() {
           'logger_acquisition_uncertainty',
           'uncertainty_k_factor'
         ];
-        
+
         const cleanedLogger = { ...logger };
-        
+
         optionalFields.forEach(field => {
           const value = cleanedLogger[field];
           // Remove field if it's undefined, null, empty string, or NaN
-          if (value === undefined || value === null || value === '' || 
-              (typeof value === 'number' && isNaN(value))) {
+          if (value === undefined || value === null || value === '' ||
+            (typeof value === 'number' && isNaN(value))) {
             delete cleanedLogger[field];
           }
         });
-        
+
         return cleanedLogger;
       };
-      
+
       const formattedData = {
         ...data,
         measurement_location: [{
@@ -184,50 +366,67 @@ export function FormWizard() {
 
           {/* Step Navigation */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            {steps.map((step, index) => (
-              <button
-                key={step.id}
-                type="button"
-                onClick={() => goToStep(index)}
-                className={cn(
-                  "group relative flex flex-col items-center p-3 rounded-xl transition-all duration-200 hover:bg-primary/5 focus:outline-none focus:ring-2 focus:ring-primary/30",
-                  index === currentStep && "bg-primary/10 ring-1 ring-primary/20",
-                  index < currentStep && "opacity-75 hover:opacity-100"
-                )}
-                aria-label={`Go to step ${index + 1}: ${step.name}`}
-                tabIndex={0}
-              >
-                {/* Step Number/Check */}
-                <div className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold mb-2 transition-all duration-200",
-                  index < currentStep && "bg-primary text-white shadow-sm",
-                  index === currentStep && "bg-primary text-white shadow-md ring-2 ring-primary/30",
-                  index > currentStep && "bg-border/40 text-muted-foreground group-hover:bg-primary/20"
-                )}>
-                  {index < currentStep ? (
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  ) : (
-                    index + 1
+            {steps.map((step, index) => {
+              const status = getStepStatus(index);
+              return (
+                <button
+                  key={step.id}
+                  type="button"
+                  onClick={() => goToStep(index)}
+                  className={cn(
+                    "group relative flex flex-col items-center p-3 rounded-xl transition-all duration-200 hover:bg-primary/5 focus:outline-none focus:ring-2 focus:ring-primary/30",
+                    status === 'current' && "bg-primary/10 ring-1 ring-primary/20",
+                    status === 'complete' && "opacity-100 hover:opacity-100",
+                    status === 'incomplete' && "opacity-75 hover:opacity-100",
+                    status === 'unvisited' && "opacity-50 hover:opacity-75"
                   )}
-                </div>
+                  aria-label={`Go to step ${index + 1}: ${step.name}`}
+                  tabIndex={0}
+                >
+                  {/* Step Number/Check/Error */}
+                  <div className={cn(
+                    "w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold mb-2 transition-all duration-200",
+                    status === 'complete' && "bg-green-500 text-white shadow-sm",
+                    status === 'current' && "bg-primary text-white shadow-md ring-2 ring-primary/30",
+                    status === 'incomplete' && "bg-red-500 text-white shadow-sm",
+                    status === 'unvisited' && "bg-border/40 text-muted-foreground group-hover:bg-primary/20"
+                  )}>
+                    {status === 'complete' ? (
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    ) : status === 'incomplete' ? (
+                      <X className="w-4 h-4" />
+                    ) : (
+                      index + 1
+                    )}
+                  </div>
 
-                {/* Step Label */}
-                <span className={cn(
-                  "text-xs font-medium text-center leading-tight transition-colors duration-200",
-                  index <= currentStep ? "text-primary" : "text-muted-foreground",
-                  index === currentStep && "font-semibold"
-                )}>
-                  {step.name}
-                </span>
+                  {/* Step Label */}
+                  <span className={cn(
+                    "text-xs font-medium text-center leading-tight transition-colors duration-200",
+                    status === 'complete' && "text-green-600",
+                    status === 'current' && "text-primary font-semibold",
+                    status === 'incomplete' && "text-red-600",
+                    status === 'unvisited' && "text-muted-foreground"
+                  )}>
+                    {step.name}
+                  </span>
 
-                {/* Current Step Indicator */}
-                {index === currentStep && (
-                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full animate-pulse" />
-                )}
-              </button>
-            ))}
+                  {/* Current Step Indicator */}
+                  {status === 'current' && (
+                    <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full animate-pulse" />
+                  )}
+
+                  {/* Incomplete Step Warning */}
+                  {status === 'incomplete' && (
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500/20 border border-red-500 rounded-full flex items-center justify-center">
+                      <AlertTriangle className="w-2 h-2 text-red-500" />
+                    </div>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
       </nav>
