@@ -100,7 +100,7 @@ export function FormWizard() {
 
     let hasLoggers = false;
     formData.measurement_location.forEach((location, locIndex) => {
-      if (location.logger_main_config?.length > 0) {
+      if (location.logger_main_config && location.logger_main_config.length > 0) {
         hasLoggers = true;
         location.logger_main_config.forEach((logger, loggerIndex) => {
           if (!logger.logger_model_name) {
