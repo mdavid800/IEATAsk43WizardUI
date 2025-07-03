@@ -11,24 +11,19 @@ export function BasicInfoStep() {
   const campaignStatus = watch('campaignStatus');
   const plantType = watch('plant_type');
 
-  // Handler for custom input
-  const handleCustomPlantTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setValue('plant_type', e.target.value);
-  }
-
   // Validation logic moved from ReviewStep
   const validateBasicInfo = () => {
     const formData = watch();
-    const { author, organisation, plant_name, plant_type, version, startDate, campaignStatus, endDate } = formData;
+    const { author, organisation, plant_type, version, date, startDate, campaignStatus, endDate } = formData;
     const issues: string[] = [];
 
     if (!author) issues.push('Author is required');
     if (!organisation) issues.push('Organisation is required');
-    if (!plant_name) issues.push('Plant name is required');
     if (!plant_type) issues.push('Plant type is required');
     if (!version) issues.push('Version is required');
-    if (!startDate) issues.push('Start date is required');
-    if (campaignStatus === 'historical' && !endDate) issues.push('End date is required');
+    if (!date) issues.push('Date is required');
+    if (!startDate) issues.push('Campaign start date is required');
+    if (campaignStatus === 'historical' && !endDate) issues.push('Campaign end date is required');
 
     return {
       valid: issues.length === 0,
@@ -107,18 +102,18 @@ export function BasicInfoStep() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="plant_name">Plant Name <span className="required-asterisk">*</span></Label>
+          <Label htmlFor="plant_name">Plant Name</Label>
           <Input
             id="plant_name"
             {...register('plant_name')}
-            placeholder="Enter plant name"
+            placeholder="Enter plant name (optional)"
           />
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="plant_type">Plant Type <span className="required-asterisk">*</span></Label>
           <Select
-            onValueChange={(value) => setValue('plant_type', value)}
+            onValueChange={(value) => setValue('plant_type', value === 'null' ? null : value)}
             value={plantType || ''}
           >
             <SelectTrigger>
@@ -128,24 +123,9 @@ export function BasicInfoStep() {
               <SelectItem value="onshore_wind">Onshore Wind</SelectItem>
               <SelectItem value="offshore_wind">Offshore Wind</SelectItem>
               <SelectItem value="solar">Solar</SelectItem>
-              <SelectItem value="custom">Custom...</SelectItem>
+              <SelectItem value="null">Not Specified</SelectItem>
             </SelectContent>
           </Select>
-          {(
-            plantType === 'custom' ||
-            (plantType && !['onshore_wind', 'offshore_wind', 'solar'].includes(plantType))
-          ) && (
-              <div className="mt-2">
-                <Label htmlFor="plant_type">Custom Plant Type <span className="required-asterisk">*</span></Label>
-                <Input
-                  id="plant_type"
-                  placeholder="Enter custom plant type"
-                  value={['onshore_wind', 'offshore_wind', 'solar', 'custom'].includes(plantType) ? '' : plantType}
-                  onChange={handleCustomPlantTypeChange}
-                  autoFocus
-                />
-              </div>
-            )}
         </div>
 
         <div className="space-y-2">
@@ -158,12 +138,25 @@ export function BasicInfoStep() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="startDate">Start Date <span className="required-asterisk">*</span></Label>
+          <Label htmlFor="date">Date <span className="required-asterisk">*</span></Label>
+          <DatePicker
+            id="date"
+            value={watch('date') || new Date().toISOString().split('T')[0]}
+            onChange={(value) => setValue('date', value)}
+            placeholder="Date JSON file was created"
+            required
+            includeTime={false}
+          />
+          <p className="text-sm text-muted-foreground">Date this JSON file was created</p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="startDate">Start Date of Campaign <span className="required-asterisk">*</span></Label>
           <DatePicker
             id="startDate"
             value={watch('startDate')}
             onChange={(value) => setValue('startDate', value)}
-            placeholder="Select start date and time"
+            placeholder="Select campaign start date and time"
             required
             includeTime={true}
           />
@@ -187,12 +180,12 @@ export function BasicInfoStep() {
 
         {campaignStatus === 'historical' && (
           <div className="space-y-2">
-            <Label htmlFor="endDate">End Date <span className="required-asterisk">*</span></Label>
+            <Label htmlFor="endDate">End Date of Campaign <span className="required-asterisk">*</span></Label>
             <DatePicker
               id="endDate"
               value={watch('endDate') || ''}
               onChange={(value) => setValue('endDate', value)}
-              placeholder="Select end date and time"
+              placeholder="Select campaign end date and time"
               required
               includeTime={true}
             />

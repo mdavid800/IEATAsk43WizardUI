@@ -158,17 +158,80 @@ export function LoggerSection({ locationIndex }: LoggerSectionProps) {
   const determineMeasurementType = (name: string): string => {
     const lowerName = name.toLowerCase();
 
-    if (lowerName.includes('significantwaveheight')) return 'wave_height';
-    if (lowerName.includes('maximumwaveheight')) return 'wave_height';
-    if (lowerName.includes('peakperiod')) return 'wave_period';
-    if (lowerName.includes('meanspectralperiod')) return 'wave_period';
-    if (lowerName.includes('wavedirection')) return 'wave_direction';
-    if (lowerName.includes('windspeed')) return 'wind_speed';
-    if (lowerName.includes('winddirection')) return 'wind_direction';
-    if (lowerName.includes('temp')) return 'temperature';
-    if (lowerName.includes('press')) return 'pressure';
-    if (lowerName.includes('humid')) return 'humidity';
-    if (lowerName.includes('gps')) return 'position';
+    // Wind measurements (most common, check first)
+    if (lowerName.includes('windspeed') || lowerName.includes('wind_speed')) return 'wind_speed';
+    if (lowerName.includes('winddirection') || lowerName.includes('wind_direction')) return 'wind_direction';
+    if (lowerName.includes('verticalwind') || lowerName.includes('vertical_wind')) return 'vertical_wind_speed';
+    if (lowerName.includes('turbulence') || lowerName.includes('ti')) return 'wind_speed_turbulence';
+    if (lowerName.includes('gust')) return 'wind_speed'; // Gust is typically wind speed statistic
+
+    // Temperature measurements
+    if (lowerName.includes('airtemp') || lowerName.includes('air_temp')) return 'air_temperature';
+    if (lowerName.includes('watertemp') || lowerName.includes('water_temp') || lowerName.includes('seatemp')) return 'water_temperature';
+    if (lowerName.includes('temp') && !lowerName.includes('air') && !lowerName.includes('water')) return 'temperature';
+
+    // Pressure measurements
+    if (lowerName.includes('airpress') || lowerName.includes('air_press') || lowerName.includes('barometric')) return 'air_pressure';
+    if (lowerName.includes('press') && !lowerName.includes('air')) return 'pressure';
+    if (lowerName.includes('density')) return 'air_density';
+
+    // Humidity
+    if (lowerName.includes('humid') || lowerName.includes('rh')) return 'relative_humidity';
+
+    // Wave measurements  
+    if (lowerName.includes('significantwaveheight') || lowerName.includes('hs') || lowerName.includes('swh')) return 'wave_significant_height';
+    if (lowerName.includes('maximumwaveheight') || lowerName.includes('hmax')) return 'wave_maximum_height';
+    if (lowerName.includes('waveheight') || lowerName.includes('wave_height')) return 'wave_height';
+    if (lowerName.includes('peakperiod') || lowerName.includes('tp')) return 'wave_peak_period';
+    if (lowerName.includes('meanspectralperiod') || lowerName.includes('tm')) return 'wave_period';
+    if (lowerName.includes('waveperiod') || lowerName.includes('wave_period')) return 'wave_period';
+    if (lowerName.includes('wavedirection') || lowerName.includes('wave_direction') || lowerName.includes('mwd')) return 'wave_direction';
+
+    // Solar/Irradiance measurements
+    if (lowerName.includes('ghi') || lowerName.includes('globalhorz') || lowerName.includes('global_horizontal')) return 'global_horizontal_irradiance';
+    if (lowerName.includes('dni') || lowerName.includes('directnormal') || lowerName.includes('direct_normal')) return 'direct_normal_irradiance';
+    if (lowerName.includes('dhi') || lowerName.includes('diffusehorizontal')) return 'diffuse_horizontal_irradiance';
+    if (lowerName.includes('irradiance') || lowerName.includes('solar')) return 'global_horizontal_irradiance';
+    if (lowerName.includes('albedo') || lowerName.includes('reflection')) return 'albedo';
+
+    // Electrical measurements
+    if (lowerName.includes('voltage') || lowerName.includes('volt')) return 'voltage';
+    if (lowerName.includes('current') || lowerName.includes('amp')) return 'current';
+    if (lowerName.includes('resistance') || lowerName.includes('ohm')) return 'resistance';
+    if (lowerName.includes('power') && !lowerName.includes('wind')) return 'power';
+    if (lowerName.includes('energy')) return 'energy';
+
+    // Position and motion
+    if (lowerName.includes('gps') || lowerName.includes('latitude') || lowerName.includes('longitude')) return 'gps_coordinates';
+    if (lowerName.includes('pitch')) return 'pitch';
+    if (lowerName.includes('roll')) return 'roll';
+    if (lowerName.includes('heading') || lowerName.includes('yaw')) return 'heading';
+    if (lowerName.includes('tilt')) return 'tilt';
+    if (lowerName.includes('orientation')) return 'orientation';
+
+    // Environmental
+    if (lowerName.includes('precipitation') || lowerName.includes('rain')) return 'precipitation';
+    if (lowerName.includes('ice') || lowerName.includes('icing')) return 'ice_detection';
+    if (lowerName.includes('fog') || lowerName.includes('visibility')) return 'fog';
+    if (lowerName.includes('illuminance') || lowerName.includes('lux')) return 'illuminance';
+
+    // Water measurements
+    if (lowerName.includes('salinity') || lowerName.includes('salt')) return 'salinity';
+    if (lowerName.includes('conductivity')) return 'conductivity';
+    if (lowerName.includes('turbidity')) return 'turbidity';
+    if (lowerName.includes('waterspeed') || lowerName.includes('current_speed')) return 'water_speed';
+    if (lowerName.includes('waterdirection') || lowerName.includes('current_direction')) return 'water_direction';
+
+    // Quality and status
+    if (lowerName.includes('quality') || lowerName.includes('qc')) return 'quality';
+    if (lowerName.includes('status') || lowerName.includes('flag')) return 'status';
+    if (lowerName.includes('availability') || lowerName.includes('avail')) return 'availability';
+    if (lowerName.includes('counter') || lowerName.includes('count')) return 'counter';
+
+    // Signal strength (lidar/sodar)
+    if (lowerName.includes('cnr') || lowerName.includes('carrier')) return 'carrier_to_noise_ratio';
+    if (lowerName.includes('snr') || lowerName.includes('signal')) return 'signal_to_noise_ratio';
+    if (lowerName.includes('echo') || lowerName.includes('intensity')) return 'echo_intensity';
 
     return 'other';
   };

@@ -50,16 +50,16 @@ export function FormWizard() {
   // Validation functions for each step
   const validateBasicInfo = () => {
     const formData = methods.watch();
-    const { author, organisation, plant_name, plant_type, version, startDate, campaignStatus, endDate } = formData;
+    const { author, organisation, plant_type, version, date, startDate, campaignStatus, endDate } = formData;
     const issues: string[] = [];
 
     if (!author) issues.push('Author is required');
     if (!organisation) issues.push('Organisation is required');
-    if (!plant_name) issues.push('Plant name is required');
     if (!plant_type) issues.push('Plant type is required');
     if (!version) issues.push('Version is required');
-    if (!startDate) issues.push('Start date is required');
-    if (campaignStatus === 'historical' && !endDate) issues.push('End date is required');
+    if (!date) issues.push('Date is required');
+    if (!startDate) issues.push('Campaign start date is required');
+    if (campaignStatus === 'historical' && !endDate) issues.push('Campaign end date is required');
 
     return {
       valid: issues.length === 0,
@@ -282,8 +282,11 @@ export function FormWizard() {
         return cleanedLogger;
       };
 
+      // Exclude campaign dates from JSON export (they're for form validation only)
+      const { startDate, endDate, ...exportData } = data;
+
       const formattedData = {
-        ...data,
+        ...exportData,
         measurement_location: [{
           ...data.measurement_location[0],
           update_at: new Date().toISOString(),

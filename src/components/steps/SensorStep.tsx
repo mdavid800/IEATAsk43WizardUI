@@ -6,9 +6,11 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { DatePicker } from '../ui/date-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { SearchableSelect } from '../ui/searchable-select';
 import { Textarea } from '../ui/textarea';
 import { cn } from '../../utils/cn';
 import type { IEATask43Schema, SensorType, MeasurementType, Sensor } from '../../types/schema';
+import { sensorTypeOptions, measurementTypeOptions } from '../../utils/enum-options';
 import DynamicSensorOptionalFields from './DynamicSensorOptionalFields';
 
 // Define types for managing expanded states locally per location
@@ -435,33 +437,14 @@ function LocationSensorsManager({
                   <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.sensor_type_id`}>
                     Sensor Type <span className="required-asterisk">*</span>
                   </Label>
-                  <Select
-                    onValueChange={(value) => setValue(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.sensor_type_id`, value as SensorType)}
+                  <SearchableSelect
+                    options={sensorTypeOptions}
                     value={watch(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.sensor_type_id`)}
-                  >
-                    <SelectTrigger className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.sensor_type_id ? 'border-red-500' : ''}>
-                      <SelectValue placeholder="Select sensor type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="anemometer">Anemometer</SelectItem>
-                      <SelectItem value="wind_vane">Wind Vane</SelectItem>
-                      {/* ... other sensor types ... */}
-                      <SelectItem value="barometer">Barometer</SelectItem>
-                      <SelectItem value="hygrometer">Hygrometer</SelectItem>
-                      <SelectItem value="pyranometer">Pyranometer</SelectItem>
-                      <SelectItem value="2d_ultrasonic">2D Ultrasonic</SelectItem>
-                      <SelectItem value="3d_ultrasonic">3D Ultrasonic</SelectItem>
-                      <SelectItem value="rain_gauge">Rain Gauge</SelectItem>
-                      <SelectItem value="gps">GPS</SelectItem>
-                      <SelectItem value="compass">Compass</SelectItem>
-                      <SelectItem value="adcp">ADCP</SelectItem>
-                      <SelectItem value="altimeter">Altimeter</SelectItem>
-                      <SelectItem value="ctd">CTD</SelectItem>
-                      <SelectItem value="lidar">Lidar</SelectItem>
-                      <SelectItem value="sodar">Sodar</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    onValueChange={(value) => setValue(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.sensor_type_id`, value as SensorType)}
+                    placeholder="Select sensor type..."
+                    searchPlaceholder="Search sensor types..."
+                    className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.sensor_type_id ? 'border-red-500' : ''}
+                  />
                   {errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.sensor_type_id && (
                     <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensors[sensorsIndex].sensor_type_id.message || 'Sensor type is required'}</p>
                   )}
@@ -653,22 +636,13 @@ function CalibrationArray({
                   <Label htmlFor={`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.measurement_type_id`}>
                     Measurement Type
                   </Label>
-                  <Select
-                    onValueChange={(value) => setValue(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.measurement_type_id`, value as MeasurementType)}
+                  <SearchableSelect
+                    options={measurementTypeOptions}
                     value={watch(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.measurement_type_id`)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select measurement type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="wind_speed">Wind Speed</SelectItem>
-                      <SelectItem value="wind_direction">Wind Direction</SelectItem>
-                      <SelectItem value="temperature">Temperature</SelectItem>
-                      <SelectItem value="pressure">Pressure</SelectItem>
-                      <SelectItem value="humidity">Humidity</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    onValueChange={(value) => setValue(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.calibration.${calIndex}.measurement_type_id`, value as MeasurementType)}
+                    placeholder="Select measurement type..."
+                    searchPlaceholder="Search measurement types..."
+                  />
                 </div>
 
                 <div className="space-y-2">

@@ -6,7 +6,9 @@ import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
+import { SearchableSelect } from '../../ui/searchable-select';
 import { Textarea } from '../../ui/textarea';
+import { measurementTypeOptions, heightReferenceOptions } from '../../../utils/enum-options';
 
 interface MeasurementSectionProps {
   locationIndex: number;
@@ -75,7 +77,7 @@ export function MeasurementSection({ locationIndex }: MeasurementSectionProps) {
             measurement_type_id: type,
             statistic_type_id: statisticType,
             height_m: height || 0,
-            height_reference_id: type.includes('wave') ? 'sea_level' : 'ground_level'
+            height_reference_id: determineHeightReference(type, cleanName)
           };
         });
 
@@ -103,24 +105,118 @@ export function MeasurementSection({ locationIndex }: MeasurementSectionProps) {
   const determineMeasurementType = (name: string): string => {
     const lowerName = name.toLowerCase();
 
-    // Wave measurements
-    if (lowerName.includes('significantwaveheight')) return 'wave_height';
-    if (lowerName.includes('maximumwaveheight')) return 'wave_height';
-    if (lowerName.includes('peakperiod')) return 'wave_period';
-    if (lowerName.includes('meanspectralperiod')) return 'wave_period';
-    if (lowerName.includes('wavedirection')) return 'wave_direction';
+    // Wind measurements (most common, check first)
+    if (lowerName.includes('windspeed') || lowerName.includes('wind_speed')) return 'wind_speed';
+    if (lowerName.includes('winddirection') || lowerName.includes('wind_direction')) return 'wind_direction';
+    if (lowerName.includes('verticalwind') || lowerName.includes('vertical_wind')) return 'vertical_wind_speed';
+    if (lowerName.includes('turbulence') || lowerName.includes('ti')) return 'wind_speed_turbulence';
+    if (lowerName.includes('gust')) return 'wind_speed'; // Gust is typically wind speed statistic
 
-    // Wind measurements
-    if (lowerName.includes('windspeed')) return 'wind_speed';
-    if (lowerName.includes('winddirection')) return 'wind_direction';
+    // Temperature measurements
+    if (lowerName.includes('airtemp') || lowerName.includes('air_temp')) return 'air_temperature';
+    if (lowerName.includes('watertemp') || lowerName.includes('water_temp') || lowerName.includes('seatemp')) return 'water_temperature';
+    if (lowerName.includes('temp') && !lowerName.includes('air') && !lowerName.includes('water')) return 'temperature';
 
-    // Other measurements
-    if (lowerName.includes('temp')) return 'temperature';
-    if (lowerName.includes('press')) return 'pressure';
-    if (lowerName.includes('humid')) return 'humidity';
-    if (lowerName.includes('gps')) return 'position';
+    // Pressure measurements
+    if (lowerName.includes('airpress') || lowerName.includes('air_press') || lowerName.includes('barometric')) return 'air_pressure';
+    if (lowerName.includes('press') && !lowerName.includes('air')) return 'pressure';
+    if (lowerName.includes('density')) return 'air_density';
+
+    // Humidity
+    if (lowerName.includes('humid') || lowerName.includes('rh')) return 'relative_humidity';
+
+    // Wave measurements  
+    if (lowerName.includes('significantwaveheight') || lowerName.includes('hs') || lowerName.includes('swh')) return 'wave_significant_height';
+    if (lowerName.includes('maximumwaveheight') || lowerName.includes('hmax')) return 'wave_maximum_height';
+    if (lowerName.includes('waveheight') || lowerName.includes('wave_height')) return 'wave_height';
+    if (lowerName.includes('peakperiod') || lowerName.includes('tp')) return 'wave_peak_period';
+    if (lowerName.includes('meanspectralperiod') || lowerName.includes('tm')) return 'wave_period';
+    if (lowerName.includes('waveperiod') || lowerName.includes('wave_period')) return 'wave_period';
+    if (lowerName.includes('wavedirection') || lowerName.includes('wave_direction') || lowerName.includes('mwd')) return 'wave_direction';
+
+    // Solar/Irradiance measurements
+    if (lowerName.includes('ghi') || lowerName.includes('globalhorz') || lowerName.includes('global_horizontal')) return 'global_horizontal_irradiance';
+    if (lowerName.includes('dni') || lowerName.includes('directnormal') || lowerName.includes('direct_normal')) return 'direct_normal_irradiance';
+    if (lowerName.includes('dhi') || lowerName.includes('diffusehorizontal')) return 'diffuse_horizontal_irradiance';
+    if (lowerName.includes('irradiance') || lowerName.includes('solar')) return 'global_horizontal_irradiance';
+    if (lowerName.includes('albedo') || lowerName.includes('reflection')) return 'albedo';
+
+    // Electrical measurements
+    if (lowerName.includes('voltage') || lowerName.includes('volt')) return 'voltage';
+    if (lowerName.includes('current') || lowerName.includes('amp')) return 'current';
+    if (lowerName.includes('resistance') || lowerName.includes('ohm')) return 'resistance';
+    if (lowerName.includes('power') && !lowerName.includes('wind')) return 'power';
+    if (lowerName.includes('energy')) return 'energy';
+
+    // Position and motion
+    if (lowerName.includes('gps') || lowerName.includes('latitude') || lowerName.includes('longitude')) return 'gps_coordinates';
+    if (lowerName.includes('pitch')) return 'pitch';
+    if (lowerName.includes('roll')) return 'roll';
+    if (lowerName.includes('heading') || lowerName.includes('yaw')) return 'heading';
+    if (lowerName.includes('tilt')) return 'tilt';
+    if (lowerName.includes('orientation')) return 'orientation';
+
+    // Environmental
+    if (lowerName.includes('precipitation') || lowerName.includes('rain')) return 'precipitation';
+    if (lowerName.includes('ice') || lowerName.includes('icing')) return 'ice_detection';
+    if (lowerName.includes('fog') || lowerName.includes('visibility')) return 'fog';
+    if (lowerName.includes('illuminance') || lowerName.includes('lux')) return 'illuminance';
+
+    // Water measurements
+    if (lowerName.includes('salinity') || lowerName.includes('salt')) return 'salinity';
+    if (lowerName.includes('conductivity')) return 'conductivity';
+    if (lowerName.includes('turbidity')) return 'turbidity';
+    if (lowerName.includes('waterspeed') || lowerName.includes('current_speed')) return 'water_speed';
+    if (lowerName.includes('waterdirection') || lowerName.includes('current_direction')) return 'water_direction';
+
+    // Quality and status
+    if (lowerName.includes('quality') || lowerName.includes('qc')) return 'quality';
+    if (lowerName.includes('status') || lowerName.includes('flag')) return 'status';
+    if (lowerName.includes('availability') || lowerName.includes('avail')) return 'availability';
+    if (lowerName.includes('counter') || lowerName.includes('count')) return 'counter';
+
+    // Signal strength (lidar/sodar)
+    if (lowerName.includes('cnr') || lowerName.includes('carrier')) return 'carrier_to_noise_ratio';
+    if (lowerName.includes('snr') || lowerName.includes('signal')) return 'signal_to_noise_ratio';
+    if (lowerName.includes('echo') || lowerName.includes('intensity')) return 'echo_intensity';
 
     return 'other';
+  };
+
+  const determineHeightReference = (measurementType: string, name: string): string => {
+    const lowerName = name.toLowerCase();
+
+    // Marine/water measurements typically use sea level references
+    if (measurementType.includes('wave_') ||
+      measurementType.includes('water_') ||
+      measurementType === 'salinity' ||
+      measurementType === 'conductivity' ||
+      measurementType === 'turbidity' ||
+      lowerName.includes('sea') ||
+      lowerName.includes('marine') ||
+      lowerName.includes('offshore')) {
+      return 'sea_level';
+    }
+
+    // Motion measurements (from floating platforms) typically use sea level
+    if (measurementType === 'pitch' ||
+      measurementType === 'roll' ||
+      measurementType === 'heading' ||
+      measurementType.includes('motion_corrected') ||
+      lowerName.includes('motion') ||
+      lowerName.includes('float')) {
+      return 'sea_level';
+    }
+
+    // Depth measurements use sea floor reference
+    if (measurementType === 'depth' ||
+      lowerName.includes('depth') ||
+      lowerName.includes('seafloor')) {
+      return 'sea_floor';
+    }
+
+    // Default to ground level for terrestrial measurements
+    return 'ground_level';
   };
 
   const extractHeight = (name: string): number | null => {
@@ -234,26 +330,13 @@ export function MeasurementSection({ locationIndex }: MeasurementSectionProps) {
                     <Label htmlFor={`measurement_location.${locationIndex}.measurement_point.${index}.measurement_type_id`}>
                       Measurement Type
                     </Label>
-                    <Select
-                      onValueChange={(value) => setValue(`measurement_location.${locationIndex}.measurement_point.${index}.measurement_type_id`, value)}
+                    <SearchableSelect
+                      options={measurementTypeOptions}
                       value={getValues(`measurement_location.${locationIndex}.measurement_point.${index}.measurement_type_id`)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select measurement type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="wind_speed">Wind Speed</SelectItem>
-                        <SelectItem value="wind_direction">Wind Direction</SelectItem>
-                        <SelectItem value="temperature">Temperature</SelectItem>
-                        <SelectItem value="pressure">Pressure</SelectItem>
-                        <SelectItem value="humidity">Humidity</SelectItem>
-                        <SelectItem value="wave_height">Wave Height</SelectItem>
-                        <SelectItem value="wave_period">Wave Period</SelectItem>
-                        <SelectItem value="wave_direction">Wave Direction</SelectItem>
-                        <SelectItem value="position">Position</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      onValueChange={(value) => setValue(`measurement_location.${locationIndex}.measurement_point.${index}.measurement_type_id`, value)}
+                      placeholder="Select measurement type..."
+                      searchPlaceholder="Search measurement types..."
+                    />
                   </div>
 
                   <div className="space-y-2">
@@ -272,19 +355,13 @@ export function MeasurementSection({ locationIndex }: MeasurementSectionProps) {
                     <Label htmlFor={`measurement_location.${locationIndex}.measurement_point.${index}.height_reference_id`}>
                       Height Reference
                     </Label>
-                    <Select
-                      onValueChange={(value) => setValue(`measurement_location.${locationIndex}.measurement_point.${index}.height_reference_id`, value)}
+                    <SearchableSelect
+                      options={heightReferenceOptions}
                       value={getValues(`measurement_location.${locationIndex}.measurement_point.${index}.height_reference_id`)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select height reference" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ground_level">Ground Level</SelectItem>
-                        <SelectItem value="sea_level">Sea Level</SelectItem>
-                        <SelectItem value="sea_floor">Sea Floor</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      onValueChange={(value) => setValue(`measurement_location.${locationIndex}.measurement_point.${index}.height_reference_id`, value)}
+                      placeholder="Select height reference..."
+                      searchPlaceholder="Search height references..."
+                    />
                   </div>
 
                   <div className="sm:col-span-2 space-y-2">

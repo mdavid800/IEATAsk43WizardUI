@@ -6,9 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ClearableSelect } from '@/components/ui/clearable-select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { MultiSelect } from '@/components/ui/multi-select';
+import { measurementTypeOptions, heightReferenceOptions, statisticTypeOptions } from '@/utils/enum-options';
 import {
     Table,
     TableBody,
@@ -182,7 +184,8 @@ const ExpandableRow = ({
 
                         <div>
                             <Label className="text-xs text-muted-foreground">Measurement Type</Label>
-                            <ClearableSelect
+                            <SearchableSelect
+                                options={measurementTypeOptions}
                                 value={watch(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.measurement_type_id`) || undefined}
                                 onValueChange={(value: string | undefined) => {
                                     setValue(
@@ -190,24 +193,16 @@ const ExpandableRow = ({
                                         value as MeasurementType
                                     );
                                 }}
-                                placeholder="Select measurement type"
-                            >
-                                <SelectItem value="wind_speed">Wind Speed</SelectItem>
-                                <SelectItem value="wind_direction">Wind Direction</SelectItem>
-                                <SelectItem value="temperature">Temperature</SelectItem>
-                                <SelectItem value="pressure">Pressure</SelectItem>
-                                <SelectItem value="humidity">Humidity</SelectItem>
-                                <SelectItem value="wave_height">Wave Height</SelectItem>
-                                <SelectItem value="wave_period">Wave Period</SelectItem>
-                                <SelectItem value="wave_direction">Wave Direction</SelectItem>
-                                <SelectItem value="position">Position</SelectItem>
-                                <SelectItem value="other">Other</SelectItem>
-                            </ClearableSelect>
+                                placeholder="Select measurement type..."
+                                searchPlaceholder="Search measurement types..."
+                                className="mt-1"
+                            />
                         </div>
 
                         <div>
                             <Label className="text-xs text-muted-foreground">Statistic Type</Label>
-                            <ClearableSelect
+                            <SearchableSelect
+                                options={statisticTypeOptions}
                                 value={watch(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.statistic_type_id`) || undefined}
                                 onValueChange={(value: string | undefined) => {
                                     setValue(
@@ -216,23 +211,8 @@ const ExpandableRow = ({
                                     );
                                 }}
                                 placeholder="Select statistic type"
-                            >
-                                <SelectItem value="avg">Average</SelectItem>
-                                <SelectItem value="sd">Standard Deviation</SelectItem>
-                                <SelectItem value="max">Maximum</SelectItem>
-                                <SelectItem value="min">Minimum</SelectItem>
-                                <SelectItem value="ti">Turbulence Intensity</SelectItem>
-                                <SelectItem value="ti30sec">TI 30sec</SelectItem>
-                                <SelectItem value="gust">Gust</SelectItem>
-                                <SelectItem value="count">Count</SelectItem>
-                                <SelectItem value="availability">Availability</SelectItem>
-                                <SelectItem value="quality">Quality</SelectItem>
-                                <SelectItem value="sum">Sum</SelectItem>
-                                <SelectItem value="median">Median</SelectItem>
-                                <SelectItem value="mode">Mode</SelectItem>
-                                <SelectItem value="range">Range</SelectItem>
-                                <SelectItem value="text">Text</SelectItem>
-                            </ClearableSelect>
+                                searchPlaceholder="Search..."
+                            />
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
@@ -256,7 +236,8 @@ const ExpandableRow = ({
 
                         <div>
                             <Label className="text-xs text-muted-foreground">Height Reference</Label>
-                            <ClearableSelect
+                            <SearchableSelect
+                                options={heightReferenceOptions}
                                 value={watch(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.height_reference_id`) as HeightReference || undefined}
                                 onValueChange={(value: string | undefined) =>
                                     setValue(
@@ -265,11 +246,8 @@ const ExpandableRow = ({
                                     )
                                 }
                                 placeholder="Select height reference"
-                            >
-                                <SelectItem value="ground_level">Ground Level</SelectItem>
-                                <SelectItem value="sea_level">Sea Level</SelectItem>
-                                <SelectItem value="sea_floor">Sea Floor</SelectItem>
-                            </ClearableSelect>
+                                searchPlaceholder="Search..."
+                            />
                         </div>
 
                         <div>
@@ -619,50 +597,27 @@ export function MeasurementTable({
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="type-filter">Measurement Type</Label>
-                                                <ClearableSelect
+                                                <SearchableSelect
+                                                    options={measurementTypeOptions}
                                                     value={filters.measurement_type_id === 'all' ? undefined : filters.measurement_type_id}
                                                     onValueChange={(value: string | undefined) =>
                                                         setFilters(prev => ({ ...prev, measurement_type_id: (value as MeasurementType) || 'all' }))
                                                     }
                                                     placeholder="All types"
-                                                >
-                                                    <SelectItem value="wind_speed">Wind Speed</SelectItem>
-                                                    <SelectItem value="wind_direction">Wind Direction</SelectItem>
-                                                    <SelectItem value="temperature">Temperature</SelectItem>
-                                                    <SelectItem value="pressure">Pressure</SelectItem>
-                                                    <SelectItem value="humidity">Humidity</SelectItem>
-                                                    <SelectItem value="wave_height">Wave Height</SelectItem>
-                                                    <SelectItem value="wave_period">Wave Period</SelectItem>
-                                                    <SelectItem value="wave_direction">Wave Direction</SelectItem>
-                                                    <SelectItem value="position">Position</SelectItem>
-                                                    <SelectItem value="other">Other</SelectItem>
-                                                </ClearableSelect>
+                                                    searchPlaceholder="Search..."
+                                                />
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="statistic-type-filter">Statistic Type</Label>
-                                                <ClearableSelect
+                                                <SearchableSelect
+                                                    options={statisticTypeOptions}
                                                     value={filters.statistic_type_id === 'all' ? undefined : filters.statistic_type_id}
                                                     onValueChange={(value: string | undefined) =>
                                                         setFilters(prev => ({ ...prev, statistic_type_id: (value as StatisticType) || 'all' }))
                                                     }
                                                     placeholder="All statistics"
-                                                >
-                                                    <SelectItem value="avg">Average</SelectItem>
-                                                    <SelectItem value="sd">Standard Deviation</SelectItem>
-                                                    <SelectItem value="max">Maximum</SelectItem>
-                                                    <SelectItem value="min">Minimum</SelectItem>
-                                                    <SelectItem value="ti">Turbulence Intensity</SelectItem>
-                                                    <SelectItem value="ti30sec">TI 30sec</SelectItem>
-                                                    <SelectItem value="gust">Gust</SelectItem>
-                                                    <SelectItem value="count">Count</SelectItem>
-                                                    <SelectItem value="availability">Availability</SelectItem>
-                                                    <SelectItem value="quality">Quality</SelectItem>
-                                                    <SelectItem value="sum">Sum</SelectItem>
-                                                    <SelectItem value="median">Median</SelectItem>
-                                                    <SelectItem value="mode">Mode</SelectItem>
-                                                    <SelectItem value="range">Range</SelectItem>
-                                                    <SelectItem value="text">Text</SelectItem>
-                                                </ClearableSelect>
+                                                    searchPlaceholder="Search..."
+                                                />
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="height-filter">Height (m)</Label>
@@ -789,52 +744,29 @@ export function MeasurementTable({
                                 {columnVisibility.measurement_type_id && (
                                     <div className="space-y-2">
                                         <Label className="text-sm">Measurement Type</Label>
-                                        <ClearableSelect
+                                        <SearchableSelect
+                                            options={measurementTypeOptions}
                                             value={bulkEditValues.measurement_type_id || undefined}
                                             onValueChange={(value: string | undefined) =>
                                                 setBulkEditValues(prev => ({ ...prev, measurement_type_id: (value as MeasurementType) || '' }))
                                             }
                                             placeholder="Select type"
-                                        >
-                                            <SelectItem value="wind_speed">Wind Speed</SelectItem>
-                                            <SelectItem value="wind_direction">Wind Direction</SelectItem>
-                                            <SelectItem value="temperature">Temperature</SelectItem>
-                                            <SelectItem value="pressure">Pressure</SelectItem>
-                                            <SelectItem value="humidity">Humidity</SelectItem>
-                                            <SelectItem value="wave_height">Wave Height</SelectItem>
-                                            <SelectItem value="wave_period">Wave Period</SelectItem>
-                                            <SelectItem value="wave_direction">Wave Direction</SelectItem>
-                                            <SelectItem value="position">Position</SelectItem>
-                                            <SelectItem value="other">Other</SelectItem>
-                                        </ClearableSelect>
+                                            searchPlaceholder="Search..."
+                                        />
                                     </div>
                                 )}
                                 {columnVisibility.statistic_type_id && (
                                     <div className="space-y-2">
                                         <Label className="text-sm">Statistic Type</Label>
-                                        <ClearableSelect
+                                        <SearchableSelect
+                                            options={statisticTypeOptions}
                                             value={bulkEditValues.statistic_type_id || undefined}
                                             onValueChange={(value: string | undefined) =>
                                                 setBulkEditValues(prev => ({ ...prev, statistic_type_id: (value as StatisticType) || '' }))
                                             }
                                             placeholder="Select statistic"
-                                        >
-                                            <SelectItem value="avg">Average</SelectItem>
-                                            <SelectItem value="sd">Standard Deviation</SelectItem>
-                                            <SelectItem value="max">Maximum</SelectItem>
-                                            <SelectItem value="min">Minimum</SelectItem>
-                                            <SelectItem value="ti">Turbulence Intensity</SelectItem>
-                                            <SelectItem value="ti30sec">TI 30sec</SelectItem>
-                                            <SelectItem value="gust">Gust</SelectItem>
-                                            <SelectItem value="count">Count</SelectItem>
-                                            <SelectItem value="availability">Availability</SelectItem>
-                                            <SelectItem value="quality">Quality</SelectItem>
-                                            <SelectItem value="sum">Sum</SelectItem>
-                                            <SelectItem value="median">Median</SelectItem>
-                                            <SelectItem value="mode">Mode</SelectItem>
-                                            <SelectItem value="range">Range</SelectItem>
-                                            <SelectItem value="text">Text</SelectItem>
-                                        </ClearableSelect>
+                                            searchPlaceholder="Search..."
+                                        />
                                     </div>
                                 )}
                                 {columnVisibility.height_m && (
@@ -853,17 +785,15 @@ export function MeasurementTable({
                                 {columnVisibility.height_reference_id && (
                                     <div className="space-y-2">
                                         <Label className="text-sm">Height Reference</Label>
-                                        <ClearableSelect
+                                        <SearchableSelect
+                                            options={heightReferenceOptions}
                                             value={bulkEditValues.height_reference_id || undefined}
                                             onValueChange={(value: string | undefined) =>
                                                 setBulkEditValues(prev => ({ ...prev, height_reference_id: (value as HeightReference) || '' }))
                                             }
                                             placeholder="Select reference"
-                                        >
-                                            <SelectItem value="ground_level">Ground Level</SelectItem>
-                                            <SelectItem value="sea_level">Sea Level</SelectItem>
-                                            <SelectItem value="sea_floor">Sea Floor</SelectItem>
-                                        </ClearableSelect>
+                                            searchPlaceholder="Search..."
+                                        />
                                     </div>
                                 )}
                                 {columnVisibility.unit && (
@@ -989,7 +919,8 @@ export function MeasurementTable({
                                             )}
                                             {columnVisibility.measurement_type_id && (
                                                 <TableCell className={`p-2 ${isCompactView ? "min-w-[120px] max-w-[140px]" : "min-w-[140px] max-w-[160px]"}`}>
-                                                    <ClearableSelect
+                                                    <SearchableSelect
+                                                        options={measurementTypeOptions}
                                                         value={watch(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.measurement_type_id`) || undefined}
                                                         onValueChange={(value: string | undefined) => {
                                                             setValue(
@@ -998,23 +929,14 @@ export function MeasurementTable({
                                                             );
                                                         }}
                                                         placeholder="Type"
-                                                    >
-                                                        <SelectItem value="wind_speed">Wind Speed</SelectItem>
-                                                        <SelectItem value="wind_direction">Wind Direction</SelectItem>
-                                                        <SelectItem value="temperature">Temperature</SelectItem>
-                                                        <SelectItem value="pressure">Pressure</SelectItem>
-                                                        <SelectItem value="humidity">Humidity</SelectItem>
-                                                        <SelectItem value="wave_height">Wave Height</SelectItem>
-                                                        <SelectItem value="wave_period">Wave Period</SelectItem>
-                                                        <SelectItem value="wave_direction">Wave Direction</SelectItem>
-                                                        <SelectItem value="position">Position</SelectItem>
-                                                        <SelectItem value="other">Other</SelectItem>
-                                                    </ClearableSelect>
+                                                        searchPlaceholder="Search..."
+                                                    />
                                                 </TableCell>
                                             )}
                                             {columnVisibility.statistic_type_id && (
                                                 <TableCell className={`p-2 ${isCompactView ? "min-w-[100px] max-w-[120px]" : "min-w-[120px] max-w-[140px]"}`}>
-                                                    <ClearableSelect
+                                                    <SearchableSelect
+                                                        options={statisticTypeOptions}
                                                         value={watch(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.statistic_type_id`) || undefined}
                                                         onValueChange={(value: string | undefined) => {
                                                             setValue(
@@ -1023,23 +945,8 @@ export function MeasurementTable({
                                                             );
                                                         }}
                                                         placeholder="Stat"
-                                                    >
-                                                        <SelectItem value="avg">Avg</SelectItem>
-                                                        <SelectItem value="sd">SD</SelectItem>
-                                                        <SelectItem value="max">Max</SelectItem>
-                                                        <SelectItem value="min">Min</SelectItem>
-                                                        <SelectItem value="ti">TI</SelectItem>
-                                                        <SelectItem value="ti30sec">TI30s</SelectItem>
-                                                        <SelectItem value="gust">Gust</SelectItem>
-                                                        <SelectItem value="count">Count</SelectItem>
-                                                        <SelectItem value="availability">Avail</SelectItem>
-                                                        <SelectItem value="quality">Quality</SelectItem>
-                                                        <SelectItem value="sum">Sum</SelectItem>
-                                                        <SelectItem value="median">Median</SelectItem>
-                                                        <SelectItem value="mode">Mode</SelectItem>
-                                                        <SelectItem value="range">Range</SelectItem>
-                                                        <SelectItem value="text">Text</SelectItem>
-                                                    </ClearableSelect>
+                                                        searchPlaceholder="Search..."
+                                                    />
                                                 </TableCell>
                                             )}
                                             {columnVisibility.height_m && (
@@ -1055,7 +962,8 @@ export function MeasurementTable({
                                             )}
                                             {columnVisibility.height_reference_id && (
                                                 <TableCell className={`p-2 ${isCompactView ? "min-w-[100px] max-w-[120px]" : "min-w-[120px] max-w-[140px]"}`}>
-                                                    <ClearableSelect
+                                                    <SearchableSelect
+                                                        options={heightReferenceOptions}
                                                         value={watch(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.height_reference_id`) || undefined}
                                                         onValueChange={(value: string | undefined) =>
                                                             setValue(
@@ -1064,11 +972,8 @@ export function MeasurementTable({
                                                             )
                                                         }
                                                         placeholder="Ref"
-                                                    >
-                                                        <SelectItem value="ground_level">Ground</SelectItem>
-                                                        <SelectItem value="sea_level">Sea</SelectItem>
-                                                        <SelectItem value="sea_floor">Floor</SelectItem>
-                                                    </ClearableSelect>
+                                                        searchPlaceholder="Search..."
+                                                    />
                                                 </TableCell>
                                             )}
                                             {columnVisibility.unit && (
