@@ -1,7 +1,7 @@
 import React from 'react';
 import { useState } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
-import { ChevronRight, ChevronLeft, Save, X, AlertTriangle } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Save, X, AlertTriangle, Loader2 } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { BasicInfoStep } from './steps/BasicInfoStep';
 import { LocationStep } from './steps/LocationStep';

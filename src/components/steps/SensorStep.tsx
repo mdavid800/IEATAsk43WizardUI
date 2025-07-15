@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { SearchableSelect } from '../ui/searchable-select';
 import { Textarea } from '../ui/textarea';
 import { cn } from '../../utils/cn';
+import { getDefaultDatesForNewEntry } from '../../utils/campaign-dates';
 import type { IEATask43Schema, SensorType, MeasurementType, Sensor } from '../../types/schema';
 import { sensorTypeOptions, measurementTypeOptions } from '../../utils/enum-options';
 import DynamicSensorOptionalFields from './DynamicSensorOptionalFields';
@@ -274,17 +275,19 @@ function LocationSensorsManager({
   // Parent's toggleExpandSensor should be robust. Let's assume it is.
 
   const addSensorsForLocation = () => {
+    const formData = watch();
+    const defaultDates = getDefaultDatesForNewEntry(formData);
     appendSensors({
       oem: '',
       model: '',
       serial_number: '',
       sensor_type_id: undefined,
       classification: '',
-      instrument_poi_height_mm: 0,
-      is_heated: false,
-      sensor_body_size_mm: 0,
-      date_from: '',
-      date_to: '',
+      instrument_poi_height_mm: undefined,
+      is_heated: undefined,
+      sensor_body_size_mm: undefined,
+      date_from: defaultDates.date_from,
+      date_to: defaultDates.date_to,
       notes: '',
       calibration: [],
       logger_measurement_config: [],
@@ -570,9 +573,9 @@ function CalibrationArray({
 
   const addCalibration = () => {
     appendCalibrationRHF({
-      measurement_type_id: undefined, slope: 1, offset: 0, sensitivity: 0, calibration_id: '',
+      measurement_type_id: undefined, slope: undefined, offset: undefined, sensitivity: undefined, calibration_id: '',
       date_of_calibration: '', calibration_organisation: '', place_of_calibration: '',
-      uncertainty_k_factor: 0, revision: '', report_file_name: '', report_link: '',
+      uncertainty_k_factor: undefined, revision: '', report_file_name: '', report_link: '',
       notes: '', calibration_uncertainty: []
     });
     // The useEffect above will detect the new item and call onCalibrationAdded.
@@ -818,9 +821,9 @@ function UncertaintyArray({
 
   const addUncertaintyItem = () => {
     appendUncertainty({
-      reference_bin: 0,
+      reference_bin: undefined,
       reference_unit: '',
-      combined_uncertainty: 0,
+      combined_uncertainty: undefined,
     });
   };
 

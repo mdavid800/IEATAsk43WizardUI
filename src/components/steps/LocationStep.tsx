@@ -9,6 +9,7 @@ import { Textarea } from '../ui/textarea';
 import { Map } from '../ui/map';
 import { Button } from '../ui/button';
 import { cn } from '../../utils/cn';
+import { getDefaultDatesForNewEntry } from '../../utils/campaign-dates';
 import type { IEATask43Schema } from '../../types/schema';
 
 export function LocationStep() {
@@ -61,17 +62,19 @@ export function LocationStep() {
   };
 
   const addVerticalProfilerProperty = () => {
+    const formData = watch();
+    const defaultDates = getDefaultDatesForNewEntry(formData);
     const currentProps = watch('measurement_location.0.vertical_profiler_properties') || [];
     setValue('measurement_location.0.vertical_profiler_properties', [
       ...currentProps,
       {
-        device_datum_plane_height_m: 0,
-        height_reference_id: 'ground_level',
-        device_orientation_deg: 0,
-        orientation_reference_id: 'true_north',
-        device_vertical_orientation: 'upward',
-        date_from: new Date().toISOString(),
-        date_to: null,
+        device_datum_plane_height_m: undefined,
+        height_reference_id: undefined,
+        device_orientation_deg: undefined,
+        orientation_reference_id: undefined,
+        device_vertical_orientation: undefined,
+        date_from: defaultDates.date_from,
+        date_to: defaultDates.date_to,
         notes: '',
         update_at: new Date().toISOString()
       }
@@ -85,15 +88,17 @@ export function LocationStep() {
   };
 
   const addModelConfig = () => {
+    const formData = watch();
+    const defaultDates = getDefaultDatesForNewEntry(formData);
     const currentConfigs = watch('measurement_location.0.model_config') || [];
     setValue('measurement_location.0.model_config', [
       ...currentConfigs,
       {
-        reanalysis: 'ERA5',
+        reanalysis: undefined,
         horizontal_grid_resolution_m: null,
         model_used: null,
-        date_from: new Date().toISOString(),
-        date_to: null,
+        date_from: defaultDates.date_from,
+        date_to: defaultDates.date_to,
         offset_from_utc_hrs: null,
         averaging_period_minutes: null,
         timestamp_is_end_of_period: null,

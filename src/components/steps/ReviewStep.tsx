@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { FileJson, Check, AlertCircle } from 'lucide-react';
+import { FileJson, Check, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { cn } from '../../utils/cn';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -11,6 +11,10 @@ import type { IEATask43Schema, Sensor } from '../../types/schema';
 export function ReviewStep() {
   const { watch } = useFormContext<IEATask43Schema>();
   const formData = watch();
+  const [isGeneratingPreview, setIsGeneratingPreview] = useState(true);
+  const [previewJson, setPreviewJson] = useState<string>('');
+  const isGeneratingRef = useRef(false);
+  const lastDataHashRef = useRef<string>('');
 
   // Simplified validation - just check if basic required sections exist
   const hasBasicInfo = !!(formData.author && formData.organisation && formData.plant_name && formData.plant_type && formData.version && formData.startDate);
@@ -31,6 +35,46 @@ export function ReviewStep() {
 
   const isValid = sections.every(section => section.valid);
   const completedSections = sections.filter(section => section.valid).length;
+
+  // Generate preview JSON asynchronously to prevent UI blocking
+  useEffect(() => {
+    // Create a hash of the form data to detect actual changes
+    const dataHash = JSON.stringify(formData);
+    
+    // Only regenerate if data actually changed
+    if (dataHash === lastDataHashRef.current || isGeneratingRef.current) {
+      return;
+    }
+
+    const generatePreview = () => {
+      isGeneratingRef.current = true;
+      setIsGeneratingPreview(true);
+      
+      // Use setTimeout to allow the UI to render first
+      setTimeout(() => {
+        try {
+          const exportData = generateExportJson(formData);
+          const jsonString = JSON.stringify(exportData, null, 2);
+          setPreviewJson(jsonString);
+          lastDataHashRef.current = dataHash;
+        } catch (error) {
+          console.error('Error generating preview:', error);
+          setPreviewJson('Error generating preview. Please check your data.');
+          lastDataHashRef.current = dataHash;
+        } finally {
+          setIsGeneratingPreview(false);
+          isGeneratingRef.current = false;
+        }
+      }, 100); // Small delay to allow UI to render
+    };
+
+    // Debounce rapid changes
+    const timeoutId = setTimeout(generatePreview, 200);
+    
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [formData]);
 
   return (
     <div className="space-y-8">
@@ -147,23 +191,32 @@ export function ReviewStep() {
             </span>
           </div>
           <div className="rounded-md overflow-hidden border border-border">
-            <SyntaxHighlighter
-              language="json"
-              style={oneLight}
-              customStyle={{
-                margin: 0,
-                padding: '1rem',
-                fontSize: '0.875rem',
-                lineHeight: '1.25rem',
-                background: '#ffffff',
-                color: '#24292e',
-                border: 'none',
-              }}
-              wrapLines={true}
-              wrapLongLines={true}
-            >
-              {JSON.stringify(generateExportJson(formData), null, 2)}
-            </SyntaxHighlighter>
+            {isGeneratingPreview ? (
+              <div className="flex items-center justify-center p-8 bg-white">
+                <div className="flex flex-col items-center gap-3">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground">Generating JSON preview...</p>
+                </div>
+              </div>
+            ) : (
+              <SyntaxHighlighter
+                language="json"
+                style={oneLight}
+                customStyle={{
+                  margin: 0,
+                  padding: '1rem',
+                  fontSize: '0.875rem',
+                  lineHeight: '1.25rem',
+                  background: '#ffffff',
+                  color: '#24292e',
+                  border: 'none',
+                }}
+                wrapLines={true}
+                wrapLongLines={true}
+              >
+                {previewJson}
+              </SyntaxHighlighter>
+            )}
           </div>
         </div>
       </div>

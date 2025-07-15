@@ -8,6 +8,7 @@ import { DatePicker } from '../ui/date-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Textarea } from '../ui/textarea';
 import { cn } from '../../utils/cn';
+import { getDefaultDatesForNewEntry } from '../../utils/campaign-dates';
 import type { IEATask43Schema, LoggerOEM } from '../../types/schema';
 import DynamicLoggerOptionalFields from './DynamicLoggerOptionalFields';
 
@@ -58,14 +59,16 @@ export function LoggerStep() {
   const validationResult = validateLoggers();
 
   const addLogger = (locationIndex: number) => {
+    const formData = watch();
+    const defaultDates = getDefaultDatesForNewEntry(formData);
     const currentLoggers = watch(`measurement_location.${locationIndex}.logger_main_config`) || [];
     const newLogger = {
-      logger_oem_id: 'Other' as LoggerOEM,
+      logger_oem_id: undefined,
       logger_serial_number: '',
-      date_from: new Date().toISOString(),
-      date_to: null,
+      date_from: defaultDates.date_from,
+      date_to: defaultDates.date_to,
       update_at: new Date().toISOString(),
-      clock_is_auto_synced: true
+      clock_is_auto_synced: undefined
     };
 
     setValue(`measurement_location.${locationIndex}.logger_main_config`, [...currentLoggers, newLogger]);
