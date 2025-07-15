@@ -10,6 +10,7 @@ import { MeasurementStep } from './steps/MeasurementStep';
 import { SensorsStep } from './steps/SensorStep';
 import { ReviewStep } from './steps/ReviewStep';
 import { Button } from './ui/button';
+import { downloadJsonFile } from '../utils/json-export';
 import type { IEATask43Schema, Sensor } from '../types/schema';
 
 const steps = [
@@ -250,97 +251,8 @@ export function FormWizard() {
 
   const onSubmit = (data: IEATask43Schema) => {
     if (currentStep === steps.length - 1) {
-      // Use custom plant type if selected
-      // If plant_type is 'custom', use the value from the input field (which will be set to plant_type).
-      // No need to reference plant_type_custom anymore.
-
-      // Helper function to clean optional logger fields
-      const cleanOptionalLoggerFields = (logger: any) => {
-        const optionalFields = [
-          'encryption_pin_or_key',
-          'enclosure_lock_details',
-          'offset_from_utc_hrs',
-          'sampling_rate_sec',
-          'averaging_period_minutes',
-          'timestamp_is_end_of_period',
-          'clock_is_auto_synced',
-          'logger_acquisition_uncertainty',
-          'uncertainty_k_factor'
-        ];
-
-        const cleanedLogger = { ...logger };
-
-        optionalFields.forEach(field => {
-          const value = cleanedLogger[field];
-          // Remove field if it's undefined, null, empty string, or NaN
-          if (value === undefined || value === null || value === '' ||
-            (typeof value === 'number' && isNaN(value))) {
-            delete cleanedLogger[field];
-          }
-        });
-
-        return cleanedLogger;
-      };
-
-      // Exclude campaign dates from JSON export (they're for form validation only)
-      const { startDate, endDate, ...exportData } = data;
-
-      const formattedData = {
-        ...exportData,
-        measurement_location: [{
-          ...data.measurement_location[0],
-          update_at: new Date().toISOString(),
-          logger_main_config: data.measurement_location[0].logger_main_config?.map(logger => cleanOptionalLoggerFields({
-            ...logger,
-            update_at: new Date().toISOString(),
-            date_to: logger.date_to || null,
-            clock_is_auto_synced: true
-          })),
-          measurement_point: data.measurement_location[0].measurement_point.map(point => ({
-            ...point,
-            update_at: new Date().toISOString(),
-            sensor: point.sensor?.map(sensor => ({
-              ...sensor,
-              update_at: new Date().toISOString(),
-              calibration: sensor.calibration?.map(cal => ({
-                ...cal,
-                update_at: new Date().toISOString(),
-                calibration_uncertainty: cal.calibration_uncertainty?.map(unc => ({
-                  ...unc
-                }))
-              }))
-            })),
-            logger_measurement_config: point.logger_measurement_config.map(config => ({
-              ...config,
-              update_at: new Date().toISOString(),
-              column_name: config.column_name.map(col => ({
-                ...col,
-                update_at: new Date().toISOString()
-              }))
-            })),
-            mounting_arrangement: point.mounting_arrangement?.map(mount => ({
-              ...mount,
-              update_at: new Date().toISOString()
-            })),
-            interference_structures: point.interference_structures?.map(structure => ({
-              ...structure,
-              update_at: new Date().toISOString()
-            }))
-          }))
-        }]
-      };
-
-      // Export as JSON file
-      const jsonString = JSON.stringify(formattedData, null, 2);
-      const blob = new Blob([jsonString], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'iea-task43-data.json';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      // Use shared utility function for consistent JSON export
+      downloadJsonFile(data, 'iea-task43-data.json');
     } else {
       next();
     }

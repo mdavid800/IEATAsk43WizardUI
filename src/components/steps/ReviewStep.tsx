@@ -5,6 +5,7 @@ import { Button } from '../ui/button';
 import { cn } from '../../utils/cn';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { generateExportJson } from '../../utils/json-export';
 import type { IEATask43Schema, Sensor } from '../../types/schema';
 
 export function ReviewStep() {
@@ -140,7 +141,10 @@ export function ReviewStep() {
         <div className="bg-muted/50 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-4">
             <FileJson className="w-5 h-5 text-primary" />
-            <h3 className="text-base font-medium">Data Preview</h3>
+            <h3 className="text-base font-medium">Export Preview</h3>
+            <span className="text-sm text-muted-foreground">
+              (IEA-compliant JSON - excludes form-only fields)
+            </span>
           </div>
           <div className="rounded-md overflow-hidden border border-border">
             <SyntaxHighlighter
@@ -158,7 +162,7 @@ export function ReviewStep() {
               wrapLines={true}
               wrapLongLines={true}
             >
-              {JSON.stringify(formData, null, 2)}
+              {JSON.stringify(generateExportJson(formData), null, 2)}
             </SyntaxHighlighter>
           </div>
         </div>
@@ -172,7 +176,8 @@ export function ReviewStep() {
           </div>
           <div className="ml-3">
             <p className="text-sm text-blue-700">
-              Review your configuration summary above. When you're ready, click the "Export JSON" button to download your IEA Task 43 data model file.
+              Review your configuration summary and export preview above. The exported JSON will be IEA Task 43 compliant and exclude form-only fields like campaign status and dates.
+              When ready, click "Export JSON" to download your data model file.
               {!isValid && " Make sure to complete all required sections first."}
             </p>
           </div>

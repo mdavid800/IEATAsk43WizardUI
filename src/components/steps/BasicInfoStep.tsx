@@ -5,25 +5,31 @@ import { DatePicker } from '../ui/date-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { AlertCircle, Check } from 'lucide-react';
 import { cn } from '../../utils/cn';
+import { validateFormOnlyFields } from '../../utils/form-validation';
 
 export function BasicInfoStep() {
   const { register, watch, setValue } = useFormContext();
   const campaignStatus = watch('campaignStatus');
   const plantType = watch('plant_type');
 
-  // Validation logic moved from ReviewStep
+  // Validation logic using enhanced validation utilities
   const validateBasicInfo = () => {
     const formData = watch();
-    const { author, organisation, plant_type, version, date, startDate, campaignStatus, endDate } = formData;
+    const { author, organisation, plant_type, version, date } = formData;
     const issues: string[] = [];
 
+    // Validate required IEA fields
     if (!author) issues.push('Author is required');
     if (!organisation) issues.push('Organisation is required');
     if (!plant_type) issues.push('Plant type is required');
     if (!version) issues.push('Version is required');
     if (!date) issues.push('Date is required');
-    if (!startDate) issues.push('Campaign start date is required');
-    if (campaignStatus === 'historical' && !endDate) issues.push('Campaign end date is required');
+
+    // Validate form-only fields using dedicated utility
+    const formValidation = validateFormOnlyFields(formData as any);
+    if (!formValidation.valid) {
+      issues.push(...formValidation.issues);
+    }
 
     return {
       valid: issues.length === 0,
@@ -99,6 +105,19 @@ export function BasicInfoStep() {
             placeholder="Enter organisation name"
             className="professional-input"
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="license">License</Label>
+          <Input
+            id="license"
+            {...register('license')}
+            placeholder="e.g., BSD-3-Clause or https://..."
+            className="professional-input"
+          />
+          <p className="text-sm text-muted-foreground">
+            Legal document or URI giving permission to use this data
+          </p>
         </div>
 
         <div className="space-y-2">

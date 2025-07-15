@@ -4,9 +4,14 @@ export interface IEATask43Schema {
   organisation: string;
   date: string; // Date the JSON file was created (YYYY-MM-DD format)
   version: string;
-  campaignStatus: 'live' | 'historical'; // Added for issue #5: Indicate if campaign is live or historical
+  license?: string | null; // Legal permissions field (IEA compliant)
+  
+  // 🔹 FORM-ONLY FIELDS (NOT exported to JSON)
+  campaignStatus?: 'live' | 'historical'; // Form validation only
   startDate?: string; // Campaign start date (form only, not exported to JSON)
   endDate?: string; // Campaign end date (form only, not exported to JSON)
+  
+  // ✅ IEA-COMPLIANT FIELDS
   /** Name of the plant */
   plant_name?: string | null;
   /** Type of plant: onshore wind, offshore wind, solar, or null */
