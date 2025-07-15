@@ -48,6 +48,26 @@ export interface MeasurementLocation {
   measurement_point: MeasurementPoint[];
 }
 
+export interface MastSectionGeometry {
+  uuid?: string | null;
+  mast_section_height_mm?: number | null;
+  pole_diameter_mm?: number | null;
+  lattice_face_width_at_bottom_mm?: number | null;
+  lattice_face_width_at_top_mm?: number | null;
+  lattice_leg_width_mm?: number | null;
+  lattice_leg_is_round_cross_section?: boolean | null;
+  lattice_bracing_member_diameter_mm?: number | null;
+  lattice_bracing_member_diameter_horizontal_mm?: number | null;
+  lattice_bracing_member_diameter_diagonal_mm?: number | null;
+  lattice_number_of_diagonal_bracing_members?: number | null;
+  lattice_bracing_member_length_diagonal_mm?: number | null;
+  number_of_repetitive_patterns_on_face?: number | null;
+  lattice_bracing_member_height_mm?: number | null;
+  lattice_has_horizontal_member?: boolean | null;
+  notes?: string | null;
+  update_at: string | null;
+}
+
 export interface MastProperties {
   mast_geometry_id?: 'lattice_triangle' | 'lattice_square_round_edges' | 'lattice_square_sharp_edges' | 'pole' | null;
   mast_oem?: string;
@@ -58,6 +78,7 @@ export interface MastProperties {
   date_to: string | null;
   notes?: string;
   update_at: string;
+  mast_section_geometry?: MastSectionGeometry[] | null;
 }
 
 export interface VerticalProfilerProperty {
@@ -154,8 +175,11 @@ export interface Sensor {
 export interface Calibration {
   measurement_type_id: MeasurementType;
   slope?: number;
+  slope_unit?: MeasurementUnits | null;
   offset?: number;
+  offset_unit?: MeasurementUnits | null;
   sensitivity?: number;
+  sensitivity_unit?: MeasurementUnits | null;
   report_file_name?: string;
   report_link?: string;
   calibration_id?: string;
@@ -398,7 +422,8 @@ export type HeightReference =
 export type OrientationReference =
   | 'magnetic_north'
   | 'true_north'
-  | 'grid_north';
+  | 'grid_north'
+  | null;
 
 export type SensorType =
   | 'anemometer'
