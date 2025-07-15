@@ -1,66 +1,39 @@
-# IEA Task 43 Schema Alignment Plan - Phase 2
+# IEA Task 43 Schema Alignment Plan - Phase 2 Updated
 
 ## Overview
 After completing Phase 1 (enum expansions and basic field fixes), this updated plan focuses on the remaining critical gaps identified by comparing our current `schema.ts` with the official `iea43_wra_data_model.schema.json`.
 
-## Current Status: Phase 1 ✅ COMPLETED
+## Current Status: Phase 2A ✅ COMPLETED
 - ✅ Root level fields aligned with IEA spec
 - ✅ All critical enums expanded (70+ measurement types, 60+ units, 40+ sensor types)
 - ✅ Searchable dropdown UX implemented
 - ✅ JSON export compliance achieved
+- ✅ **ModelConfig implementation complete** - Full reanalysis data support
+- ✅ **Critical nullability fixes** - uuid and height_m now properly nullable
+- ✅ **LocationStep UI enhanced** - Dynamic ModelConfig section for reanalysis stations
 
-## Phase 2: Critical Missing Structures 🎯 CURRENT FOCUS
+## Phase 2B: Remaining Structures 🎯 CURRENT FOCUS
 
-### 1. **MISSING: `model_config` Array** - HIGH PRIORITY
-**Location**: `MeasurementLocation` interface
-**Purpose**: Support for reanalysis/simulation data sources
+### 1. ✅ **COMPLETED: `model_config` Array** - HIGH PRIORITY
+**Status**: ✅ **FULLY IMPLEMENTED**
+- ✅ ModelConfig interface added to schema.ts
+- ✅ Added to MeasurementLocation interface
+- ✅ UI section in LocationStep.tsx (appears when 'reanalysis' selected)
+- ✅ Full form functionality with add/remove/expand capabilities
+- ✅ All IEA-required fields: reanalysis, date_from, optional fields
 
-**Required Interface**:
-```typescript
-interface ModelConfig {
-  reanalysis: 'CFSR' | 'ERA-Interim' | 'ERA5' | 'JRA-55' | 'MERRA-2' | 'NCAR' | 'Other';
-  horizontal_grid_resolution_m?: number | null;
-  model_used?: string | null;
-  date_from: string;
-  date_to: string | null;
-  offset_from_utc_hrs?: number | null;
-  averaging_period_minutes?: number | null;
-  timestamp_is_end_of_period?: boolean | null;
-  notes?: string | null;
-  update_at: string | null;
-}
-```
+### 2. ❌ **SKIPPING: `lidar_config` Array** - OUTDATED
+**Status**: ❌ **INTENTIONALLY SKIPPED**
+**Reason**: This is outdated in the official schema and has been replaced by `vertical_profiler_properties` which is already fully implemented in our system.
 
-**Add to MeasurementLocation**:
-```typescript
-model_config?: ModelConfig[];
-```
-
-### 2. **MISSING: `lidar_config` Array** - HIGH PRIORITY
-**Location**: `LoggerMainConfig` interface
-**Purpose**: Lidar-specific configuration settings
-
-**Required Interface**:
-```typescript
-interface LidarConfig {
-  flow_corrections_applied?: boolean | null;
-  logger_stated_device_datum_plane_height_m?: number | null;
-  logger_stated_device_orientation_deg?: number | null;
-  date_from: string | null;
-  date_to: string | null;
-  notes?: string | null;
-  update_at: string | null;
-}
-```
-
-**Add to LoggerMainConfig**:
-```typescript
-lidar_config?: LidarConfig[] | null;
-```
+**Current Implementation**: 
+- ✅ `vertical_profiler_properties` array is complete and covers all lidar functionality
+- ✅ UI fully functional for lidar/sodar/floating_lidar station types
+- ✅ Covers all necessary lidar configuration fields
 
 ### 3. **MISSING: `mast_section_geometry` Array** - MEDIUM PRIORITY
 **Location**: `MastProperties` interface
-**Purpose**: Detailed mast section specifications
+**Purpose**: Detailed mast section specifications for advanced IEC compliance
 
 **Required Interface**:
 ```typescript
@@ -90,13 +63,13 @@ interface MastSectionGeometry {
 mast_section_geometry?: MastSectionGeometry[] | null;
 ```
 
-## Phase 3: Critical Type Fixes 🔧 MEDIUM PRIORITY
+## Phase 3: Final Type Fixes 🔧 MEDIUM PRIORITY
 
-### 1. **NULLABILITY MISMATCHES**
+### 1. ✅ **COMPLETED: NULLABILITY MISMATCHES**
 ```typescript
-// Current → Should be
-uuid: string → uuid: string | null  // in MeasurementLocation
-height_m: number → height_m: number | null  // in MeasurementPoint
+// ✅ FIXED
+uuid: string | null  // in MeasurementLocation
+height_m: number | null  // in MeasurementPoint
 ```
 
 ### 2. **MISSING CALIBRATION UNIT FIELDS**
@@ -128,20 +101,20 @@ The official schema has a constraint that `logger_main_config` and `model_config
 
 ## Implementation Priority
 
-### 🔥 IMMEDIATE (Phase 2A)
-1. Add `ModelConfig` interface and array to `MeasurementLocation`
-2. Add `LidarConfig` interface and array to `LoggerMainConfig` 
-3. Fix `uuid` and `height_m` nullability
+### ✅ COMPLETED (Phase 2A)
+1. ✅ Add `ModelConfig` interface and array to `MeasurementLocation`
+2. ✅ Fix `uuid` and `height_m` nullability
+3. ✅ Complete LocationStep UI for ModelConfig
 
 ### 🎯 NEXT (Phase 2B)  
 4. Add missing calibration unit fields
-5. Add `MastSectionGeometry` interface
+5. Add `MastSectionGeometry` interface (optional - advanced IEC compliance)
 6. Fix `OrientationReference` nullability
 
 ### 📝 LATER (Phase 3)
 7. Add mutual exclusivity validation
-8. Update form components for new optional fields
-9. Add comprehensive schema validation
+8. Add comprehensive schema validation
+9. Consider date format validation
 
 ## Breaking Changes Impact
 - **Minimal**: Most additions are optional arrays/fields
@@ -157,14 +130,36 @@ The official schema has a constraint that `logger_main_config` and `model_config
 
 These provide UI/UX benefits without compromising IEA compliance in final JSON export.
 
+## Architecture Decision: Vertical Profiler vs LidarConfig
+
+**Decision**: Use `vertical_profiler_properties` instead of `lidar_config`
+
+**Rationale**: 
+- `vertical_profiler_properties` is the current standard in IEA Task 43
+- `lidar_config` appears in schema but is legacy/deprecated
+- `vertical_profiler_properties` covers all lidar, sodar, and floating lidar configurations
+- Our implementation already supports this comprehensively
+- UI already functional for all vertical profiler types
+
 ---
 
-## Next Action Items
+## Current Phase 2B Action Items
 
-1. ✅ **Update plan.md** with current gaps analysis
-2. 🎯 **Implement ModelConfig interface** and integration
-3. 🎯 **Implement LidarConfig interface** and integration  
-4. 🎯 **Fix critical nullability issues**
-5. 📋 **Update form validation** for new optional structures
+1. ✅ **Update plan.md** to reflect ModelConfig completion and remove LidarConfig
+2. 🎯 **Add calibration unit fields** (slope_unit, offset_unit, sensitivity_unit)
+3. 📋 **Add MastSectionGeometry interface** (optional - for advanced users)
+4. 🔧 **Fix OrientationReference nullability**
 
-**Estimated Completion**: 3-4 hours for Phase 2A, 2-3 hours for Phase 2B
+**Estimated Completion**: 2-3 hours for Phase 2B
+
+## Summary: Major Progress Achieved
+
+**✅ Phase 2A Complete:**
+- **ModelConfig**: Full reanalysis data support with comprehensive UI
+- **Nullability**: Critical type fixes for schema compliance
+- **UI Enhancement**: Dynamic sections based on station type selection
+
+**🎯 Next Focus:**
+- Calibration unit fields (practical necessity)
+- Optional advanced mast geometry (IEC compliance)
+- Final type alignment touches

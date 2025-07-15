@@ -19,8 +19,21 @@ export interface IEATask43Schema {
   measurement_location: MeasurementLocation[];
 }
 
+export interface ModelConfig {
+  reanalysis: 'CFSR' | 'ERA-Interim' | 'ERA5' | 'JRA-55' | 'MERRA-2' | 'NCAR' | 'Other';
+  horizontal_grid_resolution_m?: number | null;
+  model_used?: string | null;
+  date_from: string;
+  date_to: string | null;
+  offset_from_utc_hrs?: number | null;
+  averaging_period_minutes?: number | null;
+  timestamp_is_end_of_period?: boolean | null;
+  notes?: string | null;
+  update_at: string | null;
+}
+
 export interface MeasurementLocation {
-  uuid: string;
+  uuid: string | null;
   name: string;
   latitude_ddeg: number;
   longitude_ddeg: number;
@@ -30,6 +43,7 @@ export interface MeasurementLocation {
   mast_properties?: MastProperties;
   vertical_profiler_properties?: VerticalProfilerProperty[];
   logger_main_config?: LoggerMainConfig[];
+  model_config?: ModelConfig[];
   sensors?: Sensor[]; // Added to support sensors directly under a location as per SensorStep.tsx
   measurement_point: MeasurementPoint[];
 }
@@ -85,7 +99,7 @@ export interface MeasurementPoint {
   name: string;
   measurement_type_id: 'wind_speed' | 'wind_direction' | 'temperature' | 'pressure' | 'humidity' | 'wave_height' | 'wave_period' | 'wave_direction' | 'position' | 'other';
   statistic_type_id?: StatisticType;
-  height_m: number;
+  height_m: number | null;
   height_reference_id: 'ground_level' | 'sea_level' | 'sea_floor';
   unit?: string;
   notes?: string;

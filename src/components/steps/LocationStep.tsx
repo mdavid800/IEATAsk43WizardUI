@@ -15,6 +15,7 @@ export function LocationStep() {
   const { register, setValue, watch } = useFormContext<IEATask43Schema>();
   const [isExpanded, setIsExpanded] = useState(true);
   const [expandedProfilerProps, setExpandedProfilerProps] = useState<Record<string, boolean>>({});
+  const [expandedModelConfigs, setExpandedModelConfigs] = useState<Record<string, boolean>>({});
 
   // Validation logic moved from ReviewStep
   const validateLocations = () => {
@@ -52,6 +53,13 @@ export function LocationStep() {
     }));
   };
 
+  const toggleModelConfigExpand = (index: number) => {
+    setExpandedModelConfigs(prev => ({
+      ...prev,
+      [index]: !prev[index]
+    }));
+  };
+
   const addVerticalProfilerProperty = () => {
     const currentProps = watch('measurement_location.0.vertical_profiler_properties') || [];
     setValue('measurement_location.0.vertical_profiler_properties', [
@@ -74,6 +82,31 @@ export function LocationStep() {
     const currentProps = watch('measurement_location.0.vertical_profiler_properties') || [];
     const newProps = currentProps.filter((_, i) => i !== index);
     setValue('measurement_location.0.vertical_profiler_properties', newProps);
+  };
+
+  const addModelConfig = () => {
+    const currentConfigs = watch('measurement_location.0.model_config') || [];
+    setValue('measurement_location.0.model_config', [
+      ...currentConfigs,
+      {
+        reanalysis: 'ERA5',
+        horizontal_grid_resolution_m: null,
+        model_used: null,
+        date_from: new Date().toISOString(),
+        date_to: null,
+        offset_from_utc_hrs: null,
+        averaging_period_minutes: null,
+        timestamp_is_end_of_period: null,
+        notes: null,
+        update_at: new Date().toISOString()
+      }
+    ]);
+  };
+
+  const removeModelConfig = (index: number) => {
+    const currentConfigs = watch('measurement_location.0.model_config') || [];
+    const newConfigs = currentConfigs.filter((_, i) => i !== index);
+    setValue('measurement_location.0.model_config', newConfigs);
   };
 
   return (
@@ -493,6 +526,181 @@ export function LocationStep() {
                               </Label>
                               <Textarea
                                 {...register(`measurement_location.0.vertical_profiler_properties.${index}.notes`)}
+                                placeholder="Add any additional notes"
+                                rows={3}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Model Configuration Section */}
+              {watch('measurement_location.0.measurement_station_type_id') === 'reanalysis' && (
+                <div className="mt-8 pt-6 border-t border-border">
+                  <div className="flex justify-between items-center mb-4">
+                    <h4 className="text-lg font-medium">Model Configuration</h4>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="bg-primary hover:bg-primary/90 shadow hover:shadow-lg focus:ring-2 focus:ring-primary/50"
+                      onClick={addModelConfig}
+                    >
+                      <PlusCircle className="w-4 h-4 mr-2" />
+                      Add Model Configuration
+                    </Button>
+                  </div>
+
+                  {(watch('measurement_location.0.model_config') || []).map((_, index) => (
+                    <div key={index} className="border border-border rounded-lg overflow-hidden mb-4">
+                      <div
+                        className="bg-card p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => toggleModelConfigExpand(index)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <ChevronDown className={`w-5 h-5 transition-transform ${expandedModelConfigs[index] ? 'transform rotate-0' : 'transform -rotate-90'}`} />
+                            <h5 className="text-base font-medium">Model Configuration {index + 1}</h5>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            aria-label="Remove"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeModelConfig(index);
+                            }}
+                            className="p-2 hover:bg-transparent"
+                          >
+                            <Trash2 className="w-6 h-6 text-[#FF0000] hover:text-[#CC0000]" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {expandedModelConfigs[index] && (
+                        <div className="border-t border-border p-6 bg-background">
+                          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                            <div className="space-y-2">
+                              <Label htmlFor={`measurement_location.0.model_config.${index}.reanalysis`}>
+                                Reanalysis <span className="required-asterisk">*</span>
+                              </Label>
+                              <Select
+                                onValueChange={(value) => setValue(`measurement_location.0.model_config.${index}.reanalysis`, value as any)}
+                                value={watch(`measurement_location.0.model_config.${index}.reanalysis`)}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select reanalysis dataset" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="CFSR">CFSR</SelectItem>
+                                  <SelectItem value="ERA-Interim">ERA-Interim</SelectItem>
+                                  <SelectItem value="ERA5">ERA5</SelectItem>
+                                  <SelectItem value="JRA-55">JRA-55</SelectItem>
+                                  <SelectItem value="MERRA-2">MERRA-2</SelectItem>
+                                  <SelectItem value="NCAR">NCAR</SelectItem>
+                                  <SelectItem value="Other">Other</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor={`measurement_location.0.model_config.${index}.horizontal_grid_resolution_m`}>
+                                Horizontal Grid Resolution (m)
+                              </Label>
+                              <Input
+                                type="number"
+                                step="1"
+                                {...register(`measurement_location.0.model_config.${index}.horizontal_grid_resolution_m`, { valueAsNumber: true })}
+                                placeholder="Enter grid resolution"
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor={`measurement_location.0.model_config.${index}.model_used`}>
+                                Model Used
+                              </Label>
+                              <Input
+                                {...register(`measurement_location.0.model_config.${index}.model_used`)}
+                                placeholder="Enter model name"
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor={`measurement_location.0.model_config.${index}.offset_from_utc_hrs`}>
+                                Offset From UTC (hrs)
+                              </Label>
+                              <Input
+                                type="number"
+                                step="0.5"
+                                {...register(`measurement_location.0.model_config.${index}.offset_from_utc_hrs`, { valueAsNumber: true })}
+                                placeholder="Enter UTC offset"
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor={`measurement_location.0.model_config.${index}.averaging_period_minutes`}>
+                                Averaging Period (min)
+                              </Label>
+                              <Input
+                                type="number"
+                                step="1"
+                                {...register(`measurement_location.0.model_config.${index}.averaging_period_minutes`, { valueAsNumber: true })}
+                                placeholder="Enter averaging period"
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor={`measurement_location.0.model_config.${index}.timestamp_is_end_of_period`}>
+                                Timestamp at End of Period
+                              </Label>
+                              <Select
+                                onValueChange={(value) => setValue(`measurement_location.0.model_config.${index}.timestamp_is_end_of_period`, value === 'true' ? true : value === 'false' ? false : null)}
+                                value={watch(`measurement_location.0.model_config.${index}.timestamp_is_end_of_period`) === true ? 'true' : watch(`measurement_location.0.model_config.${index}.timestamp_is_end_of_period`) === false ? 'false' : ''}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select timestamp position" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="true">True (end of period)</SelectItem>
+                                  <SelectItem value="false">False (start of period)</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor={`measurement_location.0.model_config.${index}.date_from`}>
+                                Date From <span className="required-asterisk">*</span>
+                              </Label>
+                              <DatePicker
+                                value={watch(`measurement_location.0.model_config.${index}.date_from`) || ''}
+                                onChange={(value) => setValue(`measurement_location.0.model_config.${index}.date_from`, value)}
+                                placeholder="Select start date and time"
+                                includeTime={true}
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor={`measurement_location.0.model_config.${index}.date_to`}>
+                                Date To
+                              </Label>
+                              <DatePicker
+                                value={watch(`measurement_location.0.model_config.${index}.date_to`) || ''}
+                                onChange={(value) => setValue(`measurement_location.0.model_config.${index}.date_to`, value)}
+                                placeholder="Select end date and time"
+                                includeTime={true}
+                              />
+                            </div>
+
+                            <div className="sm:col-span-2 space-y-2">
+                              <Label htmlFor={`measurement_location.0.model_config.${index}.notes`}>
+                                Notes
+                              </Label>
+                              <Textarea
+                                {...register(`measurement_location.0.model_config.${index}.notes`)}
                                 placeholder="Add any additional notes"
                                 rows={3}
                               />
