@@ -1,12 +1,30 @@
 # Implementation Plan
 
 - [ ] 1. Set up schema validation infrastructure
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   - Install JSON schema validation library (ajv)
   - Copy official IEA schema file to project utilities
   - Create schema validation service with proper error handling
   - _Requirements: 8.1, 8.2, 8.3, 8.4_
+-
+
+
 
 - [ ] 2. Fix TypeScript schema interface compliance
+
 - [ ] 2.1 Update MeasurementLocation interface
   - Remove non-compliant `sensors?: Sensor[]` field from MeasurementLocation
   - Ensure all required fields are properly marked as non-optional

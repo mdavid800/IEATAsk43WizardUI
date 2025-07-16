@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { FormWizard } from './components/FormWizard';
 import { LandingPage } from './components/LandingPage';
-import { Wind, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Button } from './components/ui/button';
 import { Logo } from './components/ui/logo';
 
 function App() {
   const [showForm, setShowForm] = useState(false);
+
+
 
   const handleStartForm = () => {
     setShowForm(true);
