@@ -226,9 +226,29 @@ export function LocationStep() {
                     step="0.000001"
                     min="-90"
                     max="90"
-                    {...register('measurement_location.0.latitude_ddeg', { valueAsNumber: true })}
-                    placeholder="Enter latitude"
+                    {...register('measurement_location.0.latitude_ddeg', {
+                      valueAsNumber: true,
+                      validate: (value) => {
+                        if (value === undefined || value === null) return true;
+                        if (value < -90 || value > 90) {
+                          return 'Latitude must be between -90 and 90 degrees';
+                        }
+                        return true;
+                      }
+                    })}
+                    placeholder="Enter latitude (-90 to 90)"
+                    className={
+                      watch('measurement_location.0.latitude_ddeg') > 90 ||
+                        watch('measurement_location.0.latitude_ddeg') < -90
+                        ? 'border-red-500 focus:border-red-500'
+                        : ''
+                    }
                   />
+                  {(watch('measurement_location.0.latitude_ddeg') > 90 || watch('measurement_location.0.latitude_ddeg') < -90) && (
+                    <p className="text-sm text-red-600">
+                      Latitude must be between -90 and 90 degrees
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -240,9 +260,29 @@ export function LocationStep() {
                     step="0.000001"
                     min="-180"
                     max="180"
-                    {...register('measurement_location.0.longitude_ddeg', { valueAsNumber: true })}
-                    placeholder="Enter longitude"
+                    {...register('measurement_location.0.longitude_ddeg', {
+                      valueAsNumber: true,
+                      validate: (value) => {
+                        if (value === undefined || value === null) return true;
+                        if (value < -180 || value > 180) {
+                          return 'Longitude must be between -180 and 180 degrees';
+                        }
+                        return true;
+                      }
+                    })}
+                    placeholder="Enter longitude (-180 to 180)"
+                    className={
+                      watch('measurement_location.0.longitude_ddeg') > 180 ||
+                        watch('measurement_location.0.longitude_ddeg') < -180
+                        ? 'border-red-500 focus:border-red-500'
+                        : ''
+                    }
                   />
+                  {(watch('measurement_location.0.longitude_ddeg') > 180 || watch('measurement_location.0.longitude_ddeg') < -180) && (
+                    <p className="text-sm text-red-600">
+                      Longitude must be between -180 and 180 degrees
+                    </p>
+                  )}
                 </div>
 
                 <div className="sm:col-span-2">
