@@ -4,6 +4,7 @@ import { PlusCircle, Upload, ChevronDown, AlertCircle, Check } from 'lucide-reac
 import Papa from 'papaparse';
 import { Button } from '@/components/ui/button';
 import { cn } from '../../utils/cn';
+import { getDefaultDatesForNewEntry } from '../../utils/campaign-dates';
 import type {
   IEATask43Schema,
   MeasurementType,
@@ -84,6 +85,8 @@ export function MeasurementStep() {
     const logger = watch(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}`);
     if (!logger) return;
 
+    const formData = watch();
+    const defaultDates = getDefaultDatesForNewEntry(formData);
     const currentPoints = watch(`measurement_location.${locationIndex}.measurement_point`) || [];
     const newPoint = {
       name: '',
@@ -94,8 +97,8 @@ export function MeasurementStep() {
       update_at: new Date().toISOString(),
       logger_measurement_config: [{
         logger_id: logger.logger_id || logger.logger_serial_number,
-        date_from: new Date().toISOString(),
-        date_to: null,
+        date_from: defaultDates.date_from,
+        date_to: defaultDates.date_to,
         update_at: new Date().toISOString(),
         column_name: []
       }],
@@ -617,6 +620,8 @@ export function MeasurementStep() {
               }
 
               // Create the measurement point
+              const formData = watch();
+              const defaultDates = getDefaultDatesForNewEntry(formData);
               const measurementPoint: MeasurementPoint = {
                 name: column.name, // Use exact original column name
                 measurement_type_id: column.measurementType,
@@ -627,8 +632,8 @@ export function MeasurementStep() {
                 update_at: new Date().toISOString(),
                 logger_measurement_config: [{
                   logger_id: loggerId,
-                  date_from: new Date().toISOString(),
-                  date_to: null,
+                  date_from: defaultDates.date_from,
+                  date_to: defaultDates.date_to,
                   update_at: new Date().toISOString(),
                   column_name: [{
                     column_name: column.name, // Use exact original column name
