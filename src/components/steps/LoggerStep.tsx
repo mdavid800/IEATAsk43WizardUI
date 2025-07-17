@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Textarea } from '../ui/textarea';
 import { cn } from '../../utils/cn';
 import { getDefaultDatesForNewEntry } from '../../utils/campaign-dates';
+import { validateLoggers } from '../../utils/step-validation';
 import type { IEATask43Schema, LoggerOEM } from '../../types/schema';
 import DynamicLoggerOptionalFields from './DynamicLoggerOptionalFields';
 
@@ -20,43 +21,9 @@ export function LoggerStep() {
   );
   const [expandedLoggers, setExpandedLoggers] = useState<{ [key: number]: boolean }>({});
 
-  // Validation logic moved from ReviewStep
-  const validateLoggers = () => {
-    const formData = watch();
-    const issues: string[] = [];
-
-    formData.measurement_location?.forEach((location, locIndex) => {
-      if (!location.logger_main_config?.length) {
-        issues.push(`Location ${locIndex + 1}: At least one logger is required`);
-        return;
-      }
-
-      location.logger_main_config.forEach((logger, logIndex) => {
-        if (!logger.logger_oem_id) {
-          issues.push(`Location ${locIndex + 1}, Logger ${logIndex + 1}: Logger Manufacturer is required`);
-        }
-        if (!logger.logger_model_name) {
-          issues.push(`Location ${locIndex + 1}, Logger ${logIndex + 1}: Model Name is required`);
-        }
-        if (!logger.logger_serial_number) {
-          issues.push(`Location ${locIndex + 1}, Logger ${logIndex + 1}: Serial number is required`);
-        }
-        if (!logger.date_from) {
-          issues.push(`Location ${locIndex + 1}, Logger ${logIndex + 1}: Date From is required`);
-        }
-        if (!logger.date_to) {
-          issues.push(`Location ${locIndex + 1}, Logger ${logIndex + 1}: Date To is required`);
-        }
-      });
-    });
-
-    return {
-      valid: issues.length === 0,
-      issues
-    };
-  };
-
-  const validationResult = validateLoggers();
+  // Use shared validation utility
+  const formData = watch();
+  const validationResult = validateLoggers(formData);
 
   const addLogger = (locationIndex: number) => {
     const formData = watch();

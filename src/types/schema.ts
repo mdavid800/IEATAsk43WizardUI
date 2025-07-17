@@ -33,19 +33,18 @@ export interface ModelConfig {
 }
 
 export interface MeasurementLocation {
-  uuid: string | null;
-  name: string;
-  latitude_ddeg: number;
-  longitude_ddeg: number;
-  measurement_station_type_id: 'mast' | 'lidar' | 'sodar' | 'floating_lidar' | 'wave_buoy' | 'adcp' | 'solar' | 'virtual_met_mast' | 'reanalysis';
+  uuid?: string | null;
+  name: string; // Required
+  latitude_ddeg: number; // Required
+  longitude_ddeg: number; // Required
+  measurement_station_type_id: 'mast' | 'lidar' | 'sodar' | 'floating_lidar' | 'wave_buoy' | 'adcp' | 'solar' | 'virtual_met_mast' | 'reanalysis'; // Required
   notes?: string;
   update_at: string;
   mast_properties?: MastProperties;
   vertical_profiler_properties?: VerticalProfilerProperty[];
   logger_main_config?: LoggerMainConfig[];
   model_config?: ModelConfig[];
-  sensors?: Sensor[]; // Added to support sensors directly under a location as per SensorStep.tsx
-  measurement_point: MeasurementPoint[];
+  measurement_point: MeasurementPoint[]; // Required
 }
 
 export interface MastSectionGeometry {
@@ -118,11 +117,10 @@ export interface LoggerMainConfig {
 
 export interface MeasurementPoint {
   name: string;
-  measurement_type_id: 'wind_speed' | 'wind_direction' | 'temperature' | 'pressure' | 'humidity' | 'wave_height' | 'wave_period' | 'wave_direction' | 'position' | 'other';
+  measurement_type_id: MeasurementType;
   statistic_type_id?: StatisticType;
   height_m: number | null;
-  height_reference_id: 'ground_level' | 'sea_level' | 'sea_floor';
-  unit?: string;
+  height_reference_id: HeightReference;
   notes?: string;
   update_at: string;
   logger_measurement_config: LoggerMeasurementConfig[];
