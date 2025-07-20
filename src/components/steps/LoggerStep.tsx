@@ -1,4 +1,4 @@
-import { useFormContext } from 'react-hook-form';
+erimport { useFormContext } from 'react-hook-form';
 import { PlusCircle, Trash2, ChevronDown, Settings, AlertCircle, Check } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '../ui/button';
@@ -10,14 +10,14 @@ import { Textarea } from '../ui/textarea';
 import { cn } from '../../utils/cn';
 import { getDefaultDatesForNewEntry } from '../../utils/campaign-dates';
 import { validateLoggers } from '../../utils/step-validation';
-import type { IEATask43Schema, LoggerOEM } from '../../types/schema';
+import type { IEATask43Schema, LoggerOEM, LoggerMainConfig } from '../../types/schema';
 import DynamicLoggerOptionalFields from './DynamicLoggerOptionalFields';
 
 export function LoggerStep() {
   const { register, setValue, watch } = useFormContext<IEATask43Schema>();
   const locations = watch('measurement_location');
   const [expandedLocations, setExpandedLocations] = useState<{ [key: string]: boolean }>(
-    locations.reduce((acc, loc) => ({ ...acc, [loc.uuid]: true }), {})
+    locations.reduce((acc, loc) => ({ ...acc, [loc.uuid!]: true }), {})
   );
   const [expandedLoggers, setExpandedLoggers] = useState<{ [key: number]: boolean }>({});
 
@@ -29,7 +29,7 @@ export function LoggerStep() {
     const formData = watch();
     const defaultDates = getDefaultDatesForNewEntry(formData);
     const currentLoggers = watch(`measurement_location.${locationIndex}.logger_main_config`) || [];
-    const newLogger = {
+    const newLogger: Partial<LoggerMainConfig> = {
       logger_oem_id: undefined,
       logger_serial_number: '',
       date_from: defaultDates.date_from,
@@ -38,7 +38,7 @@ export function LoggerStep() {
       clock_is_auto_synced: undefined
     };
 
-    setValue(`measurement_location.${locationIndex}.logger_main_config`, [...currentLoggers, newLogger]);
+    setValue(`measurement_location.${locationIndex}.logger_main_config`, [...currentLoggers, newLogger as LoggerMainConfig]);
     setExpandedLoggers({ ...expandedLoggers, [currentLoggers.length]: true }); // Use index as key
   };
 
@@ -116,11 +116,11 @@ export function LoggerStep() {
         <div key={location.uuid} className="logger-card mb-8 shadow-lg transition-transform hover:scale-[1.01]">
           <div
             className="flex items-center justify-between bg-gradient-to-r from-primary/5 to-primary/0 p-5 cursor-pointer hover:bg-primary/10 transition-colors border-b border-border/60 backdrop-blur-md"
-            onClick={() => toggleLocationExpand(location.uuid)}
+            onClick={() => toggleLocationExpand(location.uuid!)}
           >
             <div className="flex items-center gap-4">
               <ChevronDown
-                className={`w-5 h-5 transition-transform ${expandedLocations[location.uuid] ? 'rotate-0' : '-rotate-90'}`}
+                className={`w-5 h-5 transition-transform ${expandedLocations[location.uuid!] ? 'rotate-0' : '-rotate-90'}`}
               />
               <h3 className="text-xl font-semibold text-primary drop-shadow-sm tracking-tight">
                 {location.name || `Location ${locationIndex + 1}`}
@@ -131,13 +131,14 @@ export function LoggerStep() {
             </div>
           </div>
 
-          {expandedLocations[location.uuid] && (
+          {expandedLocations[location.uuid!] && (
             <div className="p-8 bg-white/70 backdrop-blur-md border-t border-border/60 space-y-8 transition-all animate-fadeIn">
               <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-3">
                   <Settings className="w-5 h-5 text-primary" />
                   <span className="font-semibold text-foreground tracking-tight text-base">Loggers</span>
-                </div>         <Button
+                </div>
+                <Button
                   type="button"
                   variant="secondary"
                   className="bg-primary hover:bg-primary/90 shadow hover:shadow-lg focus:ring-2 focus:ring-primary/50"
@@ -154,11 +155,11 @@ export function LoggerStep() {
                     <div
                       className="flex items-center gap-3 cursor-pointer select-none px-6 py-3 bg-gradient-to-r from-primary/10 to-primary/0 hover:bg-primary/20 transition-colors border-b border-border/40"
                       onClick={() => toggleLoggerExpand(loggerIndex)}
-                    >                <div className="flex items-center w-full justify-between">
+                    >
+                      <div className="flex items-center w-full justify-between">
                         <div className="flex items-center gap-3">
                           <ChevronDown
-                            className={`w-5 h-5 transition-transform ${expandedLoggers[loggerIndex] ? 'transform rotate-0' : 'transform -rotate-90'
-                              }`}
+                            className={`w-5 h-5 transition-transform ${expandedLoggers[loggerIndex] ? 'transform rotate-0' : 'transform -rotate-90'}`}
                           />
                           <h5 className="text-base font-medium">Logger {loggerIndex + 1}</h5>
                           <div className="text-sm text-muted-foreground">
@@ -183,7 +184,7 @@ export function LoggerStep() {
 
                     {expandedLoggers[loggerIndex] && (
                       <div className="p-6 bg-background space-y-6">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 p-8 bg-white/80 rounded-b-xl">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                           <div className="space-y-2">
                             <Label htmlFor={`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.logger_oem_id`}>
                               Logger Manufacturer <span className="required-asterisk">*</span>

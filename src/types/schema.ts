@@ -44,6 +44,7 @@ export interface MeasurementLocation {
   vertical_profiler_properties?: VerticalProfilerProperty[];
   logger_main_config?: LoggerMainConfig[];
   model_config?: ModelConfig[];
+  sensors?: Sensor[]; // Array of sensors attached to this location
   measurement_point: MeasurementPoint[]; // Required
 }
 

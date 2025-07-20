@@ -6,14 +6,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { AlertCircle, Check } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { validateBasicInfo } from '../../utils/step-validation';
+import { IEATask43Schema } from '../../types/schema';
 
 export function BasicInfoStep() {
-  const { register, watch, setValue } = useFormContext();
+  const { register, watch, setValue } = useFormContext<IEATask43Schema>();
   const formData = watch();
   const campaignStatus = watch('campaignStatus');
   const plantType = watch('plant_type');
 
-  const validationResult = validateBasicInfo(formData);
+  const validationResult = validateBasicInfo(formData as IEATask43Schema);
 
   return (
     <div className="space-y-8">
@@ -108,7 +109,7 @@ export function BasicInfoStep() {
         <div className="space-y-2">
           <Label htmlFor="plant_type">Plant Type <span className="required-asterisk">*</span></Label>
           <Select
-            onValueChange={(value) => setValue('plant_type', value === 'null' ? null : value)}
+            onValueChange={(value) => setValue('plant_type', value === 'null' ? null : value as 'onshore_wind' | 'offshore_wind' | 'solar')}
             value={plantType || ''}
           >
             <SelectTrigger>
@@ -160,7 +161,7 @@ export function BasicInfoStep() {
         <div className="space-y-2">
           <Label htmlFor="campaignStatus">Campaign Status <span className="required-asterisk">*</span></Label>
           <Select
-            onValueChange={(value) => setValue('campaignStatus', value)}
+            onValueChange={(value) => setValue('campaignStatus', value as 'live' | 'historical')}
             value={campaignStatus || ''}
           >
             <SelectTrigger>

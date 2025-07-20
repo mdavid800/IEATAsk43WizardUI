@@ -38,7 +38,10 @@ export function MeasurementStep() {
   const { register, setValue, watch } = useFormContext<IEATask43Schema>();
   const locations = watch('measurement_location');
   const [expandedLocations, setExpandedLocations] = useState<{ [key: string]: boolean }>(
-    locations.reduce((acc, loc) => ({ ...acc, [loc.uuid]: true }), {})
+    locations.reduce((acc, loc) => {
+      const locationId = loc.uuid || crypto.randomUUID();
+      return { ...acc, [locationId]: true };
+    }, {})
   );
   const [expandedLoggers, setExpandedLoggers] = useState<{ [key: string]: boolean }>({});
   const [expandedPoints, setExpandedPoints] = useState<{ [key: string]: boolean }>({});
@@ -47,6 +50,7 @@ export function MeasurementStep() {
   const [selectedPoints, setSelectedPoints] = useState<{ [key: string]: boolean }>({});
   const [bulkEditValues, setBulkEditValues] = useState<BulkEditValues>({
     measurement_type_id: '',
+    statistic_type_id: '',
     height_m: '',
     height_reference_id: '',
     unit: '',
@@ -495,7 +499,7 @@ export function MeasurementStep() {
 
     // Humidity
     else if (/humid|humidity|rh\b/i.test(lowerHeader)) {
-      result.measurementType = 'humidity';
+      result.measurementType = 'relative_humidity';
     }
 
     // Wave measurements
@@ -518,7 +522,7 @@ export function MeasurementStep() {
 
     // Position/GPS
     else if (/gps|lat|lon|position|coordinate/i.test(lowerHeader)) {
-      result.measurementType = 'position';
+      result.measurementType = 'gps_coordinates';
     }
 
     // If no height was found but there are numbers in the column name, try to extract height
@@ -729,15 +733,14 @@ export function MeasurementStep() {
       </div>
 
       {locations.map((location, locationIndex) => (
-        <div key={location.uuid} className="border border-border rounded-lg overflow-hidden">
+        <div key={location.uuid || crypto.randomUUID()} className="border border-border rounded-lg overflow-hidden">
           <div
             className="bg-card p-4 cursor-pointer hover:bg-muted/50 transition-colors"
-            onClick={() => toggleLocationExpand(location.uuid)}
+            onClick={() => toggleLocationExpand(location.uuid || crypto.randomUUID())}
           >
             <div className="flex items-center gap-3">
               <ChevronDown
-                className={`w-5 h-5 transition-transform ${expandedLocations[location.uuid] ? 'transform rotate-0' : 'transform -rotate-90'
-                  }`}
+                className={`w-5 h-5 transition-transform ${expandedLocations[location.uuid || ''] ? 'transform rotate-0' : 'transform -rotate-90'}`}
               />
               <h3 className="text-lg font-medium text-foreground">{location.name || `Location ${locationIndex + 1}`}</h3>
               <div className="text-sm text-muted-foreground">
@@ -746,7 +749,7 @@ export function MeasurementStep() {
             </div>
           </div>
 
-          {expandedLocations[location.uuid] && (
+          {expandedLocations[location.uuid || ''] && (
             <div className="p-6 border-t border-border">
               {(location.logger_main_config || []).map((logger, loggerIndex) => {
                 const loggerId = `${location.uuid}-${loggerIndex}`;
@@ -807,8 +810,8 @@ export function MeasurementStep() {
                             <Button
                               type="button"
                               variant="secondary"
-                              className="bg-blue-600 hover:bg-blue-700 text-white"
-                              onClick={() => handleUploadClick(location.uuid, loggerId)}
+                              className={cn("bg-blue-600 hover:bg-blue-700 text-white")}
+                              onClick={() => handleUploadClick(location.uuid || crypto.randomUUID(), loggerId)}
                             >
                               <Upload className="w-4 h-4 mr-2" />
                               Upload CSV
