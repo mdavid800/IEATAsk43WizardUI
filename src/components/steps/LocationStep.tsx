@@ -10,6 +10,7 @@ import { Map } from '../ui/map';
 import { Button } from '../ui/button';
 import { cn } from '../../utils/cn';
 import { getDefaultDatesForNewEntry } from '../../utils/campaign-dates';
+import { validateLocations } from '../../utils/step-validation';
 import type { IEATask43Schema } from '../../types/schema';
 
 export function LocationStep() {
@@ -18,30 +19,9 @@ export function LocationStep() {
   const [expandedProfilerProps, setExpandedProfilerProps] = useState<Record<string, boolean>>({});
   const [expandedModelConfigs, setExpandedModelConfigs] = useState<Record<string, boolean>>({});
 
-  // Validation logic moved from ReviewStep
-  const validateLocations = () => {
-    const formData = watch();
-    const issues: string[] = [];
-
-    if (!formData.measurement_location?.length) {
-      issues.push('At least one measurement location is required');
-      return { valid: false, issues };
-    }
-
-    formData.measurement_location.forEach((location, index) => {
-      if (!location.name) issues.push(`Location ${index + 1}: Name is required`);
-      if (!location.latitude_ddeg) issues.push(`Location ${index + 1}: Latitude is required`);
-      if (!location.longitude_ddeg) issues.push(`Location ${index + 1}: Longitude is required`);
-      if (!location.measurement_station_type_id) issues.push(`Location ${index + 1}: Station Type is required`);
-    });
-
-    return {
-      valid: issues.length === 0,
-      issues
-    };
-  };
-
-  const validationResult = validateLocations();
+  // Use shared validation utility
+  const formData = watch();
+  const validationResult = validateLocations(formData);
 
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);

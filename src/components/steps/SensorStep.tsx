@@ -10,6 +10,7 @@ import { SearchableSelect } from '../ui/searchable-select';
 import { Textarea } from '../ui/textarea';
 import { cn } from '../../utils/cn';
 import { getDefaultDatesForNewEntry } from '../../utils/campaign-dates';
+import { validateSensors } from '../../utils/step-validation';
 import type { IEATask43Schema, SensorType, MeasurementType, Sensor } from '../../types/schema';
 import { sensorTypeOptions, measurementTypeOptions } from '../../utils/enum-options';
 import DynamicSensorOptionalFields from './DynamicSensorOptionalFields';
@@ -58,49 +59,9 @@ export function SensorsStep() {
   const [expandedSensors, setExpandedSensors] = useState<LocationExpandedState>({});
   const [expandedCalibrations, setExpandedCalibrations] = useState<LocationNestedExpandedState>({});
 
-  // Validation logic moved from ReviewStep
-  const validateSensors = () => {
-    const formData = watch();
-    const issues: string[] = [];
-
-    formData.measurement_location?.forEach((location, locIndex) => {
-      // Require at least one sensor per location (skip undefined/null entries)
-      const validSensors = Array.isArray(location.sensors)
-        ? location.sensors.filter(Boolean)
-        : [];
-      if (validSensors.length === 0) {
-        issues.push(`Location ${locIndex + 1}: At least one sensor is required`);
-        return;
-      }
-      validSensors.forEach((sensor: Sensor, sensorIndex: number) => {
-        if (!sensor.oem) {
-          issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: OEM is required`);
-        }
-        if (!sensor.model) {
-          issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Model is required`);
-        }
-        if (!sensor.serial_number) {
-          issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Serial Number is required`);
-        }
-        if (!sensor.sensor_type_id) {
-          issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Sensor Type is required`);
-        }
-        if (!sensor.date_from) {
-          issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Date From is required`);
-        }
-        if (!sensor.date_to) {
-          issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Date To is required`);
-        }
-      });
-    });
-
-    return {
-      valid: issues.length === 0,
-      issues
-    };
-  };
-
-  const validationResult = validateSensors();
+  // Use shared validation utility
+  const formData = watch();
+  const validationResult = validateSensors(formData);
 
   // Adjust handlers to take locationIndex
   const toggleExpandSensor = (locationIndex: number, sensorsFieldId: string) => {

@@ -249,10 +249,28 @@ export function FormWizard() {
     }
   };
 
+  const [exportError, setExportError] = useState<{ requiredFieldsValidation: any; schemaValidation: any } | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+
   const onSubmit = (data: IEATask43Schema) => {
     if (currentStep === steps.length - 1) {
-      // Use shared utility function for consistent JSON export
-      downloadJsonFile(data, 'iea-task43-data.json');
+      // Reset any previous export errors
+      setExportError(null);
+      setIsExporting(true);
+
+      try {
+        // Use shared utility function for consistent JSON export with validation
+        const validationResult = downloadJsonFile(data, 'iea-task43-data.json', true);
+
+        // If validation failed, show error message
+        if (validationResult) {
+          setExportError(validationResult);
+        }
+      } catch (error) {
+        console.error('Export failed:', error);
+      } finally {
+        setIsExporting(false);
+      }
     } else {
       next();
     }
@@ -388,6 +406,59 @@ export function FormWizard() {
         </div>
 
       </div>
+
+      {/* Export Validation Error Message */}
+      {exportError && currentStep === steps.length - 1 && (
+        <div className="professional-card p-6 bg-red-50 border border-red-200">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+            <div className="space-y-2">
+              <h3 className="font-medium text-red-800">Export Failed - Schema Validation Issues</h3>
+              <p className="text-sm text-red-700">
+                Your data could not be exported because it doesn't meet the IEA Task 43 schema requirements.
+                Please fix the following issues:
+              </p>
+              <div className="mt-3 space-y-2 max-h-60 overflow-y-auto">
+                {exportError.requiredFieldsValidation?.errors?.slice(0, 5).map((error: any, index: number) => (
+                  <div key={`req-${index}`} className="text-sm text-red-700 bg-red-100/50 p-2 rounded">
+                    <span className="font-medium">{error.path}:</span> {error.message}
+                  </div>
+                ))}
+                {exportError.schemaValidation?.errors?.slice(0, 5).map((error: any, index: number) => (
+                  <div key={`schema-${index}`} className="text-sm text-orange-700 bg-orange-100/50 p-2 rounded">
+                    <span className="font-medium">{error.path}:</span> {error.message}
+                  </div>
+                ))}
+                {((exportError.requiredFieldsValidation?.errors?.length || 0) > 5 ||
+                  (exportError.schemaValidation?.errors?.length || 0) > 5) && (
+                    <div className="text-sm text-gray-600 italic">
+                      ... and {((exportError.requiredFieldsValidation?.errors?.length || 0) +
+                        (exportError.schemaValidation?.errors?.length || 0) - 10)} more issues
+                    </div>
+                  )}
+              </div>
+              <p className="text-sm text-red-700 mt-2">
+                Please review the validation section in the form for more details.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Export Loading State */}
+      {isExporting && currentStep === steps.length - 1 && (
+        <div className="professional-card p-6 bg-blue-50 border border-blue-200">
+          <div className="flex items-center gap-3">
+            <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
+            <div>
+              <h3 className="font-medium text-blue-800">Validating and Exporting Data</h3>
+              <p className="text-sm text-blue-700">
+                Please wait while we validate your data against the IEA Task 43 schema...
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Form Content */}
       <FormProvider {...methods}>

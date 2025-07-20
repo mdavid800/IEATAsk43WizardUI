@@ -5,6 +5,7 @@ import Papa from 'papaparse';
 import { Button } from '@/components/ui/button';
 import { cn } from '../../utils/cn';
 import { getDefaultDatesForNewEntry } from '../../utils/campaign-dates';
+import { validateMeasurements } from '../../utils/step-validation';
 import type {
   IEATask43Schema,
   MeasurementType,
@@ -52,34 +53,9 @@ export function MeasurementStep() {
     sensors: []
   });
 
-  // Validation logic moved from ReviewStep
-  const validateMeasurements = () => {
-    const formData = watch();
-    const issues: string[] = [];
-
-    formData.measurement_location?.forEach((location, locIndex) => {
-      if (!location.measurement_point?.length) {
-        issues.push(`Location ${locIndex + 1}: At least one measurement point is required`);
-        return;
-      }
-
-      location.measurement_point.forEach((point, pointIndex) => {
-        if (!point.name) {
-          issues.push(`Location ${locIndex + 1}, Point ${pointIndex + 1}: Name is required`);
-        }
-        if (!point.measurement_type_id) {
-          issues.push(`Location ${locIndex + 1}, Point ${pointIndex + 1}: Measurement type is required`);
-        }
-      });
-    });
-
-    return {
-      valid: issues.length === 0,
-      issues
-    };
-  };
-
-  const validationResult = validateMeasurements();
+  // Use shared validation utility
+  const formData = watch();
+  const validationResult = validateMeasurements(formData);
 
   const addMeasurementPoint = (locationIndex: number, loggerIndex: number) => {
     const logger = watch(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}`);

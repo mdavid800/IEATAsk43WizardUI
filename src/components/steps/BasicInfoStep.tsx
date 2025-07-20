@@ -5,39 +5,15 @@ import { DatePicker } from '../ui/date-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { AlertCircle, Check } from 'lucide-react';
 import { cn } from '../../utils/cn';
-import { validateFormOnlyFields } from '../../utils/form-validation';
+import { validateBasicInfo } from '../../utils/step-validation';
 
 export function BasicInfoStep() {
   const { register, watch, setValue } = useFormContext();
+  const formData = watch();
   const campaignStatus = watch('campaignStatus');
   const plantType = watch('plant_type');
 
-  // Validation logic using enhanced validation utilities
-  const validateBasicInfo = () => {
-    const formData = watch();
-    const { author, organisation, plant_type, version, date } = formData;
-    const issues: string[] = [];
-
-    // Validate required IEA fields
-    if (!author) issues.push('Author is required');
-    if (!organisation) issues.push('Organisation is required');
-    if (!plant_type) issues.push('Plant type is required');
-    if (!version) issues.push('Version is required');
-    if (!date) issues.push('Date is required');
-
-    // Validate form-only fields using dedicated utility
-    const formValidation = validateFormOnlyFields(formData as any);
-    if (!formValidation.valid) {
-      issues.push(...formValidation.issues);
-    }
-
-    return {
-      valid: issues.length === 0,
-      issues
-    };
-  };
-
-  const validationResult = validateBasicInfo();
+  const validationResult = validateBasicInfo(formData);
 
   return (
     <div className="space-y-8">

@@ -200,7 +200,10 @@ const ExpandableRow = ({
                         </div>
 
                         <div>
-                            <Label className="text-xs text-muted-foreground">Statistic Type</Label>
+                            <Label className="text-xs text-muted-foreground">
+                                Statistic Type
+                                <span className="ml-1 text-xs text-orange-600">(Form helper - goes to column config)</span>
+                            </Label>
                             <SearchableSelect
                                 options={statisticTypeOptions}
                                 value={watch(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.statistic_type_id`) || undefined}
@@ -226,7 +229,10 @@ const ExpandableRow = ({
                                 />
                             </div>
                             <div>
-                                <Label className="text-xs text-muted-foreground">Unit</Label>
+                                <Label className="text-xs text-muted-foreground">
+                                    Unit
+                                    <span className="ml-1 text-xs text-orange-600">(Form helper - not in IEA schema)</span>
+                                </Label>
                                 <Input
                                     {...register(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.unit`)}
                                     placeholder="e.g., m/s, deg"
@@ -853,7 +859,10 @@ export function MeasurementTable({
                                     )}
                                     {columnVisibility.statistic_type_id && (
                                         <TableHead className={isCompactView ? "min-w-[100px] max-w-[120px]" : "min-w-[120px] max-w-[140px]"}>
-                                            <span className="text-xs">Statistic</span>
+                                            <div className="flex flex-col">
+                                                <span className="text-xs">Statistic</span>
+                                                <span className="text-xs text-orange-600">(Form helper)</span>
+                                            </div>
                                         </TableHead>
                                     )}
                                     {columnVisibility.height_m && (
@@ -868,7 +877,10 @@ export function MeasurementTable({
                                     )}
                                     {columnVisibility.unit && (
                                         <TableHead className={isCompactView ? "w-[60px]" : "w-[70px]"}>
-                                            <span className="text-xs">Unit</span>
+                                            <div className="flex flex-col">
+                                                <span className="text-xs">Unit</span>
+                                                <span className="text-xs text-orange-600">(Form helper)</span>
+                                            </div>
                                         </TableHead>
                                     )}
                                     {columnVisibility.sensors && (
