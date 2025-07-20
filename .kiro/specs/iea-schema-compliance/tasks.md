@@ -126,7 +126,10 @@
   - _Requirements: 1.4, 8.4_ -->
 
 - [ ] 6. Update UI components for better validation feedback
-- [x] 6.1 Enhance ReviewStep validation display
+- [ ] 6.1 Enhance ReviewStep validation display
+
+
+
 
 
 
@@ -139,6 +142,10 @@
   - _Requirements: 8.2, 8.3_
 
 - [x] 6.2 Add validation warnings throughout form
+
+
+
+
 
 
 

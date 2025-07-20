@@ -118,7 +118,6 @@ export interface LoggerMainConfig {
 export interface MeasurementPoint {
   name: string;
   measurement_type_id: MeasurementType;
-  statistic_type_id?: StatisticType;
   height_m: number | null;
   height_reference_id: HeightReference;
   notes?: string;
@@ -127,6 +126,10 @@ export interface MeasurementPoint {
   sensor: Sensor[];
   mounting_arrangement?: MountingArrangement[];
   interference_structures?: InterferenceStructure[];
+
+  // 🔹 FORM-ONLY FIELDS (NOT exported to JSON)
+  statistic_type_id?: StatisticType; // Form helper - should be in column_name objects
+  unit?: string; // Form helper - not in IEA schema, use measurement_units_id in logger config
 }
 
 export interface LoggerMeasurementConfig {

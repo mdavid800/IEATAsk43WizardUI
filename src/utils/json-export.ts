@@ -88,33 +88,78 @@ export const generateExportJson = (data: IEATask43Schema) => {
                 pointSensors.push(...locationSensors);
             }
 
+            // Remove form-only fields from measurement point
+            const { statistic_type_id, unit, ...cleanPoint } = point;
+
             return {
-                ...point,
+                ...cleanPoint,
                 update_at: new Date().toISOString(),
-                sensor: pointSensors.map(sensor => ({
-                    ...sensor,
-                    date_from: formatDateToISO(sensor.date_from),
-                    date_to: formatDateToISO(sensor.date_to),
-                    update_at: new Date().toISOString(),
-                    calibration: sensor.calibration?.map(cal => ({
-                        ...cal,
-                        date_of_calibration: formatDateToISO(cal.date_of_calibration),
-                        update_at: new Date().toISOString(),
-                        calibration_uncertainty: cal.calibration_uncertainty?.map(unc => ({
-                            ...unc
-                        }))
-                    }))
-                })),
-                logger_measurement_config: point.logger_measurement_config.map(config => ({
-                    ...config,
-                    date_from: formatDateToISO(config.date_from),
-                    date_to: formatDateToISO(config.date_to),
-                    update_at: new Date().toISOString(),
-                    column_name: config.column_name.map(col => ({
-                        ...col,
+                sensor: pointSensors.map(sensor => {
+                    // Only include fields that are allowed by the official IEA schema
+                    const compliantSensor: any = {
+                        date_from: formatDateToISO(sensor.date_from),
+                        date_to: formatDateToISO(sensor.date_to),
                         update_at: new Date().toISOString()
-                    }))
-                })),
+                    };
+
+                    // Add optional fields only if they have values
+                    if (sensor.oem) compliantSensor.oem = sensor.oem;
+                    if (sensor.model) compliantSensor.model = sensor.model;
+                    if (sensor.serial_number) compliantSensor.serial_number = sensor.serial_number;
+                    if (sensor.sensor_type_id) compliantSensor.sensor_type_id = sensor.sensor_type_id;
+
+                    // Only include classification if it matches the required pattern: ^([0-9]{1,2})[.]([0-9]{1,2})[ABCDS]$
+                    if (sensor.classification && /^([0-9]{1,2})[.]([0-9]{1,2})[ABCDS]$/.test(sensor.classification)) {
+                        compliantSensor.classification = sensor.classification;
+                    }
+
+                    if (typeof sensor.instrument_poi_height_mm === 'number') compliantSensor.instrument_poi_height_mm = sensor.instrument_poi_height_mm;
+                    if (typeof sensor.is_heated === 'boolean') compliantSensor.is_heated = sensor.is_heated;
+                    if (typeof sensor.sensor_body_size_mm === 'number') compliantSensor.sensor_body_size_mm = sensor.sensor_body_size_mm;
+                    if (sensor.notes) compliantSensor.notes = sensor.notes;
+
+                    // Handle calibration array
+                    if (sensor.calibration && sensor.calibration.length > 0) {
+                        compliantSensor.calibration = sensor.calibration.map(cal => ({
+                            ...cal,
+                            date_of_calibration: formatDateToISO(cal.date_of_calibration),
+                            update_at: new Date().toISOString(),
+                            calibration_uncertainty: cal.calibration_uncertainty?.map(unc => ({
+                                ...unc
+                            }))
+                        }));
+                    }
+
+                    return compliantSensor;
+                }),
+                logger_measurement_config: point.logger_measurement_config.map(config => {
+                    // Only include fields that are allowed by the official IEA schema
+                    const compliantConfig: any = {
+                        date_from: formatDateToISO(config.date_from),
+                        date_to: formatDateToISO(config.date_to),
+                        update_at: new Date().toISOString(),
+                        column_name: config.column_name.map(col => ({
+                            column_name: col.column_name,
+                            statistic_type_id: col.statistic_type_id,
+                            is_ignored: col.is_ignored || false,
+                            notes: col.notes || null,
+                            update_at: new Date().toISOString()
+                        }))
+                    };
+
+                    // Add optional fields only if they have values
+                    if (typeof config.slope === 'number') compliantConfig.slope = config.slope;
+                    if (typeof config.offset === 'number') compliantConfig.offset = config.offset;
+                    if (typeof config.sensitivity === 'number') compliantConfig.sensitivity = config.sensitivity;
+                    if (config.measurement_units_id) compliantConfig.measurement_units_id = config.measurement_units_id;
+                    if (typeof config.height_m === 'number') compliantConfig.height_m = config.height_m;
+                    if (config.serial_number) compliantConfig.serial_number = config.serial_number;
+                    if (config.connection_channel) compliantConfig.connection_channel = config.connection_channel;
+                    if (typeof config.logger_stated_boom_orientation_deg === 'number') compliantConfig.logger_stated_boom_orientation_deg = config.logger_stated_boom_orientation_deg;
+                    if (config.notes) compliantConfig.notes = config.notes;
+
+                    return compliantConfig;
+                }),
                 mounting_arrangement: point.mounting_arrangement?.map(mount => ({
                     ...mount,
                     date_from: formatDateToISO(mount.date_from),
