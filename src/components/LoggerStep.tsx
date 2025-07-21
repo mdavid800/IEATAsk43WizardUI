@@ -1,18 +1,18 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { PlusCircle, Trash2, ChevronDown, Settings, Info } from 'lucide-react';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Textarea } from '../ui/textarea';
-import type { IEATask43Schema, LoggerOEM } from '../../types/schema';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Textarea } from './ui/textarea';
+import type { IEATask43Schema, LoggerOEM } from '../types/schema';
 
 export function LoggerStep() {
   const { register, setValue, watch } = useFormContext<IEATask43Schema>();
-  const locations = watch('measurement_location');
+  const locations = watch('measurement_location') || [];
   const [expandedLocations, setExpandedLocations] = useState<{ [key: string]: boolean }>(
-    locations.reduce((acc, loc) => ({ ...acc, [loc.uuid]: true }), {})
+    locations?.reduce((acc, loc) => ({ ...acc, [String(loc.uuid)]: true }), {}) || {}
   );
   const [expandedLoggers, setExpandedLoggers] = useState<{ [key: number]: boolean }>({});
 
@@ -75,12 +75,12 @@ export function LoggerStep() {
         <div key={location.uuid} className="logger-card mb-8">
           <div
             className="bg-white p-5 cursor-pointer hover:bg-secondary/10 transition-colors border-b border-border backdrop-blur-md"
-            onClick={() => toggleLocationExpand(location.uuid)}
+            onClick={() => location.uuid && toggleLocationExpand(String(location.uuid))}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <ChevronDown
-                  className={`w-5 h-5 transition-transform ${expandedLocations[location.uuid] ? 'rotate-0' : '-rotate-90'}`}
+                  className={`w-5 h-5 transition-transform ${location.uuid != null && expandedLocations[String(location.uuid)] ? 'rotate-0' : '-rotate-90'}`}
                 />
                 <h3 className="text-xl font-semibold text-foreground tracking-tight">
                   {location.name || `Location ${locationIndex + 1}`}
@@ -92,7 +92,7 @@ export function LoggerStep() {
             </div>
           </div>
 
-          {expandedLocations[location.uuid] && (
+          {location.uuid != null && expandedLocations[String(location.uuid)] && (
             <div className="p-8 bg-white border-t border-border space-y-8 transition-all animate-fadeIn">
               <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-3">

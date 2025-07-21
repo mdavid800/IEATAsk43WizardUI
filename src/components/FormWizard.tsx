@@ -1,4 +1,3 @@
-import React from 'react';
 import { useState } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { ChevronRight, ChevronLeft, Save, X, AlertTriangle, Loader2 } from 'lucide-react';
@@ -12,6 +11,16 @@ import { ReviewStep } from './steps/ReviewStep';
 import { Button } from './ui/button';
 import { downloadJsonFile } from '../utils/json-export';
 import type { IEATask43Schema, Sensor } from '../types/schema';
+
+// Add type for export error
+type ExportError = {
+  requiredFieldsValidation: {
+    errors?: Array<{ path: string; message: string }>;
+  };
+  schemaValidation: {
+    errors?: Array<{ path: string; message: string }>;
+  };
+} | null;
 
 const steps = [
   { id: 'basic-info', name: 'Basic Information', component: BasicInfoStep },
@@ -29,10 +38,11 @@ export function FormWizard() {
     defaultValues: {
       author: '',
       organisation: '',
-      startDate: new Date().toISOString().split('T')[0], // Renamed from date
+      startDate: new Date().toISOString().split('T')[0],
       version: '1.3.0-2024.03',
-      campaignStatus: 'live', // Added for issue #5
-      endDate: undefined, // Optional: Added for historical campaigns
+      campaignStatus: 'live',
+      endDate: undefined,
+      date: new Date().toISOString().split('T')[0], // Add missing date field
       // Plant information
       plant_name: '',
       plant_type: null,
@@ -127,39 +137,39 @@ export function FormWizard() {
     };
   };
 
+  // Fix validateSensors function
   const validateSensors = () => {
     const formData = methods.watch();
     const issues: string[] = [];
 
     formData.measurement_location?.forEach((location, locIndex) => {
-      // Require at least one sensor per location (skip undefined/null entries)
       const validSensors = Array.isArray(location.sensors)
         ? location.sensors.filter(Boolean)
         : [];
       if (validSensors.length === 0) {
         issues.push(`Location ${locIndex + 1}: At least one sensor is required`);
-        return;
+      } else {
+        validSensors.forEach((sensor: Sensor, sensorIndex: number) => {
+          if (!sensor.oem) {
+            issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: OEM is required`);
+          }
+          if (!sensor.model) {
+            issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Model is required`);
+          }
+          if (!sensor.serial_number) {
+            issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Serial Number is required`);
+          }
+          if (!sensor.sensor_type_id) {
+            issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Sensor Type is required`);
+          }
+          if (!sensor.date_from) {
+            issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Date From is required`);
+          }
+          if (!sensor.date_to) {
+            issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Date To is required`);
+          }
+        });
       }
-      validSensors.forEach((sensor: Sensor, sensorIndex: number) => {
-        if (!sensor.oem) {
-          issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: OEM is required`);
-        }
-        if (!sensor.model) {
-          issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Model is required`);
-        }
-        if (!sensor.serial_number) {
-          issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Serial Number is required`);
-        }
-        if (!sensor.sensor_type_id) {
-          issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Sensor Type is required`);
-        }
-        if (!sensor.date_from) {
-          issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Date From is required`);
-        }
-        if (!sensor.date_to) {
-          issues.push(`Location ${locIndex + 1}, Sensor ${sensorIndex + 1}: Date To is required`);
-        }
-      });
     });
 
     return {
@@ -168,6 +178,7 @@ export function FormWizard() {
     };
   };
 
+  // Fix validateMeasurements function
   const validateMeasurements = () => {
     const formData = methods.watch();
     const issues: string[] = [];
@@ -175,17 +186,16 @@ export function FormWizard() {
     formData.measurement_location?.forEach((location, locIndex) => {
       if (!location.measurement_point?.length) {
         issues.push(`Location ${locIndex + 1}: At least one measurement point is required`);
-        return;
+      } else {
+        location.measurement_point.forEach((point, pointIndex) => {
+          if (!point.name) {
+            issues.push(`Location ${locIndex + 1}, Measurement Point ${pointIndex + 1}: Name is required`);
+          }
+          if (typeof point.height_m !== 'number' || point.height_m < 0) {
+            issues.push(`Location ${locIndex + 1}, Measurement Point ${pointIndex + 1}: Valid height is required`);
+          }
+        });
       }
-
-      location.measurement_point.forEach((point, pointIndex) => {
-        if (!point.name) {
-          issues.push(`Location ${locIndex + 1}, Measurement Point ${pointIndex + 1}: Name is required`);
-        }
-        if (typeof point.height_m !== 'number' || point.height_m < 0) {
-          issues.push(`Location ${locIndex + 1}, Measurement Point ${pointIndex + 1}: Valid height is required`);
-        }
-      });
     });
 
     return {
@@ -249,7 +259,7 @@ export function FormWizard() {
     }
   };
 
-  const [exportError, setExportError] = useState<{ requiredFieldsValidation: any; schemaValidation: any } | null>(null);
+  const [exportError, setExportError] = useState<ExportError>(null);
   const [isExporting, setIsExporting] = useState(false);
 
   const onSubmit = (data: IEATask43Schema) => {
