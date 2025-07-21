@@ -6,7 +6,7 @@ import { cn } from '../../utils/cn';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { generateExportJson } from '../../utils/json-export';
-import { validateIEACompliance, validateRequiredFields } from '../../utils/schema-validation';
+import { validateIEACompliance, validateRequiredFields, ValidationResult } from '../../utils/schema-validation';
 import { validateAllSections } from '../../utils/step-validation';
 import type { IEATask43Schema, Sensor } from '../../types/schema';
 
@@ -15,8 +15,8 @@ export function ReviewStep() {
   const formData = watch();
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(true);
   const [previewJson, setPreviewJson] = useState<string>('');
-  const [schemaValidation, setSchemaValidation] = useState<{ isValid: boolean; errors: any[]; warnings: any[] } | null>(null);
-  const [requiredFieldsValidation, setRequiredFieldsValidation] = useState<{ isValid: boolean; errors: any[]; warnings: any[] } | null>(null);
+  const [schemaValidation, setSchemaValidation] = useState<ValidationResult | null>(null);
+  const [requiredFieldsValidation, setRequiredFieldsValidation] = useState<ValidationResult | null>(null);
   const isGeneratingRef = useRef(false);
   const lastDataHashRef = useRef<string>('');
 
@@ -206,7 +206,7 @@ export function ReviewStep() {
               <div className="text-sm">
                 {requiredFieldsValidation?.isValid
                   ? "All required fields are present"
-                  : `${requiredFieldsValidation?.errors?.length || 0} missing required fields`}
+                  : `${requiredFieldsValidation?.errors?.length ?? 0} missing required fields`}
               </div>
             </div>
           </div>
@@ -228,19 +228,19 @@ export function ReviewStep() {
               <div className="text-sm">
                 {schemaValidation?.isValid
                   ? "Fully compliant with IEA Task 43 schema"
-                  : `${schemaValidation?.errors?.length || 0} schema validation issues`}
+                  : `${schemaValidation?.errors?.length ?? 0} schema validation issues`}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Validation Errors */}
-        {(requiredFieldsValidation?.errors?.length > 0 || schemaValidation?.errors?.length > 0) && (
+        {/* Validation Errors - Fixed type safety */}
+        {((requiredFieldsValidation?.errors?.length ?? 0) > 0 || (schemaValidation?.errors?.length ?? 0) > 0) && (
           <div className="mt-4">
             <h4 className="text-sm font-medium text-gray-700 mb-2">Validation Issues:</h4>
 
             {/* Required Fields Errors - Categorized by form step */}
-            {requiredFieldsValidation?.errors?.length > 0 && (
+            {(requiredFieldsValidation?.errors?.length ?? 0) > 0 && (
               <div className="mb-4">
                 <div className="text-sm font-medium text-red-800 mb-2">Missing Required Fields:</div>
                 <div className="max-h-60 overflow-y-auto p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -277,28 +277,30 @@ export function ReviewStep() {
                       ];
 
                       // Group errors by step
-                      const errorsByStep = requiredFieldsValidation.errors.reduce((acc: Record<string, any[]>, error) => {
-                        // Find which step this error belongs to
-                        let foundStep = 'Other';
-                        let foundStepIndex = -1;
+                      const errorsByStep = (requiredFieldsValidation && requiredFieldsValidation.errors)
+                        ? requiredFieldsValidation.errors.reduce((acc: Record<string, any[]>, error) => {
+                          // Find which step this error belongs to
+                          let foundStep = 'Other';
+                          let foundStepIndex = -1;
 
-                        for (const mapping of stepMapping) {
-                          for (const path of mapping.paths) {
-                            if (error.path.includes(path)) {
-                              foundStep = mapping.step;
-                              foundStepIndex = mapping.stepIndex;
-                              break;
+                          for (const mapping of stepMapping) {
+                            for (const path of mapping.paths) {
+                              if (error.path.includes(path)) {
+                                foundStep = mapping.step;
+                                foundStepIndex = mapping.stepIndex;
+                                break;
+                              }
                             }
+                            if (foundStep !== 'Other') break;
                           }
-                          if (foundStep !== 'Other') break;
-                        }
 
-                        if (!acc[foundStep]) {
-                          acc[foundStep] = [];
-                        }
-                        acc[foundStep].push({ ...error, stepIndex: foundStepIndex });
-                        return acc;
-                      }, {});
+                          if (!acc[foundStep]) {
+                            acc[foundStep] = [];
+                          }
+                          acc[foundStep].push({ ...error, stepIndex: foundStepIndex });
+                          return acc;
+                        }, {})
+                        : {};
 
                       // Sort steps by their index
                       return Object.entries(errorsByStep)
@@ -334,7 +336,7 @@ export function ReviewStep() {
             )}
 
             {/* Schema Validation Errors - With improved categorization */}
-            {schemaValidation?.errors?.length > 0 && (
+            {(schemaValidation?.errors?.length ?? 0) > 0 && (
               <div>
                 <div className="text-sm font-medium text-orange-800 mb-2">Schema Compliance Issues:</div>
                 <div className="max-h-60 overflow-y-auto p-4 bg-orange-50 border border-orange-200 rounded-lg">
@@ -371,28 +373,30 @@ export function ReviewStep() {
                       ];
 
                       // First, categorize errors by step
-                      const errorsByStep = schemaValidation.errors.reduce((acc: Record<string, any[]>, error) => {
-                        // Find which step this error belongs to
-                        let foundStep = 'Other';
-                        let foundStepIndex = -1;
+                      const errorsByStep = (schemaValidation && schemaValidation.errors)
+                        ? schemaValidation.errors.reduce((acc: Record<string, any[]>, error) => {
+                          // Find which step this error belongs to
+                          let foundStep = 'Other';
+                          let foundStepIndex = -1;
 
-                        for (const mapping of stepMapping) {
-                          for (const path of mapping.paths) {
-                            if (error.path.includes(path)) {
-                              foundStep = mapping.step;
-                              foundStepIndex = mapping.stepIndex;
-                              break;
+                          for (const mapping of stepMapping) {
+                            for (const path of mapping.paths) {
+                              if (error.path.includes(path)) {
+                                foundStep = mapping.step;
+                                foundStepIndex = mapping.stepIndex;
+                                break;
+                              }
                             }
+                            if (foundStep !== 'Other') break;
                           }
-                          if (foundStep !== 'Other') break;
-                        }
 
-                        if (!acc[foundStep]) {
-                          acc[foundStep] = [];
-                        }
-                        acc[foundStep].push({ ...error, stepIndex: foundStepIndex });
-                        return acc;
-                      }, {});
+                          if (!acc[foundStep]) {
+                            acc[foundStep] = [];
+                          }
+                          acc[foundStep].push({ ...error, stepIndex: foundStepIndex });
+                          return acc;
+                        }, {})
+                        : {};
 
                       // Then, for each step, categorize errors by type
                       return Object.entries(errorsByStep)

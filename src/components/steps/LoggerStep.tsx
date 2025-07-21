@@ -1,4 +1,4 @@
-erimport { useFormContext } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import { PlusCircle, Trash2, ChevronDown, Settings, AlertCircle, Check } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '../ui/button';

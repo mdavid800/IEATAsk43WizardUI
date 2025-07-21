@@ -71,10 +71,15 @@ export function LocationStep() {
     const formData = watch();
     const defaultDates = getDefaultDatesForNewEntry(formData);
     const currentConfigs = watch('measurement_location.0.model_config') || [];
+    // Fix any existing configs with invalid reanalysis values
+    const validatedConfigs = currentConfigs.map(config => ({
+      ...config,
+      reanalysis: config.reanalysis || 'ERA5'
+    }));
     setValue('measurement_location.0.model_config', [
-      ...currentConfigs,
+      ...validatedConfigs,
       {
-        reanalysis: undefined,
+        reanalysis: 'ERA5',
         horizontal_grid_resolution_m: null,
         model_used: null,
         date_from: defaultDates.date_from,
@@ -177,7 +182,7 @@ export function LocationStep() {
                     Station Type <span className="required-asterisk">*</span>
                   </Label>
                   <Select
-                    onValueChange={(value) => setValue('measurement_location.0.measurement_station_type_id', value as any)}
+                    onValueChange={(value) => setValue('measurement_location.0.measurement_station_type_id', value as 'mast' | 'lidar' | 'sodar' | 'floating_lidar' | 'wave_buoy' | 'adcp' | 'solar' | 'virtual_met_mast' | 'reanalysis')}
                     value={watch('measurement_location.0.measurement_station_type_id')}
                   >
                     <SelectTrigger>
@@ -295,7 +300,7 @@ export function LocationStep() {
                         Mast Geometry
                       </Label>
                       <Select
-                        onValueChange={(value) => setValue('measurement_location.0.mast_properties.mast_geometry_id', value as any)}
+                        onValueChange={(value) => setValue('measurement_location.0.mast_properties.mast_geometry_id', value as 'lattice_triangle' | 'lattice_square_round_edges' | 'lattice_square_sharp_edges' | 'pole')}
                         value={watch('measurement_location.0.mast_properties.mast_geometry_id') as string}
                       >
                         <SelectTrigger>
@@ -453,8 +458,8 @@ export function LocationStep() {
                                 Height Reference
                               </Label>
                               <Select
-                                onValueChange={(value) => setValue(`measurement_location.0.vertical_profiler_properties.${index}.height_reference_id`, value as any)}
-                                value={watch(`measurement_location.0.vertical_profiler_properties.${index}.height_reference_id`)}
+                                onValueChange={(value) => setValue(`measurement_location.0.vertical_profiler_properties.${index}.height_reference_id`, value as 'ground_level' | 'mean_sea_level' | 'sea_level' | 'lowest_astronomical_tide' | 'sea_floor' | 'other')}
+                                value={watch(`measurement_location.0.vertical_profiler_properties.${index}.height_reference_id`) ?? undefined}
                               >
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select height reference" />
@@ -489,8 +494,8 @@ export function LocationStep() {
                                 Orientation Reference
                               </Label>
                               <Select
-                                onValueChange={(value) => setValue(`measurement_location.0.vertical_profiler_properties.${index}.orientation_reference_id`, value as any)}
-                                value={watch(`measurement_location.0.vertical_profiler_properties.${index}.orientation_reference_id`)}
+                                onValueChange={(value) => setValue(`measurement_location.0.vertical_profiler_properties.${index}.orientation_reference_id`, value as 'magnetic_north' | 'true_north' | 'grid_north')}
+                                value={watch(`measurement_location.0.vertical_profiler_properties.${index}.orientation_reference_id`) ?? undefined}
                               >
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select orientation reference" />
@@ -508,7 +513,7 @@ export function LocationStep() {
                                 Vertical Orientation
                               </Label>
                               <Select
-                                onValueChange={(value) => setValue(`measurement_location.0.vertical_profiler_properties.${index}.device_vertical_orientation`, value as any)}
+                                onValueChange={(value) => setValue(`measurement_location.0.vertical_profiler_properties.${index}.device_vertical_orientation`, value as 'upward' | 'downward')}
                                 value={watch(`measurement_location.0.vertical_profiler_properties.${index}.device_vertical_orientation`) as string}
                               >
                                 <SelectTrigger>
@@ -614,7 +619,7 @@ export function LocationStep() {
                                 Reanalysis <span className="required-asterisk">*</span>
                               </Label>
                               <Select
-                                onValueChange={(value) => setValue(`measurement_location.0.model_config.${index}.reanalysis`, value as any)}
+                                onValueChange={(value) => setValue(`measurement_location.0.model_config.${index}.reanalysis`, value as 'CFSR' | 'ERA-Interim' | 'ERA5' | 'JRA-55' | 'MERRA-2' | 'NCAR' | 'Other')}
                                 value={watch(`measurement_location.0.model_config.${index}.reanalysis`)}
                               >
                                 <SelectTrigger>
