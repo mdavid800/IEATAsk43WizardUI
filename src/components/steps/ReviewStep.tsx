@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { FileJson, Check, AlertCircle, Loader2, Shield, ShieldCheck } from 'lucide-react';
+import { FileJson, Check, AlertCircle, Loader2, Shield, ShieldCheck, GitCompare, Code2 } from 'lucide-react';
 import { Button } from '../ui/button';
+import { SchemaComparison } from '../ui/schema-comparison';
 import { cn } from '../../utils/cn';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -17,6 +18,7 @@ export function ReviewStep() {
   const [previewJson, setPreviewJson] = useState<string>('');
   const [schemaValidation, setSchemaValidation] = useState<ValidationResult | null>(null);
   const [requiredFieldsValidation, setRequiredFieldsValidation] = useState<ValidationResult | null>(null);
+  const [viewMode, setViewMode] = useState<'json' | 'comparison'>('json');
   const isGeneratingRef = useRef(false);
   const lastDataHashRef = useRef<string>('');
 
@@ -82,66 +84,7 @@ export function ReviewStep() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-primary mb-2">Review & Export</h2>
-        <Button
-          type="submit"
-          className={cn(
-            "flex items-center gap-2",
-            (requiredFieldsValidation?.isValid && schemaValidation?.isValid)
-              ? "bg-green-600 hover:bg-green-700"
-              : "bg-primary hover:bg-primary/90"
-          )}
-          disabled={!isValid}
-        >
-          {(requiredFieldsValidation?.isValid && schemaValidation?.isValid) ? (
-            <ShieldCheck className="w-4 h-4" />
-          ) : (
-            <FileJson className="w-4 h-4" />
-          )}
-          {(requiredFieldsValidation?.isValid && schemaValidation?.isValid)
-            ? "Export Compliant JSON"
-            : "Export JSON"}
-        </Button>
-      </div>
-
-      {/* Progress Summary */}
-      <div className="bg-muted/30 rounded-lg p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-medium">Configuration Progress</h3>
-          <span className="text-sm font-medium text-muted-foreground">
-            {completedSections} of {sections.length} sections complete
-          </span>
-        </div>
-
-        <div className="w-full bg-muted rounded-full h-2 mb-4">
-          <div
-            className="bg-primary h-2 rounded-full transition-all duration-300"
-            style={{ width: `${(completedSections / sections.length) * 100}%` }}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {sections.map((section) => (
-            <div
-              key={section.name}
-              className={cn(
-                "flex items-center gap-3 p-3 rounded-lg",
-                section.valid
-                  ? "bg-green-50 text-green-700"
-                  : "bg-red-50 text-red-700"
-              )}
-            >
-              {section.valid ? (
-                <Check className="w-5 h-5 text-green-500 flex-shrink-0" />
-              ) : (
-                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-              )}
-              <span className="text-sm font-medium">{section.name}</span>
-            </div>
-          ))}
-        </div>
-      </div>
+      <h2 className="text-2xl font-bold text-primary mb-2">Review & Export</h2>
 
       {!isValid && (
         <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
@@ -205,11 +148,11 @@ export function ReviewStep() {
           {/* Schema Validation */}
           <div className={cn(
             "flex items-center gap-3 p-4 rounded-lg border",
-            schemaValidation?.isValid
+            (schemaValidation?.isValid && requiredFieldsValidation?.isValid)
               ? "bg-green-50 text-green-700 border-green-200"
               : "bg-orange-50 text-orange-700 border-orange-200"
           )}>
-            {schemaValidation?.isValid ? (
+            {(schemaValidation?.isValid && requiredFieldsValidation?.isValid) ? (
               <ShieldCheck className="w-6 h-6 text-green-500 flex-shrink-0" />
             ) : (
               <AlertCircle className="w-6 h-6 text-orange-500 flex-shrink-0" />
@@ -217,9 +160,9 @@ export function ReviewStep() {
             <div>
               <div className="font-medium">Schema Compliance</div>
               <div className="text-sm">
-                {schemaValidation?.isValid
+                {(schemaValidation?.isValid && requiredFieldsValidation?.isValid)
                   ? "Fully compliant with IEA Task 43 schema"
-                  : `${schemaValidation?.errors?.length ?? 0} schema validation issues`}
+                  : `${(schemaValidation?.errors?.length ?? 0) + (requiredFieldsValidation?.errors?.length ?? 0)} validation issues found`}
               </div>
             </div>
           </div>
@@ -467,6 +410,82 @@ export function ReviewStep() {
         )}
       </div>
 
+      {/* View Mode Toggle */}
+      <div className="bg-muted/30 rounded-lg p-4">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-medium">Data Preview</h3>
+          <div className="flex bg-background border rounded-lg p-1">
+            <Button
+              type="button"
+              variant={viewMode === 'json' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('json')}
+              className="flex items-center gap-2"
+            >
+              <Code2 className="w-4 h-4" />
+              JSON Export
+            </Button>
+            <Button
+              type="button"
+              variant={viewMode === 'comparison' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('comparison')}
+              className="flex items-center gap-2"
+            >
+              <GitCompare className="w-4 h-4" />
+              Schema Comparison
+            </Button>
+          </div>
+        </div>
+
+        {viewMode === 'comparison' ? (
+          <SchemaComparison 
+            data={formData}
+            validationErrors={[
+              ...(requiredFieldsValidation?.errors || []),
+              ...(schemaValidation?.errors || [])
+            ]}
+          />
+        ) : (
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <FileJson className="w-5 h-5 text-primary" />
+              <h4 className="text-base font-medium">Export Preview</h4>
+              <span className="text-sm text-muted-foreground">
+                (IEA-compliant JSON - excludes form-only fields)
+              </span>
+            </div>
+            <div className="rounded-md overflow-hidden border border-border">
+              {isGeneratingPreview ? (
+                <div className="flex items-center justify-center p-8 bg-white">
+                  <div className="flex flex-col items-center gap-3">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    <p className="text-sm text-muted-foreground">Generating JSON preview...</p>
+                  </div>
+                </div>
+              ) : (
+                <SyntaxHighlighter
+                  language="json"
+                  style={oneLight}
+                  customStyle={{
+                    margin: 0,
+                    padding: '1rem',
+                    fontSize: '0.875rem',
+                    lineHeight: '1.25rem',
+                    background: '#ffffff',
+                    color: '#24292e',
+                    border: 'none',
+                  }}
+                  wrapLines={true}
+                  wrapLongLines={true}
+                >
+                  {previewJson}
+                </SyntaxHighlighter>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
       {/* Data Summary */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-card p-4 rounded-lg border">
@@ -520,46 +539,6 @@ export function ReviewStep() {
         </div>
       </div>
 
-      {/* Data Preview */}
-      <div className="mt-8">
-        <div className="bg-muted/50 rounded-lg p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <FileJson className="w-5 h-5 text-primary" />
-            <h3 className="text-base font-medium">Export Preview</h3>
-            <span className="text-sm text-muted-foreground">
-              (IEA-compliant JSON - excludes form-only fields)
-            </span>
-          </div>
-          <div className="rounded-md overflow-hidden border border-border">
-            {isGeneratingPreview ? (
-              <div className="flex items-center justify-center p-8 bg-white">
-                <div className="flex flex-col items-center gap-3">
-                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                  <p className="text-sm text-muted-foreground">Generating JSON preview...</p>
-                </div>
-              </div>
-            ) : (
-              <SyntaxHighlighter
-                language="json"
-                style={oneLight}
-                customStyle={{
-                  margin: 0,
-                  padding: '1rem',
-                  fontSize: '0.875rem',
-                  lineHeight: '1.25rem',
-                  background: '#ffffff',
-                  color: '#24292e',
-                  border: 'none',
-                }}
-                wrapLines={true}
-                wrapLongLines={true}
-              >
-                {previewJson}
-              </SyntaxHighlighter>
-            )}
-          </div>
-        </div>
-      </div>
 
       {/* Export Instructions */}
       <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mt-8">

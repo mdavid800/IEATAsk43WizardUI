@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
-import { ChevronRight, ChevronLeft, Save, X, AlertTriangle, Loader2 } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Download, X, AlertTriangle, Loader2 } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { BasicInfoStep } from './steps/BasicInfoStep';
 import { LocationStep } from './steps/LocationStep';
@@ -403,7 +403,7 @@ export function FormWizard() {
           >
             {currentStep === steps.length - 1 ? (
               <>
-                <Save className="w-4 h-4 mr-1" />
+                <Download className="w-4 h-4 mr-1" />
                 Export JSON
               </>
             ) : (
@@ -498,7 +498,7 @@ export function FormWizard() {
               >
                 {currentStep === steps.length - 1 ? (
                   <>
-                    <Save className="w-4 h-4 mr-1" />
+                    <Download className="w-4 h-4 mr-1" />
                     Export JSON
                   </>
                 ) : (
