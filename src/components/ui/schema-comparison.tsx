@@ -458,4 +458,4 @@ export function SchemaComparison({ data, validationErrors = [], className }: Sch
       </div>
     </div>
   );
-}</parameter>
+}
