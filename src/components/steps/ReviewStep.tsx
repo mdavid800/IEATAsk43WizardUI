@@ -107,44 +107,6 @@ export function ReviewStep() {
         </Button>
       </div>
 
-      {/* Progress Summary */}
-      <div className="bg-muted/30 rounded-lg p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-medium">Configuration Progress</h3>
-          <span className="text-sm font-medium text-muted-foreground">
-            {completedSections} of {sections.length} sections complete
-          </span>
-        </div>
-
-        <div className="w-full bg-muted rounded-full h-2 mb-4">
-          <div
-            className="bg-primary h-2 rounded-full transition-all duration-300"
-            style={{ width: `${(completedSections / sections.length) * 100}%` }}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {sections.map((section) => (
-            <div
-              key={section.name}
-              className={cn(
-                "flex items-center gap-3 p-3 rounded-lg",
-                section.valid
-                  ? "bg-green-50 text-green-700"
-                  : "bg-red-50 text-red-700"
-              )}
-            >
-              {section.valid ? (
-                <Check className="w-5 h-5 text-green-500 flex-shrink-0" />
-              ) : (
-                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-              )}
-              <span className="text-sm font-medium">{section.name}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
       {!isValid && (
         <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
           <div className="flex">
