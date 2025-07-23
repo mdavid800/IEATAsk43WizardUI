@@ -496,13 +496,27 @@ export function ReviewStep() {
 
         <div className="bg-card p-4 rounded-lg border">
           <div className="text-2xl font-bold text-primary">
-            {formData.measurement_location?.reduce((total, loc) =>
-              total + (loc.measurement_point?.reduce((pointTotal, point) =>
-                pointTotal + (Array.isArray(point.sensor) ? point.sensor.filter(Boolean).length : 0), 0) || 0), 0) || 0}
+            {formData.measurement_location?.reduce((total, loc) => {
+              // Count sensors at location level (legacy structure)
+              const locationSensors = Array.isArray((loc as any).sensors) 
+                ? (loc as any).sensors.filter(Boolean).length 
+                : 0;
+              
+              // Count sensors at measurement point level (correct schema structure)
+              const measurementPointSensors = loc.measurement_point?.reduce((pointTotal, point) =>
+                pointTotal + (Array.isArray(point.sensor) ? point.sensor.filter(Boolean).length : 0), 0) || 0;
+              
+              return total + locationSensors + measurementPointSensors;
+            }, 0) || 0}
           </div>
-          <div className="text-sm text-muted-foreground">Sensor{(formData.measurement_location?.reduce((total, loc) =>
-            total + (loc.measurement_point?.reduce((pointTotal, point) =>
-              pointTotal + (Array.isArray(point.sensor) ? point.sensor.filter(Boolean).length : 0), 0) || 0), 0) || 0) !== 1 ? 's' : ''}</div>
+          <div className="text-sm text-muted-foreground">Sensor{(formData.measurement_location?.reduce((total, loc) => {
+            const locationSensors = Array.isArray((loc as any).sensors) 
+              ? (loc as any).sensors.filter(Boolean).length 
+              : 0;
+            const measurementPointSensors = loc.measurement_point?.reduce((pointTotal, point) =>
+              pointTotal + (Array.isArray(point.sensor) ? point.sensor.filter(Boolean).length : 0), 0) || 0;
+            return total + locationSensors + measurementPointSensors;
+          }, 0) || 0) !== 1 ? 's' : ''}</div>
         </div>
       </div>
 
