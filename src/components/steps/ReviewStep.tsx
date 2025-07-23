@@ -148,11 +148,11 @@ export function ReviewStep() {
           {/* Schema Validation */}
           <div className={cn(
             "flex items-center gap-3 p-4 rounded-lg border",
-            schemaValidation?.isValid
+            (schemaValidation?.isValid && requiredFieldsValidation?.isValid)
               ? "bg-green-50 text-green-700 border-green-200"
               : "bg-orange-50 text-orange-700 border-orange-200"
           )}>
-            {schemaValidation?.isValid ? (
+            {(schemaValidation?.isValid && requiredFieldsValidation?.isValid) ? (
               <ShieldCheck className="w-6 h-6 text-green-500 flex-shrink-0" />
             ) : (
               <AlertCircle className="w-6 h-6 text-orange-500 flex-shrink-0" />
@@ -160,9 +160,9 @@ export function ReviewStep() {
             <div>
               <div className="font-medium">Schema Compliance</div>
               <div className="text-sm">
-                {schemaValidation?.isValid
+                {(schemaValidation?.isValid && requiredFieldsValidation?.isValid)
                   ? "Fully compliant with IEA Task 43 schema"
-                  : `${schemaValidation?.errors?.length ?? 0} schema validation issues`}
+                  : `${(schemaValidation?.errors?.length ?? 0) + (requiredFieldsValidation?.errors?.length ?? 0)} validation issues found`}
               </div>
             </div>
           </div>
