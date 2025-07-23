@@ -201,18 +201,18 @@ export const generateExportJson = (data: IEATask43Schema) => {
  * Download JSON file with the formatted data
  * Returns validation results if validation fails, or null if successful
  */
-export const downloadJsonFile = (
+export const downloadJsonFile = async (
     data: IEATask43Schema,
     filename: string = 'iea-task43-data.json',
     validateBeforeExport: boolean = true
-): { requiredFieldsValidation: any; schemaValidation: any } | null => {
+): Promise<{ requiredFieldsValidation: any; schemaValidation: any } | null> => {
     // Generate export data
     const formattedData = generateExportJson(data);
 
     // Validate data before export if requested
     if (validateBeforeExport) {
         // Import validation functions
-        const { validateIEACompliance, validateRequiredFields } = require('./schema-validation');
+        const { validateIEACompliance, validateRequiredFields } = await import('./schema-validation');
 
         // Run validations
         const requiredFieldsValidation = validateRequiredFields(formattedData);
