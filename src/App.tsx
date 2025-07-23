@@ -1,25 +1,16 @@
-import { useState } from 'react';
+import React from 'react';
 import { FormWizard } from './components/FormWizard';
 import { LandingPage } from './components/LandingPage';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from './components/ui/button';
 import { Logo } from './components/ui/logo';
+import { useAppStore } from './store/appStore';
 
 function App() {
-  const [showForm, setShowForm] = useState(false);
-
-
-
-  const handleStartForm = () => {
-    setShowForm(true);
-  };
-
-  const handleBackToLanding = () => {
-    setShowForm(false);
-  };
+  const { showForm, startForm, backToLanding } = useAppStore();
 
   if (!showForm) {
-    return <LandingPage onStartForm={handleStartForm} />;
+    return <LandingPage onStartForm={startForm} />;
   }
 
   return (
@@ -31,7 +22,7 @@ function App() {
             <Logo size="md" showText={true} variant="clean" />
 
             <Button
-              onClick={handleBackToLanding}
+              onClick={backToLanding}
               variant="outline"
               className="flex items-center gap-2 border-border hover:border-primary/50"
             >

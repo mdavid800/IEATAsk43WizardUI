@@ -35,58 +35,49 @@ export function ReviewStep() {
       return;
     }
 
-    const generatePreviewAndValidate = () => {
+    // Generate preview and validate immediately (no setTimeout)
+    if (!isGeneratingRef.current) {
       isGeneratingRef.current = true;
       setIsGeneratingPreview(true);
 
-      // Use setTimeout to allow the UI to render first
-      setTimeout(() => {
-        try {
-          // Generate export data (even if form is empty)
-          const exportData = generateExportJson(formData);
-          const jsonString = JSON.stringify(exportData, null, 2);
-          setPreviewJson(jsonString);
+      try {
+        // Generate export data (even if form is empty)
+        const exportData = generateExportJson(formData);
+        const jsonString = JSON.stringify(exportData, null, 2);
+        setPreviewJson(jsonString);
 
-          // Always run schema validation (even on empty data)
-          const schemaResult = validateIEACompliance(exportData);
-          setSchemaValidation(schemaResult);
+        // Always run schema validation (even on empty data)
+        const schemaResult = validateIEACompliance(exportData);
+        setSchemaValidation(schemaResult);
 
-          // Run required fields validation against the raw form data to catch all issues
-          // This ensures we see validation issues from all steps, not just what's in the exported JSON
-          const requiredFieldsResult = validateRequiredFields(formData);
-          setRequiredFieldsValidation(requiredFieldsResult);
+        // Run required fields validation against the raw form data to catch all issues
+        // This ensures we see validation issues from all steps, not just what's in the exported JSON
+        const requiredFieldsResult = validateRequiredFields(formData);
+        setRequiredFieldsValidation(requiredFieldsResult);
 
-          lastDataHashRef.current = dataHash;
-        } catch (error) {
-          console.error('Error generating preview:', error);
-          setPreviewJson('Error generating preview. Please check your data.');
+        lastDataHashRef.current = dataHash;
+      } catch (error) {
+        console.error('Error generating preview:', error);
+        setPreviewJson('Error generating preview. Please check your data.');
 
-          // Set validation errors even if preview generation fails
-          setSchemaValidation({
-            isValid: false,
-            errors: [{ path: 'root', message: 'Schema validation failed due to error' }],
-            warnings: []
-          });
-          setRequiredFieldsValidation({
-            isValid: false,
-            errors: [{ path: 'root', message: 'Required fields validation failed due to error' }],
-            warnings: []
-          });
+        // Set validation errors even if preview generation fails
+        setSchemaValidation({
+          isValid: false,
+          errors: [{ path: 'root', message: 'Schema validation failed due to error' }],
+          warnings: []
+        });
+        setRequiredFieldsValidation({
+          isValid: false,
+          errors: [{ path: 'root', message: 'Required fields validation failed due to error' }],
+          warnings: []
+        });
 
-          lastDataHashRef.current = dataHash;
-        } finally {
-          setIsGeneratingPreview(false);
-          isGeneratingRef.current = false;
-        }
-      }, 100); // Small delay to allow UI to render
-    };
-
-    // Run validation immediately on first render
-    generatePreviewAndValidate();
-
-    return () => {
-      // No need for timeout cleanup since we're not using setTimeout for debouncing anymore
-    };
+        lastDataHashRef.current = dataHash;
+      } finally {
+        setIsGeneratingPreview(false);
+        isGeneratingRef.current = false;
+      }
+    }
   }, [formData]);
 
   return (
