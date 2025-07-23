@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { FileJson, Check, AlertCircle, Loader2, Shield, ShieldCheck, GitCompare, Code2 } from 'lucide-react';
-import { Button } from '../ui/button';
 import { SchemaComparison } from '../ui/schema-comparison';
 import { cn } from '../../utils/cn';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -84,28 +83,7 @@ export function ReviewStep() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-primary mb-2">Review & Export</h2>
-        <Button
-          type="submit"
-          className={cn(
-            "flex items-center gap-2",
-            (requiredFieldsValidation?.isValid && schemaValidation?.isValid)
-              ? "bg-green-600 hover:bg-green-700"
-              : "bg-primary hover:bg-primary/90"
-          )}
-          disabled={!isValid}
-        >
-          {(requiredFieldsValidation?.isValid && schemaValidation?.isValid) ? (
-            <ShieldCheck className="w-4 h-4" />
-          ) : (
-            <FileJson className="w-4 h-4" />
-          )}
-          {(requiredFieldsValidation?.isValid && schemaValidation?.isValid)
-            ? "Export Compliant JSON"
-            : "Export JSON"}
-        </Button>
-      </div>
+      <h2 className="text-2xl font-bold text-primary mb-2">Review & Export</h2>
 
       {!isValid && (
         <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
