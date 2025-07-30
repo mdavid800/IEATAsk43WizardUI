@@ -21,6 +21,49 @@ export const generateExportJson = (data: IEATask43Schema) => {
         }
     };
 
+    // Helper function to clean optional vertical profiler properties
+    const cleanVerticalProfilerProperties = (props: any[]) => {
+        if (!props || props.length === 0) return null;
+        
+        return props.map(prop => {
+            const cleanedProp: any = {};
+            
+            // Only include fields that have meaningful values
+            if (typeof prop.device_datum_plane_height_m === 'number') {
+                cleanedProp.device_datum_plane_height_m = prop.device_datum_plane_height_m;
+            }
+            if (prop.height_reference_id) {
+                cleanedProp.height_reference_id = prop.height_reference_id;
+            }
+            if (typeof prop.device_orientation_deg === 'number') {
+                cleanedProp.device_orientation_deg = prop.device_orientation_deg;
+            }
+            if (prop.orientation_reference_id) {
+                cleanedProp.orientation_reference_id = prop.orientation_reference_id;
+            }
+            if (prop.device_vertical_orientation) {
+                cleanedProp.device_vertical_orientation = prop.device_vertical_orientation;
+            }
+            if (prop.date_from) {
+                cleanedProp.date_from = formatDateToISO(prop.date_from);
+            }
+            if (prop.date_to) {
+                cleanedProp.date_to = formatDateToISO(prop.date_to);
+            }
+            if (prop.notes && prop.notes.trim() !== '') {
+                cleanedProp.notes = prop.notes;
+            }
+            
+            // Always set update_at if any field has a value, otherwise omit the entire property
+            if (Object.keys(cleanedProp).length > 0) {
+                cleanedProp.update_at = new Date().toISOString();
+                return cleanedProp;
+            }
+            
+            return null;
+        }).filter(Boolean); // Remove null entries
+    };
+
     // Helper function to clean optional logger fields
     const cleanOptionalLoggerFields = (logger: any) => {
         const optionalFields = [
@@ -178,6 +221,7 @@ export const generateExportJson = (data: IEATask43Schema) => {
         return {
             ...locationWithoutSensors,
             update_at: new Date().toISOString(),
+            vertical_profiler_properties: cleanVerticalProfilerProperties(location.vertical_profiler_properties),
             logger_main_config: location.logger_main_config?.map(logger => cleanOptionalLoggerFields({
                 ...logger,
                 update_at: new Date().toISOString(),
