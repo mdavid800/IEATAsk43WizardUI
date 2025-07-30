@@ -1,5 +1,5 @@
 import { useFormContext } from 'react-hook-form';
-import { PlusCircle, Trash2, ChevronDown, Settings, AlertCircle, Check } from 'lucide-react';
+import { PlusCircle, Trash2, ChevronDown, Settings, AlertCircle, Check, Info } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -16,6 +16,7 @@ import DynamicLoggerOptionalFields from './DynamicLoggerOptionalFields';
 export function LoggerStep() {
   const { register, setValue, watch } = useFormContext<IEATask43Schema>();
   const locations = watch('measurement_location');
+  const campaignStatus = watch('campaignStatus'); // Get campaign status from form
   const [expandedLocations, setExpandedLocations] = useState<{ [key: string]: boolean }>(
     locations.reduce((acc, loc) => ({ ...acc, [loc.uuid!]: true }), {})
   );
@@ -62,6 +63,16 @@ export function LoggerStep() {
       ...prev,
       [loggerIndex]: !prev[loggerIndex]
     }));
+  };
+
+  // Handle date_to field with null support for live campaigns
+  const handleDateToChange = (value: string, locationIndex: number, loggerIndex: number) => {
+    // If user enters "null" (case insensitive), set actual null value
+    if (value.toLowerCase().trim() === 'null') {
+      setValue(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.date_to`, null);
+    } else {
+      setValue(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.date_to`, value);
+    }
   };
 
   return (
@@ -291,11 +302,25 @@ export function LoggerStep() {
                             </Label>
                             <DatePicker
                               value={watch(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.date_to`) || ''}
-                              onChange={(value) => setValue(`measurement_location.${locationIndex}.logger_main_config.${loggerIndex}.date_to`, value)}
-                              placeholder="Select end date and time"
+                              onChange={(value) => handleDateToChange(value, locationIndex, loggerIndex)}
+                              placeholder="Select end date and time or type 'null'"
                               includeTime={true}
                               required
                             />
+                            {campaignStatus === 'live' && (
+                              <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                                <div className="flex items-start gap-2">
+                                  <Info className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                                  <div className="text-sm text-blue-700">
+                                    <strong>Live Campaign Note:</strong> For ongoing campaigns, you can either:
+                                    <ul className="mt-1 ml-4 list-disc">
+                                      <li>Use the current date/time as the end date</li>
+                                      <li>Type <code className="px-1 py-0.5 bg-blue-100 rounded text-xs font-mono">null</code> to indicate the campaign is still active</li>
+                                    </ul>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                           </div>
 
                           {/* Dynamic Optional Fields UI */}

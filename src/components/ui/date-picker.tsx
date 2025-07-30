@@ -15,7 +15,7 @@ import {
 
 interface DatePickerProps {
   id?: string
-  value?: string
+  value?: string | null
   onChange: (value: string) => void
   placeholder?: string
   required?: boolean
@@ -74,7 +74,13 @@ export function DatePicker({
 
   // Initialize from value prop
   React.useEffect(() => {
-    if (value) {
+    if (value === null) {
+      // Handle explicit null value
+      setDate(undefined)
+      setMonth(undefined)
+      setInputValue("null")
+      setTimeValue("")
+    } else if (value) {
       const parsedDate = new Date(value)
       if (isValidDate(parsedDate)) {
         setDate(parsedDate)
@@ -85,6 +91,12 @@ export function DatePicker({
           const minutes = parsedDate.getMinutes().toString().padStart(2, '0')
           setTimeValue(`${hours}:${minutes}`)
         }
+      } else {
+        // Handle invalid date string
+        setDate(undefined)
+        setMonth(undefined)
+        setInputValue(value)
+        setTimeValue("")
       }
     } else {
       setDate(undefined)
@@ -135,6 +147,15 @@ export function DatePicker({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value
     setInputValue(newValue)
+
+    // Handle "null" input specially
+    if (newValue.toLowerCase().trim() === 'null') {
+      setDate(undefined)
+      setMonth(undefined)
+      setTimeValue("")
+      onChange("null") // Send "null" string to parent for processing
+      return
+    }
 
     const parsedDate = new Date(newValue)
     if (isValidDate(parsedDate)) {
