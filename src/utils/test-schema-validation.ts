@@ -1,5 +1,6 @@
 // Test utility to verify schema validation is working
 import { schemaValidator, validateIEACompliance } from './schema-validation';
+import { generateExportJson } from './json-export';
 
 export function testSchemaValidation() {
     console.log('Testing IEA Schema Validation Service...');
@@ -41,10 +42,110 @@ export function testSchemaValidation() {
 
     console.log('Schema validation tests completed.');
 
+    // Test 5: Sensor distribution fix - ensure only selected sensors are exported
+    const sensorDistributionTest = testSensorDistribution();
+    console.log('Test 5 - Sensor distribution fix:', sensorDistributionTest ? 'PASS' : 'FAIL');
+
     return {
         validDataTest: validResult.isValid,
         invalidDataTest: !invalidResult.isValid,
         dateFormatTest,
-        uuidTest
+        uuidTest,
+        sensorDistributionTest
     };
+}
+
+function testSensorDistribution(): boolean {
+    console.log('Testing sensor distribution in JSON export...');
+    
+    const mockData: any = {
+        author: 'Test Author',
+        organisation: 'Test Org',
+        date: '2024-01-01',
+        version: '1.3.0-2024.03',
+        plant_name: 'Test Plant',
+        plant_type: 'onshore_wind',
+        measurement_location: [{
+            uuid: 'loc-1',
+            name: 'Test Location',
+            latitude_ddeg: 40.0,
+            longitude_ddeg: -100.0,
+            measurement_station_type_id: 'mast',
+            update_at: '2023-07-30T13:53:01.000Z',
+            
+            // Location has multiple sensors
+            sensors: [
+                {
+                    oem: 'Sensor1OEM',
+                    model: 'z300',
+                    serial_number: '1234',
+                    sensor_type_id: 'lidar',
+                    date_from: '2023-07-30T13:53:01.000Z',
+                    date_to: '2023-07-30T13:53:01.000Z'
+                },
+                {
+                    oem: 'Sensor2OEM',
+                    model: 'z300',
+                    serial_number: '1235',
+                    sensor_type_id: 'lidar',
+                    date_from: '2023-07-30T13:53:01.000Z',
+                    date_to: '2023-07-30T13:53:01.000Z'
+                }
+            ],
+            
+            measurement_point: [{
+                name: 'Test Point',
+                measurement_type_id: 'wind_speed',
+                height_m: 40,
+                height_reference_id: 'ground_level',
+                update_at: '2023-07-30T13:53:01.000Z',
+                logger_measurement_config: [{
+                    logger_id: 'logger1',
+                    date_from: '2023-07-30T13:53:01.000Z',
+                    date_to: '2023-07-30T13:53:01.000Z',
+                    update_at: '2023-07-30T13:53:01.000Z',
+                    column_name: [{
+                        column_name: 'Test Column',
+                        statistic_type_id: 'avg',
+                        is_ignored: false,
+                        update_at: '2023-07-30T13:53:01.000Z'
+                    }]
+                }],
+                
+                // This measurement point should ONLY have one specific sensor
+                sensor: [{
+                    oem: 'Sensor1OEM',
+                    model: 'z300',
+                    serial_number: '1234',
+                    sensor_type_id: 'lidar',
+                    date_from: '2023-07-30T13:53:01.000Z',
+                    date_to: '2023-07-30T13:53:01.000Z'
+                }]
+            }]
+        }]
+    };
+    
+    try {
+        const exportedData = generateExportJson(mockData);
+        const exportedMeasurementPoint = exportedData.measurement_location[0].measurement_point[0];
+        const exportedSensorSerials = exportedMeasurementPoint.sensor.map((s: any) => s.serial_number);
+        
+        // Should only contain the sensor that was selected for this measurement point
+        const expectedSensorSerials = ['1234'];
+        const isCorrect = JSON.stringify(expectedSensorSerials.sort()) === JSON.stringify(exportedSensorSerials.sort()) &&
+                         exportedSensorSerials.length === 1;
+        
+        if (isCorrect) {
+            console.log('✅ Sensor distribution test passed: measurement point contains only selected sensors');
+        } else {
+            console.log('❌ Sensor distribution test failed:');
+            console.log('  Expected sensors:', expectedSensorSerials);
+            console.log('  Actual sensors:', exportedSensorSerials);
+        }
+        
+        return isCorrect;
+    } catch (error) {
+        console.log('❌ Sensor distribution test failed with error:', error);
+        return false;
+    }
 }

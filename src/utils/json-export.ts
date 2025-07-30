@@ -105,31 +105,20 @@ export const generateExportJson = (data: IEATask43Schema) => {
 
     // Process each location to restructure sensors
     const formattedLocations = data.measurement_location.map(location => {
-        // Extract location-level sensors (if any) - sensors should now be at measurement_point level
-        // This is for backward compatibility in case old data still has sensors at location level
-        const locationData = location as any;
-        const locationSensors = locationData.sensors || [];
-
         // Create a copy of the location without the sensors field (if it exists)
         // Use spread to create a new object without modifying the original
         const locationWithoutSensors = { ...location };
 
-        // Delete the sensors property if it exists
+        // Delete the sensors property if it exists - sensors should be at measurement point level
         if ('sensors' in locationWithoutSensors) {
             delete (locationWithoutSensors as any).sensors;
         }
 
-        // Process measurement points and distribute sensors
+        // Process measurement points - only use sensors specifically selected for each point
         const updatedMeasurementPoints = location.measurement_point.map(point => {
-            // Start with existing point sensors
+            // Only use sensors that were specifically selected for this measurement point
+            // These are the sensors selected in the measurement point table UI
             const pointSensors = [...(point.sensor || [])];
-
-            // Add location sensors to the first measurement point
-            // In a real implementation, you would need logic to determine which measurement point
-            // each sensor belongs to based on measurement type, height, etc.
-            if (locationSensors.length > 0) {
-                pointSensors.push(...locationSensors);
-            }
 
             // Remove form-only fields from measurement point
             const { statistic_type_id, unit, ...cleanPoint } = point;
