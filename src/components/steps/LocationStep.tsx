@@ -42,21 +42,19 @@ export function LocationStep() {
   };
 
   const addVerticalProfilerProperty = () => {
-    const formData = watch();
-    const defaultDates = getDefaultDatesForNewEntry(formData);
     const currentProps = watch('measurement_location.0.vertical_profiler_properties') || [];
     setValue('measurement_location.0.vertical_profiler_properties', [
       ...currentProps,
       {
-        device_datum_plane_height_m: undefined,
-        height_reference_id: undefined,
-        device_orientation_deg: undefined,
-        orientation_reference_id: undefined,
-        device_vertical_orientation: undefined,
-        date_from: defaultDates.date_from,
-        date_to: defaultDates.date_to,
-        notes: '',
-        update_at: new Date().toISOString()
+        device_datum_plane_height_m: null,
+        height_reference_id: null,
+        device_orientation_deg: null,
+        orientation_reference_id: null,
+        device_vertical_orientation: null,
+        date_from: null,
+        date_to: null,
+        notes: null,
+        update_at: null
       }
     ]);
   };

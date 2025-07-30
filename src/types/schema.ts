@@ -87,10 +87,10 @@ export interface VerticalProfilerProperty {
   device_orientation_deg?: number;
   orientation_reference_id?: OrientationReference;
   device_vertical_orientation?: 'upward' | 'downward' | null;
-  date_from: string;
+  date_from?: string | null;
   date_to?: string | null;
-  notes?: string;
-  update_at: string;
+  notes?: string | null;
+  update_at?: string | null;
 }
 
 export interface LoggerMainConfig {

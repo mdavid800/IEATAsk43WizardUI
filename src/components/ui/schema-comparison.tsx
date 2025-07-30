@@ -144,7 +144,7 @@ export function SchemaComparison({ data, validationErrors = [], className }: Sch
                   children: [
                     buildNode('device_datum_plane_height_m', `measurement_location[${index}].vertical_profiler_properties[${vpIndex}].device_datum_plane_height_m`, false, 'number|null', false, 'Height of device datum plane'),
                     buildNode('height_reference_id', `measurement_location[${index}].vertical_profiler_properties[${vpIndex}].height_reference_id`, false, 'enum|null', false, 'Reference for height measurements', ['ground_level', 'mean_sea_level', 'sea_level', 'lowest_astronomical_tide', 'sea_floor', 'other']),
-                    buildNode('date_from', `measurement_location[${index}].vertical_profiler_properties[${vpIndex}].date_from`, true, 'datetime', false, 'Start date for this configuration'),
+                    buildNode('date_from', `measurement_location[${index}].vertical_profiler_properties[${vpIndex}].date_from`, false, 'datetime|null', false, 'Start date for this configuration'),
                     buildNode('date_to', `measurement_location[${index}].vertical_profiler_properties[${vpIndex}].date_to`, false, 'datetime|null', false, 'End date for this configuration'),
                   ]
                 }))
