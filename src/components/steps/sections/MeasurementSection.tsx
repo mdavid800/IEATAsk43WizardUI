@@ -8,7 +8,7 @@ import { Label } from '../../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { SearchableSelect } from '../../ui/searchable-select';
 import { Textarea } from '../../ui/textarea';
-import { measurementTypeOptions, heightReferenceOptions } from '../../../utils/enum-options';
+import { measurementTypeOptions, heightReferenceOptions, measurementUnitsOptions } from '../../../utils/enum-options';
 
 interface MeasurementSectionProps {
   locationIndex: number;
@@ -69,6 +69,7 @@ export function MeasurementSection({ locationIndex }: MeasurementSectionProps) {
           const type = determineMeasurementType(cleanName);
           const statisticType = determineStatisticType(cleanName);
           const height = extractHeight(cleanName);
+          const unit = extractUnit(cleanName, type);
 
           return {
             id: Date.now() + index,
@@ -77,7 +78,8 @@ export function MeasurementSection({ locationIndex }: MeasurementSectionProps) {
             measurement_type_id: type,
             statistic_type_id: statisticType,
             height_m: height || 0,
-            height_reference_id: determineHeightReference(type, cleanName)
+            height_reference_id: determineHeightReference(type, cleanName),
+            unit: unit
           };
         });
 
@@ -91,6 +93,7 @@ export function MeasurementSection({ locationIndex }: MeasurementSectionProps) {
           setValue(`measurement_location.${locationIndex}.measurement_point.${index}.statistic_type_id`, measurement.statistic_type_id);
           setValue(`measurement_location.${locationIndex}.measurement_point.${index}.height_m`, measurement.height_m);
           setValue(`measurement_location.${locationIndex}.measurement_point.${index}.height_reference_id`, measurement.height_reference_id);
+          setValue(`measurement_location.${locationIndex}.measurement_point.${index}.unit`, measurement.unit);
         });
       },
       error: (error) => {
@@ -227,6 +230,165 @@ export function MeasurementSection({ locationIndex }: MeasurementSectionProps) {
     return null;
   };
 
+  const extractUnit = (name: string, measurementType: string): string => {
+    const lowerName = name.toLowerCase();
+
+    // Check for explicit unit mentions in parentheses or brackets
+    const unitMatch = name.match(/[\(\[]\s*([^)\]]+)\s*[\)\]]/);
+    if (unitMatch) {
+      const candidateUnit = unitMatch[1].trim();
+      // Check if it's a valid unit from our options
+      if (measurementUnitsOptions.some(opt => opt.value === candidateUnit || opt.label === candidateUnit)) {
+        return candidateUnit;
+      }
+    }
+
+    // Check for units mentioned with underscores or spaces
+    if (lowerName.includes('_ms') || lowerName.includes('_m_s')) return 'm/s';
+    if (lowerName.includes('_deg') || lowerName.includes('_degrees')) return 'deg';
+    if (lowerName.includes('_degc') || lowerName.includes('_deg_c')) return 'deg_C';
+    if (lowerName.includes('_degf') || lowerName.includes('_deg_f')) return 'deg_F';
+    if (lowerName.includes('_percent') || lowerName.includes('_%')) return '%';
+    if (lowerName.includes('_mbar')) return 'mbar';
+    if (lowerName.includes('_hpa')) return 'hPa';
+    if (lowerName.includes('_pa')) return 'Pa';
+    if (lowerName.includes('_volt') || lowerName.includes('_v')) return 'V';
+    if (lowerName.includes('_mv')) return 'mV';
+    if (lowerName.includes('_ma')) return 'mA';
+    if (lowerName.includes('_amp') || lowerName.includes('_a')) return 'A';
+    if (lowerName.includes('_wm2') || lowerName.includes('_w_m2')) return 'W/m^2';
+    if (lowerName.includes('_watt') || lowerName.includes('_w')) return 'W';
+    if (lowerName.includes('_lux')) return 'lux';
+    if (lowerName.includes('_mm')) return 'mm';
+    if (lowerName.includes('_m') && !lowerName.includes('_ms')) return 'm';
+    if (lowerName.includes('_ppt')) return 'ppt';
+    if (lowerName.includes('_ppm')) return 'ppm';
+    if (lowerName.includes('_ntu')) return 'ntu';
+    if (lowerName.includes('_mph')) return 'mph';
+    if (lowerName.includes('_knots')) return 'knots';
+
+    // Determine unit based on measurement type
+    switch (measurementType) {
+      case 'wind_speed':
+      case 'motion_corrected_wind_speed':
+      case 'vertical_wind_speed':
+      case 'water_speed':
+      case 'vertical_water_speed':
+        return 'm/s';
+      
+      case 'wind_direction':
+      case 'motion_corrected_wind_direction':
+      case 'water_direction':
+      case 'wave_direction':
+      case 'compass_direction':
+      case 'orientation':
+      case 'azimuth':
+      case 'pitch':
+      case 'roll':
+      case 'heading':
+      case 'tilt':
+      case 'tilt_x':
+      case 'tilt_y':
+      case 'tilt_z':
+        return 'deg';
+      
+      case 'air_temperature':
+      case 'water_temperature':
+      case 'temperature':
+        return 'deg_C';
+      
+      case 'relative_humidity':
+      case 'availability':
+      case 'quality':
+      case 'wind_speed_turbulence':
+        return '%';
+      
+      case 'air_pressure':
+      case 'pressure':
+        return 'hPa';
+      
+      case 'voltage':
+        return 'V';
+      
+      case 'current':
+        return 'mA';
+      
+      case 'global_horizontal_irradiance':
+      case 'direct_normal_irradiance':
+      case 'diffuse_horizontal_irradiance':
+      case 'global_tilted_irradiance':
+      case 'global_normal_irradiance':
+        return 'W/m^2';
+      
+      case 'illuminance':
+        return 'lux';
+      
+      case 'precipitation':
+        return 'mm';
+      
+      case 'wave_height':
+      case 'wave_significant_height':
+      case 'wave_maximum_height':
+      case 'height':
+      case 'altitude':
+      case 'elevation':
+      case 'depth':
+      case 'water_level':
+        return 'm';
+      
+      case 'wave_period':
+      case 'wave_peak_period':
+      case 'wave_period_first_frequency':
+      case 'wave_period_second_frequency':
+      case 'wave_period_zero_crossing':
+        return 's';
+      
+      case 'wave_energy_spectrum':
+        return 'm^2/Hz';
+      
+      case 'air_density':
+        return 'kg/m^3';
+      
+      case 'mass_concentration':
+        return 'g/L';
+      
+      case 'salinity':
+        return 'ppt';
+      
+      case 'turbidity':
+        return 'ntu';
+      
+      case 'power':
+        return 'W';
+      
+      case 'energy':
+        return 'kWh';
+      
+      case 'resistance':
+        return 'ohm';
+      
+      case 'counter':
+      case 'count':
+        return '1';
+      
+      case 'carrier_to_noise_ratio':
+      case 'signal_to_noise_ratio':
+      case 'echo_intensity':
+        return 'dB';
+      
+      case 'fuel_level':
+        return 'L';
+      
+      case 'status':
+      case 'flag':
+      case 'text':
+        return 'null';
+      
+      default:
+        return 'null';
+    }
+  };
+
   const determineStatisticType = (name: string): string => {
     const lowerName = name.toLowerCase();
 
@@ -361,6 +523,19 @@ export function MeasurementSection({ locationIndex }: MeasurementSectionProps) {
                       onValueChange={(value) => setValue(`measurement_location.${locationIndex}.measurement_point.${index}.height_reference_id`, value)}
                       placeholder="Select height reference..."
                       searchPlaceholder="Search height references..."
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor={`measurement_location.${locationIndex}.measurement_point.${index}.unit`}>
+                      Unit
+                    </Label>
+                    <SearchableSelect
+                      options={measurementUnitsOptions}
+                      value={getValues(`measurement_location.${locationIndex}.measurement_point.${index}.unit`)}
+                      onValueChange={(value) => setValue(`measurement_location.${locationIndex}.measurement_point.${index}.unit`, value)}
+                      placeholder="Select unit..."
+                      searchPlaceholder="Search units..."
                     />
                   </div>
 

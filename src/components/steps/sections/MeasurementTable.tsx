@@ -10,7 +10,7 @@ import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { MultiSelect } from '@/components/ui/multi-select';
-import { measurementTypeOptions, heightReferenceOptions, statisticTypeOptions } from '@/utils/enum-options';
+import { measurementTypeOptions, heightReferenceOptions, statisticTypeOptions, measurementUnitsOptions } from '@/utils/enum-options';
 import {
     Table,
     TableBody,
@@ -233,9 +233,17 @@ const ExpandableRow = ({
                                     Unit
                                     <span className="ml-1 text-xs text-orange-600">(Form helper - not in IEA schema)</span>
                                 </Label>
-                                <Input
-                                    {...register(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.unit`)}
-                                    placeholder="e.g., m/s, deg"
+                                <SearchableSelect
+                                    options={measurementUnitsOptions}
+                                    value={watch(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.unit`) || undefined}
+                                    onValueChange={(value: string | undefined) => {
+                                        setValue(
+                                            `measurement_location.${locationIndex}.measurement_point.${actualIndex}.unit`,
+                                            value || ''
+                                        );
+                                    }}
+                                    placeholder="Select unit"
+                                    searchPlaceholder="Search units..."
                                 />
                             </div>
                         </div>
@@ -394,7 +402,7 @@ export function MeasurementTable({
         if (filters.height_reference_id !== 'all' && pointData.height_reference_id !== filters.height_reference_id) {
             return false;
         }
-        if (filters.unit !== 'all' && !pointData.unit?.toLowerCase().includes(filters.unit.toLowerCase())) {
+        if (filters.unit !== 'all' && pointData.unit !== filters.unit) {
             return false;
         }
         if (filters.notes && !pointData.notes?.toLowerCase().includes(filters.notes.toLowerCase())) {
@@ -635,6 +643,18 @@ export function MeasurementTable({
                                                 />
                                             </div>
                                             <div className="space-y-2">
+                                                <Label htmlFor="unit-filter">Unit</Label>
+                                                <SearchableSelect
+                                                    options={measurementUnitsOptions}
+                                                    value={filters.unit === 'all' ? undefined : filters.unit}
+                                                    onValueChange={(value: string | undefined) =>
+                                                        setFilters(prev => ({ ...prev, unit: value || 'all' }))
+                                                    }
+                                                    placeholder="All units"
+                                                    searchPlaceholder="Search units..."
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
                                                 <Label htmlFor="sensors-filter">Sensors</Label>
                                                 <MultiSelect
                                                     options={sensorOptions}
@@ -805,11 +825,14 @@ export function MeasurementTable({
                                 {columnVisibility.unit && (
                                     <div className="space-y-2">
                                         <Label className="text-sm">Unit</Label>
-                                        <Input
-                                            value={bulkEditValues.unit}
-                                            onChange={(e) => setBulkEditValues(prev => ({ ...prev, unit: e.target.value }))}
-                                            placeholder="e.g., m/s, deg"
-                                            className="h-9"
+                                        <SearchableSelect
+                                            options={measurementUnitsOptions}
+                                            value={bulkEditValues.unit || undefined}
+                                            onValueChange={(value: string | undefined) =>
+                                                setBulkEditValues(prev => ({ ...prev, unit: value || '' }))
+                                            }
+                                            placeholder="Select unit"
+                                            searchPlaceholder="Search units..."
                                         />
                                     </div>
                                 )}
@@ -990,13 +1013,18 @@ export function MeasurementTable({
                                             )}
                                             {columnVisibility.unit && (
                                                 <TableCell className={`p-2 ${isCompactView ? "w-[60px]" : "w-[70px]"}`}>
-                                                    <TooltipWrapper text={watch(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.unit`) || ''}>
-                                                        <Input
-                                                            {...register(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.unit`)}
-                                                            placeholder="Unit"
-                                                            className={`truncate ${isCompactView ? "text-xs h-8" : "h-9"}`}
-                                                        />
-                                                    </TooltipWrapper>
+                                                    <SearchableSelect
+                                                        options={measurementUnitsOptions}
+                                                        value={watch(`measurement_location.${locationIndex}.measurement_point.${actualIndex}.unit`) || undefined}
+                                                        onValueChange={(value: string | undefined) => {
+                                                            setValue(
+                                                                `measurement_location.${locationIndex}.measurement_point.${actualIndex}.unit`,
+                                                                value || ''
+                                                            );
+                                                        }}
+                                                        placeholder="Unit"
+                                                        searchPlaceholder="Search..."
+                                                    />
                                                 </TableCell>
                                             )}
                                             {columnVisibility.sensors && (
