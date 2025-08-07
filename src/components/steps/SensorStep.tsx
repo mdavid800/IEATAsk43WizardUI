@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
-import { PlusCircle, Trash2, ChevronDown, Plus, Copy, AlertCircle, Check } from 'lucide-react';
+import { PlusCircle, Trash2, ChevronDown, Plus, Copy, AlertCircle, Check, Info } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -54,6 +54,7 @@ const TooltipWrapper = ({ children, text, className = "" }: { children: React.Re
 export function SensorsStep() {
   const { control, register, setValue, watch, formState: { errors } } = useFormContext<IEATask43Schema>();
   const allLocations = watch('measurement_location') || [];
+  const campaignStatus = watch('campaignStatus'); // Get campaign status from form
 
   // States are now objects keyed by location index
   const [expandedSensors, setExpandedSensors] = useState<LocationExpandedState>({});
@@ -284,6 +285,16 @@ function LocationSensorsManager({
     removeSensorsAt(sensorsIndex);
   };
 
+  // Handle date_to field with null support for live campaigns
+  const handleDateToChange = (value: string, locationIndex: number, sensorsIndex: number) => {
+    // If user enters "null" (case insensitive), set actual null value
+    if (value.toLowerCase().trim() === 'null') {
+      setValue(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.date_to`, null);
+    } else {
+      setValue(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.date_to`, value);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-end">
@@ -435,14 +446,28 @@ function LocationSensorsManager({
                   </Label>
                   <DatePicker
                     value={watch(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.date_to`) || ''}
-                    onChange={(value) => setValue(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.date_to`, value)}
-                    placeholder="Select end date and time"
+                    onChange={(value) => handleDateToChange(value, locationIndex, sensorsIndex)}
+                    placeholder="Select end date and time or type 'null'"
                     includeTime={true}
                     required
                     className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.date_to ? 'border-red-500' : ''}
                   />
                   {errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.date_to && (
                     <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensors[sensorsIndex].date_to.message}</p>
+                  )}
+                  {campaignStatus === 'live' && (
+                    <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                      <div className="flex items-start gap-2">
+                        <Info className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                        <div className="text-sm text-blue-700">
+                          <strong>Live Campaign Note:</strong> For ongoing campaigns, you can either:
+                          <ul className="mt-1 ml-4 list-disc">
+                            <li>Use the current date/time as the end date</li>
+                            <li>Type <code className="px-1 py-0.5 bg-blue-100 rounded text-xs font-mono">null</code> to indicate the campaign is still active</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
                   )}
                 </div>
 

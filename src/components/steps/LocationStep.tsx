@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { ChevronDown, PlusCircle, Trash2, AlertCircle, Check } from 'lucide-react';
+import { ChevronDown, PlusCircle, Trash2, AlertCircle, Check, Info } from 'lucide-react';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -15,6 +15,7 @@ import type { IEATask43Schema } from '../../types/schema';
 
 export function LocationStep() {
   const { register, setValue, watch } = useFormContext<IEATask43Schema>();
+  const campaignStatus = watch('campaignStatus'); // Get campaign status from form
   const [isExpanded, setIsExpanded] = useState(true);
   const [expandedProfilerProps, setExpandedProfilerProps] = useState<Record<string, boolean>>({});
   const [expandedModelConfigs, setExpandedModelConfigs] = useState<Record<string, boolean>>({});
@@ -95,6 +96,34 @@ export function LocationStep() {
     const currentConfigs = watch('measurement_location.0.model_config') || [];
     const newConfigs = currentConfigs.filter((_, i) => i !== index);
     setValue('measurement_location.0.model_config', newConfigs);
+  };
+
+  // Handle date_to fields with null support for live campaigns
+  const handleMastDateToChange = (value: string) => {
+    // If user enters "null" (case insensitive), set actual null value
+    if (value.toLowerCase().trim() === 'null') {
+      setValue('measurement_location.0.mast_properties.date_to', null);
+    } else {
+      setValue('measurement_location.0.mast_properties.date_to', value);
+    }
+  };
+
+  const handleVerticalProfilerDateToChange = (value: string, index: number) => {
+    // If user enters "null" (case insensitive), set actual null value
+    if (value.toLowerCase().trim() === 'null') {
+      setValue(`measurement_location.0.vertical_profiler_properties.${index}.date_to`, null);
+    } else {
+      setValue(`measurement_location.0.vertical_profiler_properties.${index}.date_to`, value);
+    }
+  };
+
+  const handleModelConfigDateToChange = (value: string, index: number) => {
+    // If user enters "null" (case insensitive), set actual null value
+    if (value.toLowerCase().trim() === 'null') {
+      setValue(`measurement_location.0.model_config.${index}.date_to`, null);
+    } else {
+      setValue(`measurement_location.0.model_config.${index}.date_to`, value);
+    }
   };
 
   return (
@@ -373,10 +402,24 @@ export function LocationStep() {
                       </Label>
                       <DatePicker
                         value={watch('measurement_location.0.mast_properties.date_to') || ''}
-                        onChange={(value) => setValue('measurement_location.0.mast_properties.date_to', value)}
-                        placeholder="Select end date and time"
+                        onChange={(value) => handleMastDateToChange(value)}
+                        placeholder="Select end date and time or type 'null'"
                         includeTime={true}
                       />
+                      {campaignStatus === 'live' && (
+                        <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                          <div className="flex items-start gap-2">
+                            <Info className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                            <div className="text-sm text-blue-700">
+                              <strong>Live Campaign Note:</strong> For ongoing campaigns, you can either:
+                              <ul className="mt-1 ml-4 list-disc">
+                                <li>Use the current date/time as the end date</li>
+                                <li>Type <code className="px-1 py-0.5 bg-blue-100 rounded text-xs font-mono">null</code> to indicate the campaign is still active</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div className="sm:col-span-2 space-y-2">
@@ -542,10 +585,24 @@ export function LocationStep() {
                               </Label>
                               <DatePicker
                                 value={watch(`measurement_location.0.vertical_profiler_properties.${index}.date_to`) || ''}
-                                onChange={(value) => setValue(`measurement_location.0.vertical_profiler_properties.${index}.date_to`, value)}
-                                placeholder="Select end date and time"
+                                onChange={(value) => handleVerticalProfilerDateToChange(value, index)}
+                                placeholder="Select end date and time or type 'null'"
                                 includeTime={true}
                               />
+                              {campaignStatus === 'live' && (
+                                <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                                  <div className="flex items-start gap-2">
+                                    <Info className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                                    <div className="text-sm text-blue-700">
+                                      <strong>Live Campaign Note:</strong> For ongoing campaigns, you can either:
+                                      <ul className="mt-1 ml-4 list-disc">
+                                        <li>Use the current date/time as the end date</li>
+                                        <li>Type <code className="px-1 py-0.5 bg-blue-100 rounded text-xs font-mono">null</code> to indicate the campaign is still active</li>
+                                      </ul>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
                             </div>
 
                             <div className="sm:col-span-2 space-y-2">
@@ -717,10 +774,24 @@ export function LocationStep() {
                               </Label>
                               <DatePicker
                                 value={watch(`measurement_location.0.model_config.${index}.date_to`) || ''}
-                                onChange={(value) => setValue(`measurement_location.0.model_config.${index}.date_to`, value)}
-                                placeholder="Select end date and time"
+                                onChange={(value) => handleModelConfigDateToChange(value, index)}
+                                placeholder="Select end date and time or type 'null'"
                                 includeTime={true}
                               />
+                              {campaignStatus === 'live' && (
+                                <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                                  <div className="flex items-start gap-2">
+                                    <Info className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                                    <div className="text-sm text-blue-700">
+                                      <strong>Live Campaign Note:</strong> For ongoing campaigns, you can either:
+                                      <ul className="mt-1 ml-4 list-disc">
+                                        <li>Use the current date/time as the end date</li>
+                                        <li>Type <code className="px-1 py-0.5 bg-blue-100 rounded text-xs font-mono">null</code> to indicate the campaign is still active</li>
+                                      </ul>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
                             </div>
 
                             <div className="sm:col-span-2 space-y-2">
