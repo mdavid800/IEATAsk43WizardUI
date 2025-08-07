@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
-import { ChevronRight, ChevronLeft, Download, X, AlertTriangle, Loader2 } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Download, X, AlertTriangle, Loader2, FileDown, ShieldCheck } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { BasicInfoStep } from './steps/BasicInfoStep';
 import { LocationStep } from './steps/LocationStep';
@@ -9,7 +9,7 @@ import { MeasurementStep } from './steps/MeasurementStep';
 import { SensorsStep } from './steps/SensorStep';
 import { ReviewStep } from './steps/ReviewStep';
 import { Button } from './ui/button';
-import { downloadJsonFile } from '../utils/json-export';
+import { downloadJsonFile, downloadJsonFileWithoutValidation, validateExportDataAsync } from '../utils/json-export';
 import type { IEATask43Schema, Sensor } from '../types/schema';
 
 // Add type for export error
@@ -261,29 +261,56 @@ export function FormWizard() {
 
   const [exportError, setExportError] = useState<ExportError>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [validationProgress, setValidationProgress] = useState<string>('');
+  const [showExportOptions, setShowExportOptions] = useState(false);
 
   const onSubmit = (data: IEATask43Schema) => {
     if (currentStep === steps.length - 1) {
-      // Reset any previous export errors
-      setExportError(null);
-      setIsExporting(true);
-
-      try {
-        // Use shared utility function for consistent JSON export with validation
-        const validationResult = downloadJsonFile(data, 'iea-task43-data.json', true);
-
-        // If validation failed, show error message
-        if (validationResult) {
-          setExportError(validationResult);
-        }
-      } catch (error) {
-        console.error('Export failed:', error);
-      } finally {
-        setIsExporting(false);
-      }
+      // Show export options instead of immediate export
+      setShowExportOptions(true);
     } else {
       next();
     }
+  };
+
+  const handleExportWithValidation = async (data: IEATask43Schema) => {
+    // Reset any previous export errors
+    setExportError(null);
+    setIsExporting(true);
+    setValidationProgress('Starting export...');
+
+    try {
+      // Use shared utility function for consistent JSON export with validation
+      const validationResult = await downloadJsonFile(data, 'iea-task43-data.json', true);
+
+      // If validation failed, show error message
+      if (validationResult) {
+        setExportError(validationResult);
+        setValidationProgress('');
+      } else {
+        setValidationProgress('Export completed successfully!');
+        setTimeout(() => setValidationProgress(''), 3000);
+      }
+    } catch (error) {
+      console.error('Export failed:', error);
+      setValidationProgress('Export failed');
+    } finally {
+      setIsExporting(false);
+      setShowExportOptions(false);
+    }
+  };
+
+  const handleExportWithoutValidation = (data: IEATask43Schema) => {
+    setValidationProgress('Exporting without validation...');
+    try {
+      downloadJsonFileWithoutValidation(data, 'iea-task43-data.json');
+      setValidationProgress('Export completed successfully!');
+      setTimeout(() => setValidationProgress(''), 3000);
+    } catch (error) {
+      console.error('Export failed:', error);
+      setValidationProgress('Export failed');
+    }
+    setShowExportOptions(false);
   };
 
   return (
@@ -455,15 +482,74 @@ export function FormWizard() {
         </div>
       )}
 
-      {/* Export Loading State */}
-      {isExporting && currentStep === steps.length - 1 && (
+      {/* Export Options Modal */}
+      {showExportOptions && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Export Options</h3>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowExportOptions(false)}
+                className="h-6 w-6 p-0"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Choose how you want to export your data. For large datasets, consider skipping validation to avoid timeouts.
+              </p>
+              
+              <div className="space-y-3">
+                <Button
+                  type="button"
+                  onClick={() => handleExportWithValidation(methods.getValues())}
+                  className="w-full justify-start bg-green-600 hover:bg-green-700 text-white"
+                  disabled={isExporting}
+                >
+                  <ShieldCheck className="w-4 h-4 mr-2" />
+                  Export with Validation (Recommended)
+                </Button>
+                
+                <Button
+                  type="button"
+                  onClick={() => handleExportWithoutValidation(methods.getValues())}
+                  className="w-full justify-start bg-blue-600 hover:bg-blue-700 text-white"
+                  disabled={isExporting}
+                >
+                  <FileDown className="w-4 h-4 mr-2" />
+                  Export without Validation (Faster)
+                </Button>
+              </div>
+              
+              <div className="text-xs text-muted-foreground bg-gray-50 p-3 rounded">
+                <strong>With Validation:</strong> Checks data compliance but may timeout for large datasets.<br/>
+                <strong>Without Validation:</strong> Exports immediately but you should validate separately.
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Export Loading State with Progress */}
+      {(isExporting || validationProgress) && currentStep === steps.length - 1 && (
         <div className="professional-card p-6 bg-blue-50 border border-blue-200">
           <div className="flex items-center gap-3">
-            <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
+            {isExporting ? (
+              <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
+            ) : (
+              <ShieldCheck className="w-5 h-5 text-green-500" />
+            )}
             <div>
-              <h3 className="font-medium text-blue-800">Validating and Exporting Data</h3>
+              <h3 className="font-medium text-blue-800">
+                {isExporting ? 'Processing Export...' : 'Export Status'}
+              </h3>
               <p className="text-sm text-blue-700">
-                Please wait while we validate your data against the IEA Task 43 schema...
+                {validationProgress || 'Please wait while we process your data...'}
               </p>
             </div>
           </div>
