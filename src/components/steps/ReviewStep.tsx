@@ -480,30 +480,55 @@ export function ReviewStep() {
 
       {/* View Mode Toggle */}
       <div className="bg-muted/30 rounded-lg p-4">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
           <h3 className="text-lg font-medium">Data Preview</h3>
-          <div className="flex bg-background border rounded-lg p-1">
+          <div className="flex items-center gap-3">
+            <div className="flex bg-background border rounded-lg p-1">
+              <Button
+                type="button"
+                variant={viewMode === 'json' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('json')}
+                className="flex items-center gap-2"
+              >
+                <Code2 className="w-4 h-4" />
+                JSON Export
+              </Button>
+              <Button
+                type="button"
+                variant={viewMode === 'comparison' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('comparison')}
+                className="flex items-center gap-2"
+              >
+                <GitCompare className="w-4 h-4" />
+                Schema Comparison
+              </Button>
+            </div>
+            
+            {/* Manual validation trigger */}
             <Button
               type="button"
-              variant={viewMode === 'json' ? 'default' : 'ghost'}
+              onClick={() => startAsyncValidation(formData)}
+              disabled={isValidating}
+              variant="outline"
               size="sm"
-              onClick={() => setViewMode('json')}
               className="flex items-center gap-2"
             >
-              <Code2 className="w-4 h-4" />
-              JSON Export
-            </Button>
-            <Button
-              type="button"
-              variant={viewMode === 'comparison' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('comparison')}
-              className="flex items-center gap-2"
-            >
-              <GitCompare className="w-4 h-4" />
-              Schema Comparison
+              {isValidating ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Validating...
+                </>
+              ) : (
+                <>
+                  <Shield className="w-4 h-4" />
+                  Validate Now
+                </>
+              )}
             </Button>
           </div>
+        </div>
         </div>
 
         {viewMode === 'comparison' ? (
@@ -617,9 +642,13 @@ export function ReviewStep() {
           <div className="ml-3">
             <p className="text-sm text-blue-700">
               Review your configuration summary and export preview above. The exported JSON will be IEA Task 43 compliant and exclude form-only fields like campaign status and dates.
-              When ready, click "Export JSON" to download your data model file.
+              When ready, click "Export JSON" to choose your export method.
               {!isValid && " Make sure to complete all required sections first."}
             </p>
+            <div className="mt-2 text-xs text-blue-600 bg-blue-100 p-2 rounded">
+              <strong>Performance tip:</strong> For datasets with many sensors (&gt;1000), validation may take some time. 
+              You can export without validation for immediate results, then validate separately if needed.
+            </div>
           </div>
         </div>
       </div>

@@ -307,26 +307,51 @@ export const validateExportDataAsync = async (
     onProgress?: (step: string) => void
 ): Promise<{ requiredFieldsValidation: any; schemaValidation: any }> => {
     return new Promise((resolve) => {
-        // Use setTimeout to make validation non-blocking
-        setTimeout(async () => {
+        // Use requestIdleCallback if available, otherwise setTimeout
+        const scheduleWork = (callback: () => void) => {
+            if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+                (window as any).requestIdleCallback(callback, { timeout: 1000 });
+            } else {
+                setTimeout(callback, 10);
+            }
+        };
+
+        scheduleWork(async () => {
             try {
                 onProgress?.('Preparing data for validation...');
                 
                 // Generate export data
                 const formattedData = generateExportJson(data);
                 
+                // Small delay to allow UI to update
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
                 onProgress?.('Validating required fields...');
                 
-                // Import validation functions
+                // Import validation functions dynamically to prevent blocking
                 const { validateIEACompliance, validateRequiredFields } = await import('./schema-validation');
 
                 // Run required fields validation first (usually faster)
                 const requiredFieldsValidation = validateRequiredFields(formattedData);
                 
+                // Another small delay
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
                 onProgress?.('Validating schema compliance...');
                 
                 // Run schema validation (can be slower for large datasets)
-                const schemaValidation = validateIEACompliance(formattedData);
+                // Break this into chunks if it's a large dataset
+                const dataSize = JSON.stringify(formattedData).length;
+                let schemaValidation;
+                
+                if (dataSize > 1000000) { // > 1MB
+                    // For very large datasets, add extra delays
+                    onProgress?.('Processing large dataset - this may take a moment...');
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    schemaValidation = validateIEACompliance(formattedData);
+                } else {
+                    schemaValidation = validateIEACompliance(formattedData);
+                }
                 
                 onProgress?.('Validation complete');
                 
@@ -336,16 +361,16 @@ export const validateExportDataAsync = async (
                 resolve({
                     requiredFieldsValidation: {
                         isValid: false,
-                        errors: [{ path: 'root', message: 'Validation failed due to error' }],
+                        errors: [{ path: 'root', message: `Validation failed: ${error instanceof Error ? error.message : 'Unknown error'}` }],
                         warnings: []
                     },
                     schemaValidation: {
                         isValid: false,
-                        errors: [{ path: 'root', message: 'Schema validation failed due to error' }],
+                        errors: [{ path: 'root', message: `Schema validation failed: ${error instanceof Error ? error.message : 'Unknown error'}` }],
                         warnings: []
                     }
                 });
             }
-        }, 10); // Small delay to allow UI to update
+        });
     });
 }; 
