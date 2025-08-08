@@ -46,12 +46,17 @@ export function testSchemaValidation() {
     const sensorDistributionTest = testSensorDistribution();
     console.log('Test 5 - Sensor distribution fix:', sensorDistributionTest ? 'PASS' : 'FAIL');
 
+    // Test 6: Conditional device properties - ensure properties are included based on device type
+    const devicePropertiesTest = testConditionalDeviceProperties();
+    console.log('Test 6 - Conditional device properties:', devicePropertiesTest ? 'PASS' : 'FAIL');
+
     return {
         validDataTest: validResult.isValid,
         invalidDataTest: !invalidResult.isValid,
         dateFormatTest,
         uuidTest,
-        sensorDistributionTest
+        sensorDistributionTest,
+        devicePropertiesTest
     };
 }
 
@@ -146,6 +151,163 @@ function testSensorDistribution(): boolean {
         return isCorrect;
     } catch (error) {
         console.log('❌ Sensor distribution test failed with error:', error);
+        return false;
+    }
+}
+
+function testConditionalDeviceProperties(): boolean {
+    console.log('Testing conditional device properties in JSON export...');
+    
+    const mastData: any = {
+        author: 'Test Author',
+        organisation: 'Test Org',
+        date: '2024-01-01',
+        version: '1.3.0-2024.03',
+        plant_name: 'Test Plant',
+        plant_type: 'onshore_wind',
+        measurement_location: [{
+            uuid: 'mast-1',
+            name: 'Test Mast',
+            latitude_ddeg: 40.0,
+            longitude_ddeg: -100.0,
+            measurement_station_type_id: 'mast',
+            update_at: '2023-07-30T13:53:01.000Z',
+            
+            // Should be included for mast devices
+            mast_properties: {
+                mast_geometry_id: 'lattice_triangle',
+                mast_height_m: 80,
+                date_from: '2023-07-30T13:53:01.000Z',
+                date_to: null
+            },
+            
+            // Should NOT be included for mast devices
+            vertical_profiler_properties: [{
+                device_datum_plane_height_m: 1.5,
+                height_reference_id: 'ground_level',
+                date_from: '2023-07-30T13:53:01.000Z'
+            }],
+            
+            logger_main_config: [{
+                logger_oem_id: 'NRG Systems',
+                logger_serial_number: '12345',
+                date_from: '2023-07-30T13:53:01.000Z'
+            }],
+            
+            measurement_point: [{
+                name: 'Test Point',
+                measurement_type_id: 'wind_speed',
+                height_m: 40,
+                height_reference_id: 'ground_level',
+                update_at: '2023-07-30T13:53:01.000Z',
+                logger_measurement_config: [{
+                    date_from: '2023-07-30T13:53:01.000Z',
+                    column_name: [{
+                        column_name: 'Test Column',
+                        statistic_type_id: 'avg',
+                        is_ignored: false,
+                        update_at: '2023-07-30T13:53:01.000Z'
+                    }]
+                }],
+                sensor: []
+            }]
+        }]
+    };
+    
+    const lidarData: any = {
+        author: 'Test Author',
+        organisation: 'Test Org',
+        date: '2024-01-01',
+        version: '1.3.0-2024.03',
+        plant_name: 'Test Plant',
+        plant_type: 'onshore_wind',
+        measurement_location: [{
+            uuid: 'lidar-1',
+            name: 'Test Lidar',
+            latitude_ddeg: 40.0,
+            longitude_ddeg: -100.0,
+            measurement_station_type_id: 'lidar',
+            update_at: '2023-07-30T13:53:01.000Z',
+            
+            // Should NOT be included for lidar devices
+            mast_properties: {
+                mast_geometry_id: 'lattice_triangle',
+                mast_height_m: 80,
+                date_from: '2023-07-30T13:53:01.000Z',
+                date_to: null
+            },
+            
+            // Should be included for lidar devices
+            vertical_profiler_properties: [{
+                device_datum_plane_height_m: 1.5,
+                height_reference_id: 'ground_level',
+                date_from: '2023-07-30T13:53:01.000Z'
+            }],
+            
+            logger_main_config: [{
+                logger_oem_id: 'ZX Lidars',
+                logger_serial_number: '12345',
+                date_from: '2023-07-30T13:53:01.000Z'
+            }],
+            
+            measurement_point: [{
+                name: 'Test Point',
+                measurement_type_id: 'wind_speed',
+                height_m: 40,
+                height_reference_id: 'ground_level',
+                update_at: '2023-07-30T13:53:01.000Z',
+                logger_measurement_config: [{
+                    date_from: '2023-07-30T13:53:01.000Z',
+                    column_name: [{
+                        column_name: 'Test Column',
+                        statistic_type_id: 'avg',
+                        is_ignored: false,
+                        update_at: '2023-07-30T13:53:01.000Z'
+                    }]
+                }],
+                sensor: []
+            }]
+        }]
+    };
+    
+    try {
+        // Test mast data
+        const exportedMastData = generateExportJson(mastData);
+        const mastLocation = exportedMastData.measurement_location[0];
+        
+        const hasMastProperties = 'mast_properties' in mastLocation && mastLocation.mast_properties;
+        const hasVerticalProfilerProperties = 'vertical_profiler_properties' in mastLocation && mastLocation.vertical_profiler_properties;
+        
+        const mastTestPassed = hasMastProperties && !hasVerticalProfilerProperties;
+        
+        if (mastTestPassed) {
+            console.log('✅ Mast device test passed: includes mast_properties, excludes vertical_profiler_properties');
+        } else {
+            console.log('❌ Mast device test failed:');
+            console.log('  Has mast_properties:', hasMastProperties);
+            console.log('  Has vertical_profiler_properties:', hasVerticalProfilerProperties);
+        }
+        
+        // Test lidar data
+        const exportedLidarData = generateExportJson(lidarData);
+        const lidarLocation = exportedLidarData.measurement_location[0];
+        
+        const lidarHasMastProperties = 'mast_properties' in lidarLocation && lidarLocation.mast_properties;
+        const lidarHasVerticalProfilerProperties = 'vertical_profiler_properties' in lidarLocation && lidarLocation.vertical_profiler_properties;
+        
+        const lidarTestPassed = !lidarHasMastProperties && lidarHasVerticalProfilerProperties;
+        
+        if (lidarTestPassed) {
+            console.log('✅ Lidar device test passed: excludes mast_properties, includes vertical_profiler_properties');
+        } else {
+            console.log('❌ Lidar device test failed:');
+            console.log('  Has mast_properties:', lidarHasMastProperties);
+            console.log('  Has vertical_profiler_properties:', lidarHasVerticalProfilerProperties);
+        }
+        
+        return mastTestPassed && lidarTestPassed;
+    } catch (error) {
+        console.log('❌ Conditional device properties test failed with error:', error);
         return false;
     }
 }

@@ -113,6 +113,10 @@ export const generateExportJson = (data: IEATask43Schema) => {
         if ('sensors' in locationWithoutSensors) {
             delete (locationWithoutSensors as any).sensors;
         }
+        
+        // Remove ALL optional properties first, then add back only the appropriate ones based on device type
+        delete (locationWithoutSensors as any).mast_properties;
+        delete (locationWithoutSensors as any).vertical_profiler_properties;
 
         // Process measurement points - only use sensors specifically selected for each point
         const updatedMeasurementPoints = location.measurement_point.map(point => {
@@ -207,10 +211,10 @@ export const generateExportJson = (data: IEATask43Schema) => {
             };
         });
 
-        return {
+        // Build the location object with conditional properties based on station type
+        const locationData: any = {
             ...locationWithoutSensors,
             update_at: new Date().toISOString(),
-            vertical_profiler_properties: cleanVerticalProfilerProperties(location.vertical_profiler_properties),
             logger_main_config: location.logger_main_config?.map(logger => cleanOptionalLoggerFields({
                 ...logger,
                 update_at: new Date().toISOString(),
@@ -219,6 +223,24 @@ export const generateExportJson = (data: IEATask43Schema) => {
             })),
             measurement_point: updatedMeasurementPoints
         };
+
+        // Only include mast_properties for mast devices
+        if (location.measurement_station_type_id === 'mast' && location.mast_properties) {
+            locationData.mast_properties = {
+                ...location.mast_properties,
+                date_from: formatDateToISO(location.mast_properties.date_from),
+                date_to: formatDateToISO(location.mast_properties.date_to),
+                update_at: new Date().toISOString()
+            };
+        }
+
+        // Only include vertical_profiler_properties for devices that use vertical profiling
+        const verticalProfilingDevices = ['lidar', 'sodar', 'floating_lidar'];
+        if (verticalProfilingDevices.includes(location.measurement_station_type_id)) {
+            locationData.vertical_profiler_properties = cleanVerticalProfilerProperties(location.vertical_profiler_properties);
+        }
+
+        return locationData;
     });
 
     const formattedData = {
