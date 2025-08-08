@@ -1,17 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
-import { PlusCircle, Trash2, ChevronDown, Plus, Copy, AlertCircle, Check } from 'lucide-react';
+import { PlusCircle, Trash2, ChevronDown, Plus, Copy, AlertCircle, Check, Info } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { DatePicker } from '../ui/date-picker';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { SearchableSelect } from '../ui/searchable-select';
 import { Textarea } from '../ui/textarea';
 import { cn } from '../../utils/cn';
 import { getDefaultDatesForNewEntry } from '../../utils/campaign-dates';
 import { validateSensors } from '../../utils/step-validation';
-import type { IEATask43Schema, SensorType, MeasurementType, Sensor } from '../../types/schema';
+import type { IEATask43Schema, SensorType, MeasurementType } from '../../types/schema';
 import { sensorTypeOptions, measurementTypeOptions } from '../../utils/enum-options';
 import DynamicSensorOptionalFields from './DynamicSensorOptionalFields';
 
@@ -54,6 +53,7 @@ const TooltipWrapper = ({ children, text, className = "" }: { children: React.Re
 export function SensorsStep() {
   const { control, register, setValue, watch, formState: { errors } } = useFormContext<IEATask43Schema>();
   const allLocations = watch('measurement_location') || [];
+  const campaignStatus = watch('campaignStatus'); // Get campaign status from form
 
   // States are now objects keyed by location index
   const [expandedSensors, setExpandedSensors] = useState<LocationExpandedState>({});
@@ -176,6 +176,7 @@ export function SensorsStep() {
             setValue={setValue}
             watch={watch}
             errors={errors}
+            campaignStatus={campaignStatus}
             expandedSensors={expandedSensors[locationIndex] || {}}
             expandedCalibrations={expandedCalibrations[locationIndex] || {}}
             toggleExpandSensor={(sensorId) => toggleExpandSensor(locationIndex, sensorId)}
@@ -197,6 +198,7 @@ interface LocationSensorsManagerProps {
   setValue: any;
   watch: any;
   errors: any;
+  campaignStatus?: IEATask43Schema['campaignStatus'];
   expandedSensors: ExpandedState;
   expandedCalibrations: NestedExpandedState; // This will be further nested or specific to this location's sensors
   toggleExpandSensor: (sensorsFieldId: string) => void;
@@ -212,6 +214,7 @@ function LocationSensorsManager({
   setValue,
   watch,
   errors,
+  campaignStatus,
   expandedSensors,
   expandedCalibrations,
   toggleExpandSensor,
@@ -275,13 +278,22 @@ function LocationSensorsManager({
 
   const removeSensorsForLocation = (sensorsIndex: number) => {
     // Before removing from RHF, clean up its expansion state via parent if needed
-    const sensorsFieldId = sensorsFields[sensorsIndex]?.id;
     // This cleanup might be better handled in the parent's main removeSensor upon RHF update,
     // but if direct child calls are preferred:
     // if (sensorsFieldId) {
     //   // Call a specific prop function if parent needs to clean up this specific sensor's state from this location
     // }
     removeSensorsAt(sensorsIndex);
+  };
+
+  // Handle date_to field with null support for live campaigns
+  const handleDateToChange = (value: string, locationIndex: number, sensorsIndex: number) => {
+    // If user enters "null" (case insensitive), set actual null value
+    if (value.toLowerCase().trim() === 'null') {
+      setValue(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.date_to`, null);
+    } else {
+      setValue(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.date_to`, value);
+    }
   };
 
   return (
@@ -435,14 +447,28 @@ function LocationSensorsManager({
                   </Label>
                   <DatePicker
                     value={watch(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.date_to`) || ''}
-                    onChange={(value) => setValue(`measurement_location.${locationIndex}.sensors.${sensorsIndex}.date_to`, value)}
-                    placeholder="Select end date and time"
+                    onChange={(value) => handleDateToChange(value, locationIndex, sensorsIndex)}
+                    placeholder="Select end date and time or type 'null'"
                     includeTime={true}
                     required
                     className={errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.date_to ? 'border-red-500' : ''}
                   />
                   {errors?.measurement_location?.[locationIndex]?.sensor?.[sensorsIndex]?.date_to && (
                     <p className="text-red-500 text-sm">{errors.measurement_location[locationIndex].sensors[sensorsIndex].date_to.message}</p>
+                  )}
+                  {campaignStatus === 'live' && (
+                    <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                      <div className="flex items-start gap-2">
+                        <Info className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                        <div className="text-sm text-blue-700">
+                          <strong>Live Campaign Note:</strong> For ongoing campaigns, you can either:
+                          <ul className="mt-1 ml-4 list-disc">
+                            <li>Use the current date/time as the end date</li>
+                            <li>Type <code className="px-1 py-0.5 bg-blue-100 rounded text-xs font-mono">null</code> to indicate the campaign is still active</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
                   )}
                 </div>
 
@@ -465,7 +491,6 @@ function LocationSensorsManager({
 
               <CalibrationArray
                 locationIndex={locationIndex} // Pass locationIndex
-                sensorsFieldId={sensorField.id} // This is RHF's field ID for this sensor
                 sensorsIndex={sensorsIndex} // This is the array index for this sensor
                 control={control}
                 register={register}
@@ -488,7 +513,6 @@ function LocationSensorsManager({
 // --- CalibrationArray Component ---
 interface CalibrationArrayProps {
   locationIndex: number; // Added
-  sensorsFieldId: string;
   sensorsIndex: number;
   control: any;
   register: any;
@@ -502,7 +526,6 @@ interface CalibrationArrayProps {
 
 function CalibrationArray({
   locationIndex, // Added
-  sensorsFieldId,
   sensorsIndex,
   control,
   register,
