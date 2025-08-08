@@ -1,29 +1,45 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { FileJson, Check, AlertCircle, Loader2, Shield, ShieldCheck, GitCompare, Code2 } from 'lucide-react';
+import { FileJson, AlertCircle, Loader2, Shield, ShieldCheck, GitCompare, Code2, Download } from 'lucide-react';
 import { Button } from '../ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../ui/alert-dialog';
+import { useToast } from '../ui/toast';
 import { SchemaComparison } from '../ui/schema-comparison';
 import { cn } from '../../utils/cn';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { generateExportJson } from '../../utils/json-export';
-import { validateIEACompliance, validateRequiredFields, ValidationResult } from '../../utils/schema-validation';
+import { generateExportJson, validateExportDataAsync } from '../../utils/json-export';
+import { ValidationResult } from '../../utils/schema-validation';
 import { validateAllSections } from '../../utils/step-validation';
-import type { IEATask43Schema, Sensor } from '../../types/schema';
+import type { IEATask43Schema } from '../../types/schema';
 
 export function ReviewStep() {
   const { watch } = useFormContext<IEATask43Schema>();
   const formData = watch();
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(true);
+  const [isValidating, setIsValidating] = useState(false);
+  const [validationProgress, setValidationProgress] = useState<string>('');
   const [previewJson, setPreviewJson] = useState<string>('');
   const [schemaValidation, setSchemaValidation] = useState<ValidationResult | null>(null);
   const [requiredFieldsValidation, setRequiredFieldsValidation] = useState<ValidationResult | null>(null);
   const [viewMode, setViewMode] = useState<'json' | 'comparison'>('json');
   const isGeneratingRef = useRef(false);
+  const isValidatingRef = useRef(false);
   const lastDataHashRef = useRef<string>('');
+  // Track which data hash has been validated successfully
+  const validatedDataHashRef = useRef<string>('');
 
   // Use shared validation utility for consistent validation across all steps
-  const { sections, isValid, completedSections } = validateAllSections(formData);
+  const { isValid } = validateAllSections(formData);
 
   // Generate preview JSON and run validation asynchronously to prevent UI blocking
   useEffect(() => {
@@ -31,13 +47,13 @@ export function ReviewStep() {
     const dataHash = JSON.stringify(formData);
 
     // Force validation on first render or when data changes
-    const shouldValidate = !lastDataHashRef.current || dataHash !== lastDataHashRef.current;
+    const shouldGenerate = !lastDataHashRef.current || dataHash !== lastDataHashRef.current;
 
-    if (!shouldValidate || isGeneratingRef.current) {
+    if (!shouldGenerate || isGeneratingRef.current) {
       return;
     }
 
-    // Generate preview and validate immediately (no setTimeout)
+    // Generate JSON preview immediately (this is fast)
     if (!isGeneratingRef.current) {
       isGeneratingRef.current = true;
       setIsGeneratingPreview(true);
@@ -48,32 +64,13 @@ export function ReviewStep() {
         const jsonString = JSON.stringify(exportData, null, 2);
         setPreviewJson(jsonString);
 
-        // Always run schema validation (even on empty data)
-        const schemaResult = validateIEACompliance(exportData);
-        setSchemaValidation(schemaResult);
-
-        // Run required fields validation against the raw form data to catch all issues
-        // This ensures we see validation issues from all steps, not just what's in the exported JSON
-        const requiredFieldsResult = validateRequiredFields(formData);
-        setRequiredFieldsValidation(requiredFieldsResult);
-
         lastDataHashRef.current = dataHash;
+
+        // Do not auto-validate; validation runs only when user clicks "Validate Now"
+
       } catch (error) {
         console.error('Error generating preview:', error);
         setPreviewJson('Error generating preview. Please check your data.');
-
-        // Set validation errors even if preview generation fails
-        setSchemaValidation({
-          isValid: false,
-          errors: [{ path: 'root', message: 'Schema validation failed due to error' }],
-          warnings: []
-        });
-        setRequiredFieldsValidation({
-          isValid: false,
-          errors: [{ path: 'root', message: 'Required fields validation failed due to error' }],
-          warnings: []
-        });
-
         lastDataHashRef.current = dataHash;
       } finally {
         setIsGeneratingPreview(false);
@@ -81,6 +78,89 @@ export function ReviewStep() {
       }
     }
   }, [formData]);
+
+  const startAsyncValidation = async (data: IEATask43Schema) => {
+    if (isValidatingRef.current) {
+      return;
+    }
+
+    isValidatingRef.current = true;
+    setIsValidating(true);
+    setValidationProgress('Starting validation...');
+
+    try {
+      const validationResults = await validateExportDataAsync(data, (step: string) => {
+        setValidationProgress(step);
+      });
+
+      setRequiredFieldsValidation(validationResults.requiredFieldsValidation);
+      setSchemaValidation(validationResults.schemaValidation);
+      setValidationProgress('');
+      // If valid, remember which data was validated
+      const dataHash = JSON.stringify(data);
+      if (validationResults.requiredFieldsValidation?.isValid && validationResults.schemaValidation?.isValid) {
+        validatedDataHashRef.current = dataHash;
+      } else {
+        // Not fully valid; clear validated hash to require warning on export
+        validatedDataHashRef.current = '';
+      }
+    } catch (error) {
+      console.error('Validation error:', error);
+      setRequiredFieldsValidation({
+        isValid: false,
+        errors: [{ path: 'root', message: 'Required fields validation failed due to error' }],
+        warnings: []
+      });
+      setSchemaValidation({
+        isValid: false,
+        errors: [{ path: 'root', message: 'Schema validation failed due to error' }],
+        warnings: []
+      });
+      setValidationProgress('');
+    } finally {
+      setIsValidating(false);
+      isValidatingRef.current = false;
+    }
+  };
+
+  // No cleanup needed; we removed auto-validation debouncing
+
+  // Helper: trigger JSON file download
+  const downloadJson = (data: IEATask43Schema) => {
+    const exportData = generateExportJson(data);
+    const json = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'iea_task_43_export.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const { showToast } = useToast();
+  const [showExportConfirm, setShowExportConfirm] = useState(false);
+  const [pendingExportData, setPendingExportData] = useState<IEATask43Schema | null>(null);
+
+  // Export handler: use dialog when not validated
+  const handleExport = () => {
+    const currentHash = JSON.stringify(formData);
+    const isCurrentDataValidated = !!validatedDataHashRef.current && validatedDataHashRef.current === currentHash;
+    if (!isCurrentDataValidated) {
+      setPendingExportData(formData);
+      setShowExportConfirm(true);
+      return;
+    }
+    downloadJson(formData);
+    showToast({ title: 'JSON downloaded', description: 'Your export has started.' });
+  };
+
+  const confirmExport = () => {
+    const data = pendingExportData ?? formData;
+    downloadJson(data);
+    showToast({ title: 'JSON downloaded', description: 'Your export has started.' });
+    setPendingExportData(null);
+  };
 
   return (
     <div className="space-y-8">
@@ -111,26 +191,53 @@ export function ReviewStep() {
 
           {/* Overall compliance status indicator */}
           <div className={cn(
-            "px-3 py-1 rounded-full text-sm font-medium",
-            (requiredFieldsValidation?.isValid && schemaValidation?.isValid)
-              ? "bg-green-100 text-green-800"
-              : "bg-red-100 text-red-800"
+            "px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2",
+            isValidating
+              ? "bg-blue-100 text-blue-800"
+              : (requiredFieldsValidation?.isValid && schemaValidation?.isValid)
+                ? "bg-green-100 text-green-800"
+                : (!!validatedDataHashRef.current && validatedDataHashRef.current === JSON.stringify(formData))
+                  ? "bg-red-100 text-red-800" // validated once but currently failing
+                  : "bg-yellow-100 text-yellow-800" // not validated yet
           )}>
-            {(requiredFieldsValidation?.isValid && schemaValidation?.isValid)
-              ? "Compliant"
-              : "Non-Compliant"}
+            {isValidating ? (
+              <>
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Validating...
+              </>
+            ) : (
+              (requiredFieldsValidation?.isValid && schemaValidation?.isValid)
+                ? "Compliant"
+                : ((!!validatedDataHashRef.current && validatedDataHashRef.current === JSON.stringify(formData))
+                  ? "Non-Compliant"
+                  : "Not validated")
+            )}
           </div>
         </div>
+
+        {/* Validation Progress */}
+        {isValidating && validationProgress && (
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
+              <span className="text-sm text-blue-700">{validationProgress}</span>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Required Fields Validation */}
           <div className={cn(
             "flex items-center gap-3 p-4 rounded-lg border",
-            requiredFieldsValidation?.isValid
-              ? "bg-green-50 text-green-700 border-green-200"
-              : "bg-red-50 text-red-700 border-red-200"
+            isValidating
+              ? "bg-blue-50 text-blue-700 border-blue-200"
+              : requiredFieldsValidation?.isValid
+                ? "bg-green-50 text-green-700 border-green-200"
+                : "bg-red-50 text-red-700 border-red-200"
           )}>
-            {requiredFieldsValidation?.isValid ? (
+            {isValidating ? (
+              <Loader2 className="w-6 h-6 text-blue-500 animate-spin flex-shrink-0" />
+            ) : requiredFieldsValidation?.isValid ? (
               <ShieldCheck className="w-6 h-6 text-green-500 flex-shrink-0" />
             ) : (
               <AlertCircle className="w-6 h-6 text-red-500 flex-shrink-0" />
@@ -138,9 +245,11 @@ export function ReviewStep() {
             <div>
               <div className="font-medium">Required Fields</div>
               <div className="text-sm">
-                {requiredFieldsValidation?.isValid
-                  ? "All required fields are present"
-                  : `${requiredFieldsValidation?.errors?.length ?? 0} missing required fields`}
+                {isValidating
+                  ? "Validating required fields..."
+                  : requiredFieldsValidation?.isValid
+                    ? "All required fields are present"
+                    : `${requiredFieldsValidation?.errors?.length ?? 0} missing required fields`}
               </div>
             </div>
           </div>
@@ -148,11 +257,15 @@ export function ReviewStep() {
           {/* Schema Validation */}
           <div className={cn(
             "flex items-center gap-3 p-4 rounded-lg border",
-            (schemaValidation?.isValid && requiredFieldsValidation?.isValid)
-              ? "bg-green-50 text-green-700 border-green-200"
-              : "bg-orange-50 text-orange-700 border-orange-200"
+            isValidating
+              ? "bg-blue-50 text-blue-700 border-blue-200"
+              : (schemaValidation?.isValid && requiredFieldsValidation?.isValid)
+                ? "bg-green-50 text-green-700 border-green-200"
+                : "bg-orange-50 text-orange-700 border-orange-200"
           )}>
-            {(schemaValidation?.isValid && requiredFieldsValidation?.isValid) ? (
+            {isValidating ? (
+              <Loader2 className="w-6 h-6 text-blue-500 animate-spin flex-shrink-0" />
+            ) : (schemaValidation?.isValid && requiredFieldsValidation?.isValid) ? (
               <ShieldCheck className="w-6 h-6 text-green-500 flex-shrink-0" />
             ) : (
               <AlertCircle className="w-6 h-6 text-orange-500 flex-shrink-0" />
@@ -160,16 +273,18 @@ export function ReviewStep() {
             <div>
               <div className="font-medium">Schema Compliance</div>
               <div className="text-sm">
-                {(schemaValidation?.isValid && requiredFieldsValidation?.isValid)
-                  ? "Fully compliant with IEA Task 43 schema"
-                  : `${(schemaValidation?.errors?.length ?? 0) + (requiredFieldsValidation?.errors?.length ?? 0)} validation issues found`}
+                {isValidating
+                  ? "Checking schema compliance..."
+                  : (schemaValidation?.isValid && requiredFieldsValidation?.isValid)
+                    ? "Fully compliant with IEA Task 43 schema"
+                    : `${(schemaValidation?.errors?.length ?? 0) + (requiredFieldsValidation?.errors?.length ?? 0)} validation issues found`}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Validation Errors - Fixed type safety */}
-        {((requiredFieldsValidation?.errors?.length ?? 0) > 0 || (schemaValidation?.errors?.length ?? 0) > 0) && (
+        {/* Validation Errors - Only show when not validating and have results */}
+        {!isValidating && ((requiredFieldsValidation?.errors?.length ?? 0) > 0 || (schemaValidation?.errors?.length ?? 0) > 0) && (
           <div className="mt-4">
             <h4 className="text-sm font-medium text-gray-700 mb-2">Validation Issues:</h4>
 
@@ -238,7 +353,7 @@ export function ReviewStep() {
 
                       // Sort steps by their index
                       return Object.entries(errorsByStep)
-                        .sort(([stepA, errorsA], [stepB, errorsB]) => {
+                        .sort(([_stepA, errorsA], [_stepB, errorsB]) => {
                           const indexA = errorsA[0]?.stepIndex ?? 999;
                           const indexB = errorsB[0]?.stepIndex ?? 999;
                           return indexA - indexB;
@@ -334,7 +449,7 @@ export function ReviewStep() {
 
                       // Then, for each step, categorize errors by type
                       return Object.entries(errorsByStep)
-                        .sort(([stepA, errorsA], [stepB, errorsB]) => {
+                        .sort(([_stepA, errorsA], [_stepB, errorsB]) => {
                           const indexA = errorsA[0]?.stepIndex ?? 999;
                           const indexB = errorsB[0]?.stepIndex ?? 999;
                           return indexA - indexB;
@@ -396,8 +511,8 @@ export function ReviewStep() {
           </div>
         )}
 
-        {/* Compliance Success Message */}
-        {requiredFieldsValidation?.isValid && schemaValidation?.isValid && (
+        {/* Compliance Success Message - Only show when validation is complete */}
+        {!isValidating && requiredFieldsValidation?.isValid && schemaValidation?.isValid && (
           <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
             <div className="flex items-center">
               <ShieldCheck className="w-5 h-5 text-green-500 mr-2" />
@@ -412,34 +527,116 @@ export function ReviewStep() {
 
       {/* View Mode Toggle */}
       <div className="bg-muted/30 rounded-lg p-4">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
           <h3 className="text-lg font-medium">Data Preview</h3>
-          <div className="flex bg-background border rounded-lg p-1">
+          <div className="flex items-center gap-3">
+            <div className="flex bg-background border rounded-lg p-1">
+              <Button
+                type="button"
+                variant={viewMode === 'json' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('json')}
+                className="flex items-center gap-2"
+              >
+                <Code2 className="w-4 h-4" />
+                JSON Preview
+              </Button>
+              <Button
+                type="button"
+                variant={viewMode === 'comparison' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('comparison')}
+                className="flex items-center gap-2"
+              >
+                <GitCompare className="w-4 h-4" />
+                Schema Comparison
+              </Button>
+            </div>
+
+            {/* Manual validation trigger */}
+            {(() => {
+              const currentDataHash = JSON.stringify(formData);
+              const isCurrentValidated = !!validatedDataHashRef.current && validatedDataHashRef.current === currentDataHash;
+              const isCompliant = !!(requiredFieldsValidation?.isValid && schemaValidation?.isValid);
+              const state = isValidating
+                ? 'validating'
+                : isCurrentValidated
+                  ? (isCompliant ? 'compliant' : 'noncompliant')
+                  : 'notvalidated';
+
+              const colorClasses =
+                state === 'validating'
+                  ? 'bg-blue-600 hover:bg-blue-600 text-white'
+                  : state === 'compliant'
+                    ? 'bg-green-600 hover:bg-green-700 text-white'
+                    : state === 'noncompliant'
+                      ? 'bg-red-600 hover:bg-red-700 text-white'
+                      : 'bg-yellow-500 hover:bg-yellow-600 text-white';
+
+              const label =
+                state === 'validating'
+                  ? 'Validating...'
+                  : state === 'compliant'
+                    ? 'Validated'
+                    : state === 'noncompliant'
+                      ? 'Validation issues'
+                      : 'Validate Now';
+
+              const Icon =
+                state === 'validating'
+                  ? Loader2
+                  : state === 'compliant'
+                    ? ShieldCheck
+                    : state === 'noncompliant'
+                      ? AlertCircle
+                      : Shield;
+
+              return (
+                <Button
+                  type="button"
+                  onClick={() => startAsyncValidation(formData)}
+                  disabled={isValidating}
+                  variant="default"
+                  size="sm"
+                  className={cn('flex items-center gap-2 shadow', colorClasses)}
+                  aria-label={label}
+                >
+                  <Icon className={cn('w-4 h-4', state === 'validating' && 'animate-spin')} />
+                  {label}
+                </Button>
+              );
+            })()}
             <Button
               type="button"
-              variant={viewMode === 'json' ? 'default' : 'ghost'}
+              onClick={handleExport}
+              variant="default"
               size="sm"
-              onClick={() => setViewMode('json')}
               className="flex items-center gap-2"
             >
-              <Code2 className="w-4 h-4" />
-              JSON Export
-            </Button>
-            <Button
-              type="button"
-              variant={viewMode === 'comparison' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('comparison')}
-              className="flex items-center gap-2"
-            >
-              <GitCompare className="w-4 h-4" />
-              Schema Comparison
+              <Download className="w-4 h-4" />
+              Export JSON
             </Button>
           </div>
         </div>
 
+        {/* Export confirmation dialog */}
+        <AlertDialog open={showExportConfirm} onOpenChange={setShowExportConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Export without validation?</AlertDialogTitle>
+              <AlertDialogDescription>
+                You haven’t validated the current data. You can still export, but the JSON may contain issues. Continue?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmExport}>Export anyway</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         {viewMode === 'comparison' ? (
-          <SchemaComparison 
+          <SchemaComparison
             data={formData}
             validationErrors={[
               ...(requiredFieldsValidation?.errors || []),
@@ -517,20 +714,20 @@ export function ReviewStep() {
           <div className="text-2xl font-bold text-primary">
             {formData.measurement_location?.reduce((total, loc) => {
               // Count sensors at location level (legacy structure)
-              const locationSensors = Array.isArray((loc as any).sensors) 
-                ? (loc as any).sensors.filter(Boolean).length 
+              const locationSensors = Array.isArray((loc as any).sensors)
+                ? (loc as any).sensors.filter(Boolean).length
                 : 0;
-              
+
               // Count sensors at measurement point level (correct schema structure)
               const measurementPointSensors = loc.measurement_point?.reduce((pointTotal, point) =>
                 pointTotal + (Array.isArray(point.sensor) ? point.sensor.filter(Boolean).length : 0), 0) || 0;
-              
+
               return total + locationSensors + measurementPointSensors;
             }, 0) || 0}
           </div>
           <div className="text-sm text-muted-foreground">Sensor{(formData.measurement_location?.reduce((total, loc) => {
-            const locationSensors = Array.isArray((loc as any).sensors) 
-              ? (loc as any).sensors.filter(Boolean).length 
+            const locationSensors = Array.isArray((loc as any).sensors)
+              ? (loc as any).sensors.filter(Boolean).length
               : 0;
             const measurementPointSensors = loc.measurement_point?.reduce((pointTotal, point) =>
               pointTotal + (Array.isArray(point.sensor) ? point.sensor.filter(Boolean).length : 0), 0) || 0;
@@ -549,12 +746,16 @@ export function ReviewStep() {
           <div className="ml-3">
             <p className="text-sm text-blue-700">
               Review your configuration summary and export preview above. The exported JSON will be IEA Task 43 compliant and exclude form-only fields like campaign status and dates.
-              When ready, click "Export JSON" to download your data model file.
+              When ready, click "Export JSON" to choose your export method.
               {!isValid && " Make sure to complete all required sections first."}
             </p>
+            <div className="mt-2 text-xs text-blue-600 bg-blue-100 p-2 rounded">
+              <strong>Performance tip:</strong> For datasets with many sensors (&gt;1000), validation may take some time.
+              You can export without validation for immediate results, then validate separately if needed.
+            </div>
           </div>
         </div>
       </div>
-    </div >
+    </div>
   );
 }

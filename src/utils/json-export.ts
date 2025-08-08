@@ -272,4 +272,105 @@ export const downloadJsonFile = async (
 
     // Return null to indicate success
     return null;
+};
+
+/**
+ * Download JSON file without validation (for large datasets)
+ * Always succeeds and exports the JSON immediately
+ */
+export const downloadJsonFileWithoutValidation = (
+    data: IEATask43Schema,
+    filename: string = 'iea-task43-data.json'
+): void => {
+    // Generate export data
+    const formattedData = generateExportJson(data);
+    
+    // Export immediately without validation
+    const jsonString = JSON.stringify(formattedData, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+};
+
+/**
+ * Async validation function that can be called separately
+ * Returns validation results and can be used with progress callbacks
+ */
+export const validateExportDataAsync = async (
+    data: IEATask43Schema,
+    onProgress?: (step: string) => void
+): Promise<{ requiredFieldsValidation: any; schemaValidation: any }> => {
+    return new Promise((resolve) => {
+        // Use requestIdleCallback if available, otherwise setTimeout
+        const scheduleWork = (callback: () => void) => {
+            if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+                (window as any).requestIdleCallback(callback, { timeout: 1000 });
+            } else {
+                setTimeout(callback, 10);
+            }
+        };
+
+        scheduleWork(async () => {
+            try {
+                onProgress?.('Preparing data for validation...');
+                
+                // Generate export data
+                const formattedData = generateExportJson(data);
+                
+                // Small delay to allow UI to update
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                onProgress?.('Validating required fields...');
+                
+                // Import validation functions dynamically to prevent blocking
+                const { validateIEACompliance, validateRequiredFields } = await import('./schema-validation');
+
+                // Run required fields validation first (usually faster)
+                const requiredFieldsValidation = validateRequiredFields(formattedData);
+                
+                // Another small delay
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                onProgress?.('Validating schema compliance...');
+                
+                // Run schema validation (can be slower for large datasets)
+                // Break this into chunks if it's a large dataset
+                const dataSize = JSON.stringify(formattedData).length;
+                let schemaValidation;
+                
+                if (dataSize > 1000000) { // > 1MB
+                    // For very large datasets, add extra delays
+                    onProgress?.('Processing large dataset - this may take a moment...');
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    schemaValidation = validateIEACompliance(formattedData);
+                } else {
+                    schemaValidation = validateIEACompliance(formattedData);
+                }
+                
+                onProgress?.('Validation complete');
+                
+                resolve({ requiredFieldsValidation, schemaValidation });
+            } catch (error) {
+                console.error('Validation error:', error);
+                resolve({
+                    requiredFieldsValidation: {
+                        isValid: false,
+                        errors: [{ path: 'root', message: `Validation failed: ${error instanceof Error ? error.message : 'Unknown error'}` }],
+                        warnings: []
+                    },
+                    schemaValidation: {
+                        isValid: false,
+                        errors: [{ path: 'root', message: `Schema validation failed: ${error instanceof Error ? error.message : 'Unknown error'}` }],
+                        warnings: []
+                    }
+                });
+            }
+        });
+    });
 }; 

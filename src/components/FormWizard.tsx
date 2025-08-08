@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
-import { ChevronRight, ChevronLeft, Download, X, AlertTriangle, Loader2 } from 'lucide-react';
+import { ChevronRight, ChevronLeft, AlertTriangle, X } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { BasicInfoStep } from './steps/BasicInfoStep';
 import { LocationStep } from './steps/LocationStep';
@@ -9,18 +9,7 @@ import { MeasurementStep } from './steps/MeasurementStep';
 import { SensorsStep } from './steps/SensorStep';
 import { ReviewStep } from './steps/ReviewStep';
 import { Button } from './ui/button';
-import { downloadJsonFile } from '../utils/json-export';
 import type { IEATask43Schema, Sensor } from '../types/schema';
-
-// Add type for export error
-type ExportError = {
-  requiredFieldsValidation: {
-    errors?: Array<{ path: string; message: string }>;
-  };
-  schemaValidation: {
-    errors?: Array<{ path: string; message: string }>;
-  };
-} | null;
 
 const steps = [
   { id: 'basic-info', name: 'Basic Information', component: BasicInfoStep },
@@ -259,31 +248,13 @@ export function FormWizard() {
     }
   };
 
-  const [exportError, setExportError] = useState<ExportError>(null);
-  const [isExporting, setIsExporting] = useState(false);
+  // Removed legacy export state in favor of ReviewStep toolbar actions
 
-  const onSubmit = (data: IEATask43Schema) => {
-    if (currentStep === steps.length - 1) {
-      // Reset any previous export errors
-      setExportError(null);
-      setIsExporting(true);
-
-      try {
-        // Use shared utility function for consistent JSON export with validation
-        const validationResult = downloadJsonFile(data, 'iea-task43-data.json', true);
-
-        // If validation failed, show error message
-        if (validationResult) {
-          setExportError(validationResult);
-        }
-      } catch (error) {
-        console.error('Export failed:', error);
-      } finally {
-        setIsExporting(false);
-      }
-    } else {
+  const onSubmit = (_data: IEATask43Schema) => {
+    if (currentStep < steps.length - 1) {
       next();
     }
+    // On Review step, exports are handled within ReviewStep toolbar
   };
 
   return (
@@ -300,10 +271,18 @@ export function FormWizard() {
               </span>
             </div>
             <div className="w-full bg-border/30 rounded-full h-2 overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-primary to-secondary transition-all duration-500 ease-out rounded-full"
-                style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
-              />
+              {(() => {
+                const widths = ['w-1/6', 'w-2/6', 'w-3/6', 'w-4/6', 'w-5/6', 'w-full'] as const;
+                const widthClass = widths[currentStep] ?? 'w-full';
+                return (
+                  <div
+                    className={cn(
+                      'h-full bg-gradient-to-r from-primary to-secondary transition-all duration-500 ease-out rounded-full',
+                      widthClass
+                    )}
+                  />
+                );
+              })()}
             </div>
           </div>
 
@@ -395,80 +374,24 @@ export function FormWizard() {
             <span>{steps[currentStep].name}</span>
           </div>
 
-          <Button
-            type="button"
-            onClick={() => onSubmit(methods.getValues())}
-            className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white shadow-professional hover:shadow-professional-hover transition-all duration-300 hover:-translate-y-0.5"
-            aria-label={currentStep === steps.length - 1 ? 'Export JSON file' : `Go to next step: ${currentStep < steps.length - 1 ? steps[currentStep + 1].name : 'Review'}`}
-          >
-            {currentStep === steps.length - 1 ? (
-              <>
-                <Download className="w-4 h-4 mr-1" />
-                Export JSON
-              </>
-            ) : (
-              <>
-                Next
-                <ChevronRight className="w-4 h-4 ml-1" />
-              </>
-            )}
-          </Button>
+          {currentStep < steps.length - 1 ? (
+            <Button
+              type="button"
+              onClick={() => onSubmit(methods.getValues())}
+              className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white shadow-professional hover:shadow-professional-hover transition-all duration-300 hover:-translate-y-0.5"
+              aria-label={`Go to next step: ${steps[currentStep + 1].name}`}
+            >
+              Next
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+          ) : (
+            <div />
+          )}
         </div>
 
       </div>
 
-      {/* Export Validation Error Message */}
-      {exportError && currentStep === steps.length - 1 && (
-        <div className="professional-card p-6 bg-red-50 border border-red-200">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-            <div className="space-y-2">
-              <h3 className="font-medium text-red-800">Export Failed - Schema Validation Issues</h3>
-              <p className="text-sm text-red-700">
-                Your data could not be exported because it doesn't meet the IEA Task 43 schema requirements.
-                Please fix the following issues:
-              </p>
-              <div className="mt-3 space-y-2 max-h-60 overflow-y-auto">
-                {exportError.requiredFieldsValidation?.errors?.slice(0, 5).map((error: any, index: number) => (
-                  <div key={`req-${index}`} className="text-sm text-red-700 bg-red-100/50 p-2 rounded">
-                    <span className="font-medium">{error.path}:</span> {error.message}
-                  </div>
-                ))}
-                {exportError.schemaValidation?.errors?.slice(0, 5).map((error: any, index: number) => (
-                  <div key={`schema-${index}`} className="text-sm text-orange-700 bg-orange-100/50 p-2 rounded">
-                    <span className="font-medium">{error.path}:</span> {error.message}
-                  </div>
-                ))}
-                {((exportError.requiredFieldsValidation?.errors?.length || 0) > 5 ||
-                  (exportError.schemaValidation?.errors?.length || 0) > 5) && (
-                    <div className="text-sm text-gray-600 italic">
-                      ... and {((exportError.requiredFieldsValidation?.errors?.length || 0) +
-                        (exportError.schemaValidation?.errors?.length || 0) - 10)} more issues
-                    </div>
-                  )}
-              </div>
-              <p className="text-sm text-red-700 mt-2">
-                Please review the validation section in the form for more details.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Export Loading State */}
-      {isExporting && currentStep === steps.length - 1 && (
-        <div className="professional-card p-6 bg-blue-50 border border-blue-200">
-          <div className="flex items-center gap-3">
-            <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
-            <div>
-              <h3 className="font-medium text-blue-800">Validating and Exporting Data</h3>
-              <p className="text-sm text-blue-700">
-                Please wait while we validate your data against the IEA Task 43 schema...
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Removed legacy export UI; exports are contained within ReviewStep */}
 
       {/* Form Content */}
       <FormProvider {...methods}>
@@ -491,23 +414,18 @@ export function FormWizard() {
                 <ChevronLeft className="w-4 h-4 mr-1" />
                 Previous
               </Button>
-              <Button
-                type="submit"
-                className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white shadow-professional hover:shadow-professional-hover transition-all duration-300 hover:-translate-y-0.5"
-                aria-label={currentStep === steps.length - 1 ? 'Export JSON file' : `Go to next step: ${currentStep < steps.length - 1 ? steps[currentStep + 1].name : 'Review'}`}
-              >
-                {currentStep === steps.length - 1 ? (
-                  <>
-                    <Download className="w-4 h-4 mr-1" />
-                    Export JSON
-                  </>
-                ) : (
-                  <>
-                    Next
-                    <ChevronRight className="w-4 h-4 ml-1" />
-                  </>
-                )}
-              </Button>
+              {currentStep < steps.length - 1 ? (
+                <Button
+                  type="submit"
+                  className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white shadow-professional hover:shadow-professional-hover transition-all duration-300 hover:-translate-y-0.5"
+                  aria-label={`Go to next step: ${steps[currentStep + 1].name}`}
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              ) : (
+                <div />
+              )}
             </div>
           </div>
         </form>
