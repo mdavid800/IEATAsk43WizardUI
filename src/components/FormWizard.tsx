@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
-import { ChevronRight, ChevronLeft, Download, X, AlertTriangle, Loader2, FileDown, ShieldCheck } from 'lucide-react';
+import { ChevronRight, ChevronLeft, AlertTriangle, X } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { BasicInfoStep } from './steps/BasicInfoStep';
 import { LocationStep } from './steps/LocationStep';
@@ -9,18 +9,7 @@ import { MeasurementStep } from './steps/MeasurementStep';
 import { SensorsStep } from './steps/SensorStep';
 import { ReviewStep } from './steps/ReviewStep';
 import { Button } from './ui/button';
-import { downloadJsonFile, downloadJsonFileWithoutValidation, validateExportDataAsync } from '../utils/json-export';
 import type { IEATask43Schema, Sensor } from '../types/schema';
-
-// Add type for export error
-type ExportError = {
-  requiredFieldsValidation: {
-    errors?: Array<{ path: string; message: string }>;
-  };
-  schemaValidation: {
-    errors?: Array<{ path: string; message: string }>;
-  };
-} | null;
 
 const steps = [
   { id: 'basic-info', name: 'Basic Information', component: BasicInfoStep },
@@ -259,58 +248,13 @@ export function FormWizard() {
     }
   };
 
-  const [exportError, setExportError] = useState<ExportError>(null);
-  const [isExporting, setIsExporting] = useState(false);
-  const [validationProgress, setValidationProgress] = useState<string>('');
-  const [showExportOptions, setShowExportOptions] = useState(false);
+  // Removed legacy export state in favor of ReviewStep toolbar actions
 
-  const onSubmit = (data: IEATask43Schema) => {
-    if (currentStep === steps.length - 1) {
-      // Show export options instead of immediate export
-      setShowExportOptions(true);
-    } else {
+  const onSubmit = (_data: IEATask43Schema) => {
+    if (currentStep < steps.length - 1) {
       next();
     }
-  };
-
-  const handleExportWithValidation = async (data: IEATask43Schema) => {
-    // Reset any previous export errors
-    setExportError(null);
-    setIsExporting(true);
-    setValidationProgress('Starting export...');
-
-    try {
-      // Use shared utility function for consistent JSON export with validation
-      const validationResult = await downloadJsonFile(data, 'iea-task43-data.json', true);
-
-      // If validation failed, show error message
-      if (validationResult) {
-        setExportError(validationResult);
-        setValidationProgress('');
-      } else {
-        setValidationProgress('Export completed successfully!');
-        setTimeout(() => setValidationProgress(''), 3000);
-      }
-    } catch (error) {
-      console.error('Export failed:', error);
-      setValidationProgress('Export failed');
-    } finally {
-      setIsExporting(false);
-      setShowExportOptions(false);
-    }
-  };
-
-  const handleExportWithoutValidation = (data: IEATask43Schema) => {
-    setValidationProgress('Exporting without validation...');
-    try {
-      downloadJsonFileWithoutValidation(data, 'iea-task43-data.json');
-      setValidationProgress('Export completed successfully!');
-      setTimeout(() => setValidationProgress(''), 3000);
-    } catch (error) {
-      console.error('Export failed:', error);
-      setValidationProgress('Export failed');
-    }
-    setShowExportOptions(false);
+    // On Review step, exports are handled within ReviewStep toolbar
   };
 
   return (
@@ -327,10 +271,18 @@ export function FormWizard() {
               </span>
             </div>
             <div className="w-full bg-border/30 rounded-full h-2 overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-primary to-secondary transition-all duration-500 ease-out rounded-full"
-                style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
-              />
+              {(() => {
+                const widths = ['w-1/6', 'w-2/6', 'w-3/6', 'w-4/6', 'w-5/6', 'w-full'] as const;
+                const widthClass = widths[currentStep] ?? 'w-full';
+                return (
+                  <div
+                    className={cn(
+                      'h-full bg-gradient-to-r from-primary to-secondary transition-all duration-500 ease-out rounded-full',
+                      widthClass
+                    )}
+                  />
+                );
+              })()}
             </div>
           </div>
 
@@ -422,139 +374,24 @@ export function FormWizard() {
             <span>{steps[currentStep].name}</span>
           </div>
 
-          <Button
-            type="button"
-            onClick={() => onSubmit(methods.getValues())}
-            className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white shadow-professional hover:shadow-professional-hover transition-all duration-300 hover:-translate-y-0.5"
-            aria-label={currentStep === steps.length - 1 ? 'Export JSON file' : `Go to next step: ${currentStep < steps.length - 1 ? steps[currentStep + 1].name : 'Review'}`}
-          >
-            {currentStep === steps.length - 1 ? (
-              <>
-                <Download className="w-4 h-4 mr-1" />
-                Export JSON
-              </>
-            ) : (
-              <>
-                Next
-                <ChevronRight className="w-4 h-4 ml-1" />
-              </>
-            )}
-          </Button>
+          {currentStep < steps.length - 1 ? (
+            <Button
+              type="button"
+              onClick={() => onSubmit(methods.getValues())}
+              className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white shadow-professional hover:shadow-professional-hover transition-all duration-300 hover:-translate-y-0.5"
+              aria-label={`Go to next step: ${steps[currentStep + 1].name}`}
+            >
+              Next
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+          ) : (
+            <div />
+          )}
         </div>
 
       </div>
 
-      {/* Export Validation Error Message */}
-      {exportError && currentStep === steps.length - 1 && (
-        <div className="professional-card p-6 bg-red-50 border border-red-200">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-            <div className="space-y-2">
-              <h3 className="font-medium text-red-800">Export Failed - Schema Validation Issues</h3>
-              <p className="text-sm text-red-700">
-                Your data could not be exported because it doesn't meet the IEA Task 43 schema requirements.
-                Please fix the following issues:
-              </p>
-              <div className="mt-3 space-y-2 max-h-60 overflow-y-auto">
-                {exportError.requiredFieldsValidation?.errors?.slice(0, 5).map((error: any, index: number) => (
-                  <div key={`req-${index}`} className="text-sm text-red-700 bg-red-100/50 p-2 rounded">
-                    <span className="font-medium">{error.path}:</span> {error.message}
-                  </div>
-                ))}
-                {exportError.schemaValidation?.errors?.slice(0, 5).map((error: any, index: number) => (
-                  <div key={`schema-${index}`} className="text-sm text-orange-700 bg-orange-100/50 p-2 rounded">
-                    <span className="font-medium">{error.path}:</span> {error.message}
-                  </div>
-                ))}
-                {((exportError.requiredFieldsValidation?.errors?.length || 0) > 5 ||
-                  (exportError.schemaValidation?.errors?.length || 0) > 5) && (
-                    <div className="text-sm text-gray-600 italic">
-                      ... and {((exportError.requiredFieldsValidation?.errors?.length || 0) +
-                        (exportError.schemaValidation?.errors?.length || 0) - 10)} more issues
-                    </div>
-                  )}
-              </div>
-              <p className="text-sm text-red-700 mt-2">
-                Please review the validation section in the form for more details.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Export Options Modal */}
-      {showExportOptions && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Export Options</h3>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowExportOptions(false)}
-                className="h-6 w-6 p-0"
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-            
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Choose how you want to export your data. For large datasets, consider skipping validation to avoid timeouts.
-              </p>
-              
-              <div className="space-y-3">
-                <Button
-                  type="button"
-                  onClick={() => handleExportWithValidation(methods.getValues())}
-                  className="w-full justify-start bg-green-600 hover:bg-green-700 text-white"
-                  disabled={isExporting}
-                >
-                  <ShieldCheck className="w-4 h-4 mr-2" />
-                  Export with Validation (Recommended)
-                </Button>
-                
-                <Button
-                  type="button"
-                  onClick={() => handleExportWithoutValidation(methods.getValues())}
-                  className="w-full justify-start bg-blue-600 hover:bg-blue-700 text-white"
-                  disabled={isExporting}
-                >
-                  <FileDown className="w-4 h-4 mr-2" />
-                  Export without Validation (Faster)
-                </Button>
-              </div>
-              
-              <div className="text-xs text-muted-foreground bg-gray-50 p-3 rounded">
-                <strong>With Validation:</strong> Checks data compliance but may timeout for large datasets.<br/>
-                <strong>Without Validation:</strong> Exports immediately but you should validate separately.
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Export Loading State with Progress */}
-      {(isExporting || validationProgress) && currentStep === steps.length - 1 && (
-        <div className="professional-card p-6 bg-blue-50 border border-blue-200">
-          <div className="flex items-center gap-3">
-            {isExporting ? (
-              <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
-            ) : (
-              <ShieldCheck className="w-5 h-5 text-green-500" />
-            )}
-            <div>
-              <h3 className="font-medium text-blue-800">
-                {isExporting ? 'Processing Export...' : 'Export Status'}
-              </h3>
-              <p className="text-sm text-blue-700">
-                {validationProgress || 'Please wait while we process your data...'}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Removed legacy export UI; exports are contained within ReviewStep */}
 
       {/* Form Content */}
       <FormProvider {...methods}>
@@ -577,23 +414,18 @@ export function FormWizard() {
                 <ChevronLeft className="w-4 h-4 mr-1" />
                 Previous
               </Button>
-              <Button
-                type="submit"
-                className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white shadow-professional hover:shadow-professional-hover transition-all duration-300 hover:-translate-y-0.5"
-                aria-label={currentStep === steps.length - 1 ? 'Export JSON file' : `Go to next step: ${currentStep < steps.length - 1 ? steps[currentStep + 1].name : 'Review'}`}
-              >
-                {currentStep === steps.length - 1 ? (
-                  <>
-                    <Download className="w-4 h-4 mr-1" />
-                    Export JSON
-                  </>
-                ) : (
-                  <>
-                    Next
-                    <ChevronRight className="w-4 h-4 ml-1" />
-                  </>
-                )}
-              </Button>
+              {currentStep < steps.length - 1 ? (
+                <Button
+                  type="submit"
+                  className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white shadow-professional hover:shadow-professional-hover transition-all duration-300 hover:-translate-y-0.5"
+                  aria-label={`Go to next step: ${steps[currentStep + 1].name}`}
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              ) : (
+                <div />
+              )}
             </div>
           </div>
         </form>

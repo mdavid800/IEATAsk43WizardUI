@@ -1,15 +1,26 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { FileJson, Check, AlertCircle, Loader2, Shield, ShieldCheck, GitCompare, Code2 } from 'lucide-react';
+import { FileJson, AlertCircle, Loader2, Shield, ShieldCheck, GitCompare, Code2, Download } from 'lucide-react';
 import { Button } from '../ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../ui/alert-dialog';
+import { useToast } from '../ui/toast';
 import { SchemaComparison } from '../ui/schema-comparison';
 import { cn } from '../../utils/cn';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { generateExportJson, validateExportDataAsync } from '../../utils/json-export';
-import { validateIEACompliance, validateRequiredFields, ValidationResult } from '../../utils/schema-validation';
+import { ValidationResult } from '../../utils/schema-validation';
 import { validateAllSections } from '../../utils/step-validation';
-import type { IEATask43Schema, Sensor } from '../../types/schema';
+import type { IEATask43Schema } from '../../types/schema';
 
 export function ReviewStep() {
   const { watch } = useFormContext<IEATask43Schema>();
@@ -24,10 +35,11 @@ export function ReviewStep() {
   const isGeneratingRef = useRef(false);
   const isValidatingRef = useRef(false);
   const lastDataHashRef = useRef<string>('');
-  const validationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Track which data hash has been validated successfully
+  const validatedDataHashRef = useRef<string>('');
 
   // Use shared validation utility for consistent validation across all steps
-  const { sections, isValid, completedSections } = validateAllSections(formData);
+  const { isValid } = validateAllSections(formData);
 
   // Generate preview JSON and run validation asynchronously to prevent UI blocking
   useEffect(() => {
@@ -51,18 +63,11 @@ export function ReviewStep() {
         const exportData = generateExportJson(formData);
         const jsonString = JSON.stringify(exportData, null, 2);
         setPreviewJson(jsonString);
-        
+
         lastDataHashRef.current = dataHash;
-        
-        // Start async validation with debouncing
-        if (validationTimeoutRef.current) {
-          clearTimeout(validationTimeoutRef.current);
-        }
-        
-        validationTimeoutRef.current = setTimeout(() => {
-          startAsyncValidation(formData);
-        }, 1000); // Debounce validation by 1 second
-        
+
+        // Do not auto-validate; validation runs only when user clicks "Validate Now"
+
       } catch (error) {
         console.error('Error generating preview:', error);
         setPreviewJson('Error generating preview. Please check your data.');
@@ -91,6 +96,14 @@ export function ReviewStep() {
       setRequiredFieldsValidation(validationResults.requiredFieldsValidation);
       setSchemaValidation(validationResults.schemaValidation);
       setValidationProgress('');
+      // If valid, remember which data was validated
+      const dataHash = JSON.stringify(data);
+      if (validationResults.requiredFieldsValidation?.isValid && validationResults.schemaValidation?.isValid) {
+        validatedDataHashRef.current = dataHash;
+      } else {
+        // Not fully valid; clear validated hash to require warning on export
+        validatedDataHashRef.current = '';
+      }
     } catch (error) {
       console.error('Validation error:', error);
       setRequiredFieldsValidation({
@@ -110,14 +123,44 @@ export function ReviewStep() {
     }
   };
 
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (validationTimeoutRef.current) {
-        clearTimeout(validationTimeoutRef.current);
-      }
-    };
-  }, []);
+  // No cleanup needed; we removed auto-validation debouncing
+
+  // Helper: trigger JSON file download
+  const downloadJson = (data: IEATask43Schema) => {
+    const exportData = generateExportJson(data);
+    const json = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'iea_task_43_export.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const { showToast } = useToast();
+  const [showExportConfirm, setShowExportConfirm] = useState(false);
+  const [pendingExportData, setPendingExportData] = useState<IEATask43Schema | null>(null);
+
+  // Export handler: use dialog when not validated
+  const handleExport = () => {
+    const currentHash = JSON.stringify(formData);
+    const isCurrentDataValidated = !!validatedDataHashRef.current && validatedDataHashRef.current === currentHash;
+    if (!isCurrentDataValidated) {
+      setPendingExportData(formData);
+      setShowExportConfirm(true);
+      return;
+    }
+    downloadJson(formData);
+    showToast({ title: 'JSON downloaded', description: 'Your export has started.' });
+  };
+
+  const confirmExport = () => {
+    const data = pendingExportData ?? formData;
+    downloadJson(data);
+    showToast({ title: 'JSON downloaded', description: 'Your export has started.' });
+    setPendingExportData(null);
+  };
 
   return (
     <div className="space-y-8">
@@ -152,8 +195,10 @@ export function ReviewStep() {
             isValidating
               ? "bg-blue-100 text-blue-800"
               : (requiredFieldsValidation?.isValid && schemaValidation?.isValid)
-              ? "bg-green-100 text-green-800"
-              : "bg-red-100 text-red-800"
+                ? "bg-green-100 text-green-800"
+                : (!!validatedDataHashRef.current && validatedDataHashRef.current === JSON.stringify(formData))
+                  ? "bg-red-100 text-red-800" // validated once but currently failing
+                  : "bg-yellow-100 text-yellow-800" // not validated yet
           )}>
             {isValidating ? (
               <>
@@ -163,7 +208,9 @@ export function ReviewStep() {
             ) : (
               (requiredFieldsValidation?.isValid && schemaValidation?.isValid)
                 ? "Compliant"
-                : "Non-Compliant"
+                : ((!!validatedDataHashRef.current && validatedDataHashRef.current === JSON.stringify(formData))
+                  ? "Non-Compliant"
+                  : "Not validated")
             )}
           </div>
         </div>
@@ -185,8 +232,8 @@ export function ReviewStep() {
             isValidating
               ? "bg-blue-50 text-blue-700 border-blue-200"
               : requiredFieldsValidation?.isValid
-              ? "bg-green-50 text-green-700 border-green-200"
-              : "bg-red-50 text-red-700 border-red-200"
+                ? "bg-green-50 text-green-700 border-green-200"
+                : "bg-red-50 text-red-700 border-red-200"
           )}>
             {isValidating ? (
               <Loader2 className="w-6 h-6 text-blue-500 animate-spin flex-shrink-0" />
@@ -201,8 +248,8 @@ export function ReviewStep() {
                 {isValidating
                   ? "Validating required fields..."
                   : requiredFieldsValidation?.isValid
-                  ? "All required fields are present"
-                  : `${requiredFieldsValidation?.errors?.length ?? 0} missing required fields`}
+                    ? "All required fields are present"
+                    : `${requiredFieldsValidation?.errors?.length ?? 0} missing required fields`}
               </div>
             </div>
           </div>
@@ -213,8 +260,8 @@ export function ReviewStep() {
             isValidating
               ? "bg-blue-50 text-blue-700 border-blue-200"
               : (schemaValidation?.isValid && requiredFieldsValidation?.isValid)
-              ? "bg-green-50 text-green-700 border-green-200"
-              : "bg-orange-50 text-orange-700 border-orange-200"
+                ? "bg-green-50 text-green-700 border-green-200"
+                : "bg-orange-50 text-orange-700 border-orange-200"
           )}>
             {isValidating ? (
               <Loader2 className="w-6 h-6 text-blue-500 animate-spin flex-shrink-0" />
@@ -229,8 +276,8 @@ export function ReviewStep() {
                 {isValidating
                   ? "Checking schema compliance..."
                   : (schemaValidation?.isValid && requiredFieldsValidation?.isValid)
-                  ? "Fully compliant with IEA Task 43 schema"
-                  : `${(schemaValidation?.errors?.length ?? 0) + (requiredFieldsValidation?.errors?.length ?? 0)} validation issues found`}
+                    ? "Fully compliant with IEA Task 43 schema"
+                    : `${(schemaValidation?.errors?.length ?? 0) + (requiredFieldsValidation?.errors?.length ?? 0)} validation issues found`}
               </div>
             </div>
           </div>
@@ -306,7 +353,7 @@ export function ReviewStep() {
 
                       // Sort steps by their index
                       return Object.entries(errorsByStep)
-                        .sort(([stepA, errorsA], [stepB, errorsB]) => {
+                        .sort(([_stepA, errorsA], [_stepB, errorsB]) => {
                           const indexA = errorsA[0]?.stepIndex ?? 999;
                           const indexB = errorsB[0]?.stepIndex ?? 999;
                           return indexA - indexB;
@@ -402,7 +449,7 @@ export function ReviewStep() {
 
                       // Then, for each step, categorize errors by type
                       return Object.entries(errorsByStep)
-                        .sort(([stepA, errorsA], [stepB, errorsB]) => {
+                        .sort(([_stepA, errorsA], [_stepB, errorsB]) => {
                           const indexA = errorsA[0]?.stepIndex ?? 999;
                           const indexB = errorsB[0]?.stepIndex ?? 999;
                           return indexA - indexB;
@@ -492,7 +539,7 @@ export function ReviewStep() {
                 className="flex items-center gap-2"
               >
                 <Code2 className="w-4 h-4" />
-                JSON Export
+                JSON Preview
               </Button>
               <Button
                 type="button"
@@ -505,34 +552,91 @@ export function ReviewStep() {
                 Schema Comparison
               </Button>
             </div>
-            
+
             {/* Manual validation trigger */}
+            {(() => {
+              const currentDataHash = JSON.stringify(formData);
+              const isCurrentValidated = !!validatedDataHashRef.current && validatedDataHashRef.current === currentDataHash;
+              const isCompliant = !!(requiredFieldsValidation?.isValid && schemaValidation?.isValid);
+              const state = isValidating
+                ? 'validating'
+                : isCurrentValidated
+                  ? (isCompliant ? 'compliant' : 'noncompliant')
+                  : 'notvalidated';
+
+              const colorClasses =
+                state === 'validating'
+                  ? 'bg-blue-600 hover:bg-blue-600 text-white'
+                  : state === 'compliant'
+                    ? 'bg-green-600 hover:bg-green-700 text-white'
+                    : state === 'noncompliant'
+                      ? 'bg-red-600 hover:bg-red-700 text-white'
+                      : 'bg-yellow-500 hover:bg-yellow-600 text-white';
+
+              const label =
+                state === 'validating'
+                  ? 'Validating...'
+                  : state === 'compliant'
+                    ? 'Validated'
+                    : state === 'noncompliant'
+                      ? 'Validation issues'
+                      : 'Validate Now';
+
+              const Icon =
+                state === 'validating'
+                  ? Loader2
+                  : state === 'compliant'
+                    ? ShieldCheck
+                    : state === 'noncompliant'
+                      ? AlertCircle
+                      : Shield;
+
+              return (
+                <Button
+                  type="button"
+                  onClick={() => startAsyncValidation(formData)}
+                  disabled={isValidating}
+                  variant="default"
+                  size="sm"
+                  className={cn('flex items-center gap-2 shadow', colorClasses)}
+                  aria-label={label}
+                >
+                  <Icon className={cn('w-4 h-4', state === 'validating' && 'animate-spin')} />
+                  {label}
+                </Button>
+              );
+            })()}
             <Button
               type="button"
-              onClick={() => startAsyncValidation(formData)}
-              disabled={isValidating}
-              variant="outline"
+              onClick={handleExport}
+              variant="default"
               size="sm"
               className="flex items-center gap-2"
             >
-              {isValidating ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Validating...
-                </>
-              ) : (
-                <>
-                  <Shield className="w-4 h-4" />
-                  Validate Now
-                </>
-              )}
+              <Download className="w-4 h-4" />
+              Export JSON
             </Button>
           </div>
         </div>
-        </div>
+
+        {/* Export confirmation dialog */}
+        <AlertDialog open={showExportConfirm} onOpenChange={setShowExportConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Export without validation?</AlertDialogTitle>
+              <AlertDialogDescription>
+                You haven’t validated the current data. You can still export, but the JSON may contain issues. Continue?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmExport}>Export anyway</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {viewMode === 'comparison' ? (
-          <SchemaComparison 
+          <SchemaComparison
             data={formData}
             validationErrors={[
               ...(requiredFieldsValidation?.errors || []),
@@ -610,20 +714,20 @@ export function ReviewStep() {
           <div className="text-2xl font-bold text-primary">
             {formData.measurement_location?.reduce((total, loc) => {
               // Count sensors at location level (legacy structure)
-              const locationSensors = Array.isArray((loc as any).sensors) 
-                ? (loc as any).sensors.filter(Boolean).length 
+              const locationSensors = Array.isArray((loc as any).sensors)
+                ? (loc as any).sensors.filter(Boolean).length
                 : 0;
-              
+
               // Count sensors at measurement point level (correct schema structure)
               const measurementPointSensors = loc.measurement_point?.reduce((pointTotal, point) =>
                 pointTotal + (Array.isArray(point.sensor) ? point.sensor.filter(Boolean).length : 0), 0) || 0;
-              
+
               return total + locationSensors + measurementPointSensors;
             }, 0) || 0}
           </div>
           <div className="text-sm text-muted-foreground">Sensor{(formData.measurement_location?.reduce((total, loc) => {
-            const locationSensors = Array.isArray((loc as any).sensors) 
-              ? (loc as any).sensors.filter(Boolean).length 
+            const locationSensors = Array.isArray((loc as any).sensors)
+              ? (loc as any).sensors.filter(Boolean).length
               : 0;
             const measurementPointSensors = loc.measurement_point?.reduce((pointTotal, point) =>
               pointTotal + (Array.isArray(point.sensor) ? point.sensor.filter(Boolean).length : 0), 0) || 0;
@@ -646,12 +750,12 @@ export function ReviewStep() {
               {!isValid && " Make sure to complete all required sections first."}
             </p>
             <div className="mt-2 text-xs text-blue-600 bg-blue-100 p-2 rounded">
-              <strong>Performance tip:</strong> For datasets with many sensors (&gt;1000), validation may take some time. 
+              <strong>Performance tip:</strong> For datasets with many sensors (&gt;1000), validation may take some time.
               You can export without validation for immediate results, then validate separately if needed.
             </div>
           </div>
         </div>
       </div>
-    </div >
+    </div>
   );
 }
