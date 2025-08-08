@@ -5,13 +5,12 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { DatePicker } from '../ui/date-picker';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { SearchableSelect } from '../ui/searchable-select';
 import { Textarea } from '../ui/textarea';
 import { cn } from '../../utils/cn';
 import { getDefaultDatesForNewEntry } from '../../utils/campaign-dates';
 import { validateSensors } from '../../utils/step-validation';
-import type { IEATask43Schema, SensorType, MeasurementType, Sensor } from '../../types/schema';
+import type { IEATask43Schema, SensorType, MeasurementType } from '../../types/schema';
 import { sensorTypeOptions, measurementTypeOptions } from '../../utils/enum-options';
 import DynamicSensorOptionalFields from './DynamicSensorOptionalFields';
 
@@ -177,6 +176,7 @@ export function SensorsStep() {
             setValue={setValue}
             watch={watch}
             errors={errors}
+            campaignStatus={campaignStatus}
             expandedSensors={expandedSensors[locationIndex] || {}}
             expandedCalibrations={expandedCalibrations[locationIndex] || {}}
             toggleExpandSensor={(sensorId) => toggleExpandSensor(locationIndex, sensorId)}
@@ -198,6 +198,7 @@ interface LocationSensorsManagerProps {
   setValue: any;
   watch: any;
   errors: any;
+  campaignStatus?: IEATask43Schema['campaignStatus'];
   expandedSensors: ExpandedState;
   expandedCalibrations: NestedExpandedState; // This will be further nested or specific to this location's sensors
   toggleExpandSensor: (sensorsFieldId: string) => void;
@@ -213,6 +214,7 @@ function LocationSensorsManager({
   setValue,
   watch,
   errors,
+  campaignStatus,
   expandedSensors,
   expandedCalibrations,
   toggleExpandSensor,
@@ -276,7 +278,6 @@ function LocationSensorsManager({
 
   const removeSensorsForLocation = (sensorsIndex: number) => {
     // Before removing from RHF, clean up its expansion state via parent if needed
-    const sensorsFieldId = sensorsFields[sensorsIndex]?.id;
     // This cleanup might be better handled in the parent's main removeSensor upon RHF update,
     // but if direct child calls are preferred:
     // if (sensorsFieldId) {
@@ -490,7 +491,6 @@ function LocationSensorsManager({
 
               <CalibrationArray
                 locationIndex={locationIndex} // Pass locationIndex
-                sensorsFieldId={sensorField.id} // This is RHF's field ID for this sensor
                 sensorsIndex={sensorsIndex} // This is the array index for this sensor
                 control={control}
                 register={register}
@@ -513,7 +513,6 @@ function LocationSensorsManager({
 // --- CalibrationArray Component ---
 interface CalibrationArrayProps {
   locationIndex: number; // Added
-  sensorsFieldId: string;
   sensorsIndex: number;
   control: any;
   register: any;
@@ -527,7 +526,6 @@ interface CalibrationArrayProps {
 
 function CalibrationArray({
   locationIndex, // Added
-  sensorsFieldId,
   sensorsIndex,
   control,
   register,

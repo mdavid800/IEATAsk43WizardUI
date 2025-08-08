@@ -439,7 +439,7 @@ export function ReviewStep() {
         </div>
 
         {viewMode === 'comparison' ? (
-          <SchemaComparison 
+          <SchemaComparison
             data={formData}
             validationErrors={[
               ...(requiredFieldsValidation?.errors || []),
@@ -517,20 +517,20 @@ export function ReviewStep() {
           <div className="text-2xl font-bold text-primary">
             {formData.measurement_location?.reduce((total, loc) => {
               // Count sensors at location level (legacy structure)
-              const locationSensors = Array.isArray((loc as any).sensors) 
-                ? (loc as any).sensors.filter(Boolean).length 
+              const locationSensors = Array.isArray((loc as any).sensors)
+                ? (loc as any).sensors.filter(Boolean).length
                 : 0;
-              
+
               // Count sensors at measurement point level (correct schema structure)
               const measurementPointSensors = loc.measurement_point?.reduce((pointTotal, point) =>
                 pointTotal + (Array.isArray(point.sensor) ? point.sensor.filter(Boolean).length : 0), 0) || 0;
-              
+
               return total + locationSensors + measurementPointSensors;
             }, 0) || 0}
           </div>
           <div className="text-sm text-muted-foreground">Sensor{(formData.measurement_location?.reduce((total, loc) => {
-            const locationSensors = Array.isArray((loc as any).sensors) 
-              ? (loc as any).sensors.filter(Boolean).length 
+            const locationSensors = Array.isArray((loc as any).sensors)
+              ? (loc as any).sensors.filter(Boolean).length
               : 0;
             const measurementPointSensors = loc.measurement_point?.reduce((pointTotal, point) =>
               pointTotal + (Array.isArray(point.sensor) ? point.sensor.filter(Boolean).length : 0), 0) || 0;
