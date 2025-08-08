@@ -323,27 +323,29 @@ export function MeasurementTable({
     // Get available sensors for this location
     const availableSensors = (watch(`measurement_location.${locationIndex}.sensors` as any) as Sensor[]) || [];
 
-    // Memoize and prepare sensor options grouped by OEM (not MODEL) with proper formatting
+    // Memoize and prepare sensor options grouped by OEM and MODEL with proper formatting
     const sensorOptions = useMemo(() => {
         const validSensors = availableSensors.filter((sensor: Sensor) =>
             sensor && typeof sensor === 'object' && sensor.oem && sensor.serial_number
         );
 
-        const groupedByOEM: { [key: string]: { label: string; value: Sensor }[] } = {};
+        const groupedByOEMAndModel: { [key: string]: { label: string; value: Sensor }[] } = {};
         validSensors.forEach((sensor: Sensor) => {
             const oem = sensor.oem || 'Unknown OEM';
-            if (!groupedByOEM[oem]) {
-                groupedByOEM[oem] = [];
+            const model = sensor.model || 'Unknown Model';
+            const groupKey = `${oem} - ${model}`;
+            if (!groupedByOEMAndModel[groupKey]) {
+                groupedByOEMAndModel[groupKey] = [];
             }
-            groupedByOEM[oem].push({
+            groupedByOEMAndModel[groupKey].push({
                 label: `${sensor.oem} (${sensor.serial_number})`,
                 value: sensor,
             });
         });
 
-        return Object.keys(groupedByOEM).map(oem => ({
-            label: oem,
-            options: groupedByOEM[oem],
+        return Object.keys(groupedByOEMAndModel).map(groupKey => ({
+            label: groupKey,
+            options: groupedByOEMAndModel[groupKey],
         }));
     }, [availableSensors]);
 
